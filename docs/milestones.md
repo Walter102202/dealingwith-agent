@@ -39,7 +39,7 @@ A quote can be priced, accepted and paid end to end against the mock PayPal gate
 
 The DealingWith Agent interprets requests against the project's scope and produces structured intents, with Claude, OpenAI or the mock provider interchangeably.
 
-- [ ] **Context pack** (B1). Done when: the pack for P1 carries services, rules, clauses (including paid additionals), prior quotes and mandate summary, every item with its id.
+- [x] **Context pack** (B1). Done when: the pack for P1 carries services, rules, clauses (including paid additionals), prior quotes and mandate summary, every item with its id.
 - [ ] **Provider switch and structured run** (B2). Done when: `LLM_PROVIDER=anthropic|openai|mock` selects the model, the output is validated against the schema, and every run is recorded in `agent_runs`.
 - [ ] **Live eval** (B3). Done when: `pnpm eval:live` grades the five demo requests and reports pass or fail per request.
 
