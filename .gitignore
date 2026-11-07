@@ -1,0 +1,21 @@
+# Local analysis, never committed
+docs/hackathon/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Local data (PGlite)
+.data/
+
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+
+# Tooling scratch
+.superpowers/
+
+# OS
+.DS_Store
