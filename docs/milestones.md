@@ -24,7 +24,7 @@ Everything the parallel tracks depend on exists and is frozen.
 A quote can be priced, accepted and paid end to end against the mock PayPal gateway, with no credentials.
 
 - [x] **Backend foundations** (A0). Done when: `loadEnv` validates every variable with the documented defaults, the logger writes redacted JSON lines, and `AppError`, `compact` and `formatUsd` are tested.
-- [ ] **Pricing engine** (A1). Done when: included lines cost US$0 and cite a clause; rule lines price from the catalog; the rush multiplier applies; unknown refs fail loudly; version drift resolves to the current rule.
+- [x] **Pricing engine** (A1). Done when: included lines cost US$0 and cite a clause; rule lines price from the catalog; the rush multiplier applies; unknown refs fail loudly; version drift resolves to the current rule.
 - [ ] **Requests, quote versions, project scope** (A2). Done when: a new version supersedes the previous one and paid extras are appended to the project as clauses exactly once.
 - [ ] **Policies** (A3). Done when: every reason (inactive, expired, wrong project, currency, stale version, per purchase, total, funding) is tested and the spend reservation holds a row lock.
 - [ ] **Mock PayPal gateway** (A4). Done when: create, approve, capture, authorize and partial capture behave like the sandbox, with a local approve page and emitted webhooks.
