@@ -11,6 +11,8 @@ Rules: one decision per file; never edit a past decision, write a new one that s
 
 ## Index
 
+- [2026-11-07 Serialize quote versions on the request](2026-11-07-quote-version-allocation.md)
+
 - [2026-11-07 TypeScript 5.9, not 7](2026-11-07-typescript-5-9.md)
 - [2026-11-07 PGlite for tests and local default, pg for Render](2026-11-07-pglite-for-tests-and-local.md)
 - [2026-11-07 Money as integer cents](2026-11-07-integer-cents.md)
