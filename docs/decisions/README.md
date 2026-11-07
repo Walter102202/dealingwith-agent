@@ -18,3 +18,4 @@ Rules: one decision per file; never edit a past decision, write a new one that s
 - [2026-11-07 Seed creates, reset restores](2026-11-07-seed-creates-reset-restores.md)
 - [2026-11-07 Reset keeps connected client agents](2026-11-07-reset-keeps-client-agents.md)
 - [2026-11-07 API shapes live in contracts](2026-11-07-api-shapes-live-in-contracts.md)
+- [2026-11-07 The agent module lives under src/agent](2026-11-07-agent-under-src.md)
