@@ -1,6 +1,9 @@
+export * from './access.js';
 export * from './agent.js';
+export * from './api.js';
 export * from './catalog.js';
 export * from './context.js';
+export * from './events.js';
 export * from './mandate.js';
 export * from './mcp.js';
 export * from './money.js';
@@ -8,4 +11,5 @@ export * from './payment.js';
 export * from './policy.js';
 export * from './primitives.js';
 export * from './quote.js';
+export * from './request.js';
 export * from './scope.js';

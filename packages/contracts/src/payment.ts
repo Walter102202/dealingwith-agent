@@ -33,7 +33,16 @@ export type Payment = z.infer<typeof PaymentSchema>;
 export const AcceptQuoteStatusSchema = z.enum(['paid', 'approval_required', 'denied']);
 export type AcceptQuoteStatus = z.infer<typeof AcceptQuoteStatusSchema>;
 
-export const AcceptQuoteReasonSchema = z.union([PolicyReasonSchema, z.literal('no_mandate')]);
+/**
+ * Why an accept did not pay: a policy reason, `no_mandate` (agent without a
+ * mandate for this project), or `not_acceptable` (the version is `needs_info`,
+ * `draft`, `expired` or `rejected`; a superseded version is `stale_version`).
+ */
+export const AcceptQuoteReasonSchema = z.union([
+  PolicyReasonSchema,
+  z.literal('no_mandate'),
+  z.literal('not_acceptable'),
+]);
 export type AcceptQuoteReason = z.infer<typeof AcceptQuoteReasonSchema>;
 
 /** Result of accepting a quote, identical on the web and in the MCP tool. */
