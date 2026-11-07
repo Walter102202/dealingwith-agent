@@ -17,6 +17,41 @@ afterEach(async () => {
 const body = (id: string, resource: object, event_type = 'PAYMENT.CAPTURE.COMPLETED') =>
   JSON.stringify({ id, event_type, resource });
 describe('processWebhook', () => {
+  test('rejects a capture whose amount or currency differs and rolls back its event', async () => {
+    const q = await publishedQuote(h.deps, {
+      intents: [
+        {
+          kind: 'rule',
+          ref: { id: 'S2.report', version: 1 },
+          quantity: 1,
+          label: 'Summary',
+          rationale: 'S2.report',
+        },
+      ],
+    });
+    const accepted = await acceptQuote(h.deps, {
+      quoteId: q.id,
+      version: 1,
+      actor: { kind: 'web', clientId: DEMO.client.id },
+    });
+    for (const amount of [
+      { currency_code: 'USD', value: '0.01' },
+      { currency_code: 'EUR', value: '80.00' },
+    ]) {
+      await expect(
+        processWebhook(h.deps, {
+          headers: { 'x-mock-signature': h.deps.env.MOCK_WEBHOOK_SECRET },
+          rawBody: body('WH-invalid-amount', {
+            id: 'CAP-bad',
+            amount,
+            supplementary_data: { related_ids: { order_id: accepted.payment?.paypalOrderId } },
+          }),
+        }),
+      ).rejects.toMatchObject({ code: 'payment_mismatch' });
+    }
+    expect(await h.deps.db.select().from(webhookEvents)).toHaveLength(0);
+    expect(await getQuote(h.deps.db, q.id)).toMatchObject({ status: 'accepted' });
+  });
   test('rejects invalid signatures without storing an event and records unknown orders as ignored', async () => {
     const rawBody = body('WH-test', {
       id: 'CAP-unknown',

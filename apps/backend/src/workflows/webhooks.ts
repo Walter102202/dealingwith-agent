@@ -2,6 +2,7 @@ import type { DomainEvent, Payment } from '@dealingwith/contracts';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { mandates, payments, webhookEvents } from '../db/schema.js';
+import { verifyCaptureAmount } from '../integrations/paypal/verify-amount.js';
 import { AppError } from '../lib/errors.js';
 import { updateMandate } from '../modules/mandates/mandates.js';
 import {
@@ -87,6 +88,7 @@ async function dispatch(
   const payment = await resolvePayment(deps, resource);
   if (!payment) return 'ignored';
   if (type === 'PAYMENT.CAPTURE.COMPLETED') {
+    verifyCaptureAmount(resource.amount, payment.amountCents);
     if (typeof resource.id !== 'string')
       throw new AppError('invalid_webhook', 'Capture id is required');
     await markPaid(deps, {
