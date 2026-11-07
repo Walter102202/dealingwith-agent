@@ -41,6 +41,19 @@ Inputs the spec implies but no scenario test names. Each line is pinned by a tes
 
 Written for a session (Claude Code, Codex or a human) that opens this repository with no other context.
 
+### Before you start a track (preflight)
+
+Run these in order. Every step has an expected result; if yours differs, stop and write what you saw in your report instead of improvising.
+
+1. `cd` into the main checkout and `git pull`. Expected: `git log --oneline -1` shows the commit the track's revision note names, or a later one on `main`.
+2. `git worktree add ../dealingwith-track-<letter> -b track/<letter> main`, then `cd ../dealingwith-track-<letter>` and `pnpm install`. Expected: install finishes and `git status --short` prints nothing (the lockfile did not change). If `track/<letter>` already exists (you are resuming), `cd` into the existing worktree and `git pull` instead.
+3. `pnpm lint`, `pnpm typecheck`, `pnpm test`. Expected: all three green, with at least the test-file and test counts the track's revision note gives for `main`. Fewer tests means a wrong checkout.
+4. `git config user.name` prints `Walter102202` and `git config user.email` prints `walterguzman2202@gmail.com`.
+5. Create the folder `dealingwith-reports/` next to the repository if it does not exist (on Walter's machine `C:\dev\dealingwith-reports\`); your report lives at `dealingwith-reports/track-<letter>.md`, outside the repo.
+6. Resume rule: read your milestone section in `docs/milestones.md`; the first unticked line is where you continue. This holds at the start and after any restart.
+
+Ports, so parallel sessions never collide: Track A runs the backend on `3000`; Track D runs Vite on `5173` and, when it needs its own backend, starts it with `PORT=3001`; Track C runs its backend on `3002`; Track B listens on nothing and never runs `pnpm dev`.
+
 ### Read first, in this order
 
 1. `docs/design/2026-11-07-dealingwith-agent-mvp-design.md` — what we are building and why (the spec).
@@ -65,6 +78,35 @@ When something is unclear, do not stop to ask Walter. Ask yourself what a top 1%
 - Secrets only in `.env` (ignored). `docs/hackathon/` is local analysis and is never committed; if you see it in `git status`, stop and fix `.gitignore` first.
 - Before you say a task is done, run the task's test command and paste its last lines in your report. Evidence before assertions.
 
+### Bugs you find along the way
+
+Fix them without asking.
+
+- A bug in your track's code, or in existing code your track depends on and may edit, is fixed on your branch: failing test first, then the fix, then the affected suite. One commit per bug (`fix(scope): ...`), separate from the task commit. Report it with `file:line`, symptom, root cause and the test that pins it.
+- A class of bug gets one sweep, not just the instance you saw.
+- If the fix needs a file you may not touch (`packages/contracts`, `apps/backend/src/db`, root configuration), do not stop: describe the change in the report under "Needs the integrator", work around it when you safely can, and continue.
+- A big, unrelated pre-existing bug is not fixed: it goes under "Found, not fixed" with evidence.
+- Speed rule: fix only what breaks something (a failing test, a wrong result, a scenario that cannot complete). Cosmetic or theoretical issues go to the report under "Found, not fixed" and wait until after submission.
+- Never delete, skip or weaken a test to make it pass. Never touch anything outside your worktree.
+
+### Integration checks (integrator only)
+
+- Every track is reviewed by a session that did not write it (a fresh read-only session or a reviewer subagent). Every finding is verified against the code (`file:line`) before it is applied.
+- Before merging a track, the integrator re-runs `pnpm lint && pnpm typecheck && pnpm test && pnpm build` in a clean worktree of that branch, then test-merges all finished track branches into a throwaway branch and runs the same commands on the combined tree.
+- When an important problem persists after one fix, find the root cause instead of launching another round. Minor items go to a list for after submission.
+
+### Known traps of this stack
+
+Each one has already cost someone time.
+
+- ESM: every relative import ends in `.js` even when the file is `.ts`. `exactOptionalPropertyTypes` is on: never assign `undefined` to an optional key; omit the key (`compact()` from A0 exists for this).
+- Vitest collects only `*.test.ts` (and `*.test.tsx` where a project configures jsdom) under each workspace listed in the root `vitest.config.ts`. A test in a folder that is not a workspace, or named `.spec.ts`, silently never runs. Check the "Test Files" count after every run.
+- PGlite is a single connection: `createTestDb()` once per test file, `closeDb(db)` in `afterAll`, no concurrent transactions inside one test. `seedDemo(db)` gives P1, M1 and the catalog with the fixed ids in `demo-data.ts`.
+- `agent_runs.request_id` and `quotes.request_id` are foreign keys: tests insert a `requests` row first. `quotes` has the composite key `(quote_id, version)`; `Quote.id` in contracts is `quote_id`.
+- `tsc` copies nothing but `.ts` output: Markdown, JSON or HTML read at runtime from `dist/` needs an explicit copy step in the package `build` script, and `apps/backend/tsconfig.build.json` has `rootDir: "src"`, so runtime files live under `src/`.
+- Biome formats on `pnpm lint:fix` and ignores `*.md`; line width 100, single quotes. Run `pnpm lint:fix` before `pnpm lint` when the diff is large.
+- Long shell heredocs break on Windows shells; write files with your editor tool and keep shell commands short.
+
 ### Quality bar (what "top 1%" means here, checkable)
 
 - TypeScript `strict`, no `any` outside tests, no `@ts-ignore`; public functions typed at the boundary with Zod schemas from `@dealingwith/contracts`.
@@ -82,17 +124,25 @@ When something is unclear, do not stop to ask Walter. Ask yourself what a top 1%
 2. `pnpm lint` and `pnpm typecheck` are green.
 3. Committed and pushed; `docs/milestones.md` ticked.
 4. Any decision taken has a file in `docs/decisions/`.
-5. A short report (what was built, test output tail, decisions, anything the next task needs to know) is left in the chat for the integrator.
+5. The report below is written to `dealingwith-reports/track-<letter>.md` (outside the repo) and pasted in the chat. Never ask anyone to paste a report for you.
 
 ### Reporting format (end of each task or session)
+
+Append one block per task to `dealingwith-reports/track-<letter>.md` and paste the same text in the chat. When the track's last task is done, end the file with the line `STATUS: DONE`.
 
 ```text
 Task: A5 - payments and workflows
 Status: done | blocked (why) | partial (what is missing)
 Tests: <command> -> <last lines of output>
 Decisions: docs/decisions/2026-11-08-release-spend-on-paypal-error.md
-Notes for the next task: <interfaces added or changed, gotchas>
+Bugs fixed: <file:line, symptom, root cause, pinning test> or none
+Found, not fixed: <evidence> or none
+Needs the integrator: <changes outside your files> or none
+Notes for the next task: <interfaces added or changed, gotchas, exact import names you used>
+Friction: <anything you did by hand that the plan should have covered> or none
 ```
+
+If your context grows large: finish the current task, commit, push, update the report, and suggest `/compact` before continuing. A new session resumes from the first unticked milestone line with the same brief.
 
 ### Never
 
@@ -530,6 +580,34 @@ The five scenarios of spec section 7.8 as readable end-to-end tests that a judge
 
 Revised 2026-11-07 by the integrator: the agent lives in `apps/backend/src/agent/` because `apps/backend/tsconfig.build.json` has `rootDir: "src"` (anything outside `src` fails the production build and is skipped by `pnpm typecheck`). Prompts are Markdown files loaded at runtime relative to `import.meta.url`; since `tsc` copies no `.md`, Task B2 adds `apps/backend/scripts/copy-prompts.mjs` to the backend `build` script so `dist/agent/` carries them. `evals/` is a workspace package (`@dealingwith/evals`) like `tests/`: Task B3 adds `- evals` to `pnpm-workspace.yaml` and `'evals'` to the root Vitest projects (a planned one-line overlap with A8 that the integrator resolves). Decision: `docs/decisions/2026-11-07-agent-under-src.md`.
 
+**Preflight numbers.** `main` at `c2b0943` or later; `pnpm test` there reports 11 test files and 42 tests. Branch `track/b`, worktree `../dealingwith-track-b`, report `dealingwith-reports/track-b.md`. Track A (Codex) runs in parallel on `track/a`; never read or depend on that branch.
+
+**Read first for this track**, after the general list above: spec sections 4 (anti-goals), 6 (demo scenario), 7.3 (agent), 7.8 (evals); the Track A introduction (backend conventions), Task A5's Interfaces block (the `AgentPort` type you implement) and Task A7's table of demo agent outputs (your fixtures mirror it); then B1–B3 in full; `docs/decisions/*.md`; and the code you build on: `packages/contracts/src/{agent,context,catalog,scope,quote,mandate}.ts` and `apps/backend/src/db/{schema,demo-data,seed,test-db,client}.ts`. Read them; never guess a name or a column.
+
+**Files you may touch, and nothing else:** `apps/backend/src/agent/**`; `apps/backend/scripts/copy-prompts.mjs`; in `apps/backend/package.json` only the three dependencies and the `build` script (B2); `evals/**` plus the three one-line root additions named in B3; `docs/milestones.md` (M2 lines) and `docs/decisions/` (new files plus their line in `docs/decisions/README.md`). Never: `packages/contracts`, `apps/backend/src/db`, anything else in `apps/backend/src`, `apps/web`, `tsconfig*`, `biome.json`.
+
+**Decisions already taken (do not reopen; build on them):**
+
+- One structured call per request: `generateText({ ..., output: Output.object({ schema: AgentOutputSchema }) })`, no tool loop. One retry when the output fails the schema or the call throws `NoObjectGeneratedError`/`NoOutputGeneratedError`; then the run is recorded with outcome `invalid_output` and `runAgent` throws `AppError`-style `{ code: 'agent_output_invalid' }` (Track A maps it to 422).
+- Providers: `createAnthropic({ apiKey })` and `createOpenAI({ apiKey })`; the provider is callable, `provider(modelId)` returns the model. Never the `"anthropic/model"` gateway string. Defaults `claude-opus-5-5` and `gpt-5`; `LLM_MODEL` overrides. `LLM_PROVIDER=mock` needs no key and is what CI and the scenario tests run.
+- The model never prices. `AgentOutputSchema` is strict: an amount field in the output is a validation error, never a value. The prompts say so in plain words.
+- Prompts are Markdown read at runtime relative to `import.meta.url` through `prompts.ts`; `pnpm --filter @dealingwith/backend build` must leave `dist/agent/instructions.md` and `dist/agent/skills/*.md` in place.
+- The five fixtures in `evals/scenarios/fixtures/*.json` equal, field by field, the five rows of the Task A7 table. Fixture ids cite only clauses and rules that exist in `demo-data.ts` (`C1`; `C4` is the clause request 1 creates when paid; `S2.report`, `S2.alert`, `S3.base`, `S3.per_source`).
+- `AgentPort`: Track A's `workflows/deps.ts` is not on `main` yet. Define the type locally in `src/agent/port.ts` as a structural type identical to Task A5's Interfaces block (`buildContextPack(db, { clientId, projectId? })` and `runAgent(deps, { pack, text, skill, requestId, answers? })`), with `Deps` typed as `{ db: Db; env: AgentEnv; now?: () => Date }` where `AgentEnv` is `Pick<..., 'LLM_PROVIDER' | 'LLM_MODEL' | 'ANTHROPIC_API_KEY' | 'OPENAI_API_KEY'>` declared locally with exactly those names (they match `.env.example` and A0's `EnvSchema`). `createAgentPort(env)` is the export Track A's placeholder also has; the integrator switches the import at merge.
+- `buildContextPack` reads the database directly with Drizzle (catalog, project with its clauses including paid additionals, prior quote versions, the project's mandate, open questions from `needs_info` versions) and validates with `ContextPackSchema.parse` before returning. `mandate.remainingCents = totalLimitCents - spentCents`.
+- Every run writes one `agent_runs` row with the schema's column names: `requestId`, `quoteId`/`quoteVersion` when known, `provider`, `model`, `promptVersion` (git short SHA if available, else `'dev'`), `inputTokens`, `outputTokens`, `latencyMs`, `outcome` (`'ok' | 'invalid_output' | 'error'`), `error` text on failure.
+
+**Verified against the installed types (ai 7.0.165, @ai-sdk/anthropic 4.0.99, @ai-sdk/openai 4.0.111; tarballs inspected 2026-11-07):**
+
+- `import { generateText, Output, NoObjectGeneratedError, NoOutputGeneratedError } from 'ai'`; `Output.object({ schema })` accepts a Zod 4 schema directly; the parsed object is `result.output` (a getter that throws `NoOutputGeneratedError` when the model produced no object); `result.usage.inputTokens` and `result.usage.outputTokens` are `number | undefined` (store `null` when undefined); `generateText` accepts `system` and `prompt`.
+- `import { MockLanguageModelV4 } from 'ai/test'` (`MockLanguageModelV3` also exists; use V4, the current `LanguageModel` union includes both). Constructor takes `{ doGenerate }` where `doGenerate` is a function or a ready `LanguageModelV4GenerateResult`: `{ content: [{ type: 'text', text: JSON.stringify(fixture.output) }], finishReason: 'stop', usage: { inputTokens: 10, outputTokens: 20, ... }, warnings: [] }` (fill the other `usage` fields from the type; the mock model must return the fixture whose `match` regex matches the request text, so `doGenerate` is a function reading the last user message).
+- `import { createAnthropic } from '@ai-sdk/anthropic'` → `createAnthropic({ apiKey })('claude-opus-5-5')`; `import { createOpenAI } from '@ai-sdk/openai'` → `createOpenAI({ apiKey })('gpt-5')`. Both packages peer-depend on `zod ^4.1.8` (satisfied by 4.6.7) and pin `@ai-sdk/provider 4.0.37`; install all three in one `pnpm add --filter @dealingwith/backend` so the lockfile resolves one provider version.
+- `ai` also pulls `@ai-sdk/gateway`; it is unused and harmless. Do not set `AI_GATEWAY_API_KEY`.
+
+**Track B traps:** reading `.md` next to source works under `tsx` (dev and tests) and in `dist/` only if `copy-prompts.mjs` ran, so run the backend build once and list `dist/agent`. `agent_runs.request_id` is a foreign key: insert a `requests` row before a run in tests. The prompt version from git (`git rev-parse --short HEAD`) must never throw when git is missing: fall back to `'dev'`.
+
+**Definition of done for the track, all true before you report it done:** B1, B2, B3 committed and pushed on `track/b`; `pnpm lint && pnpm typecheck && pnpm test` green from the worktree root, including the `evals` project; `pnpm eval:live` with `LLM_PROVIDER=mock` prints five passes; `pnpm --filter @dealingwith/backend build` succeeds and `dist/agent/` holds the Markdown prompts; GitHub Actions green on the last push; M2 lines ticked; report ends with `STATUS: DONE`. If Walter puts an `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` in `.env`, also run `pnpm eval:live` once per provider and paste the table in the report; without keys, say so and stop there (Phase 2 covers live runs).
+
 ### Task B1: Context pack (`agent/context`)
 
 **Files:**
@@ -551,8 +629,8 @@ Revised 2026-11-07 by the integrator: the agent lives in `apps/backend/src/agent
 - Test: `apps/backend/src/agent/run.test.ts`, `apps/backend/src/agent/provider.test.ts`
 
 **Interfaces:**
-- Produces: `getModel(env): LanguageModel` — `anthropic` → `createAnthropic({ apiKey })(env.LLM_MODEL ?? 'claude-opus-5-5')`; `openai` → `createOpenAI({ apiKey })(env.LLM_MODEL ?? 'gpt-5')`; `mock` → `MockLanguageModel` (from `ai/test`, or a `MockLanguageModelV3`-style stub per the installed `ai@7` types) that returns the fixture whose `match` regex matches the request text. Verify exact import names against the installed `ai`, `@ai-sdk/anthropic` and `@ai-sdk/openai` type declarations before writing; do not use the `"anthropic/model"` gateway string form (it needs a Vercel gateway key).
-- `apps/backend/src/agent/port.ts`: `createAgentPort(env): AgentPort` returning `{ buildContextPack, runAgent }` (the `AgentPort` type comes from Track A's `workflows/deps.ts`; Track A ships a placeholder `agent/port.ts` with the same export that the integrator replaces with this one at merge). `runAgent(deps, { pack: ContextPack; text: string; skill: 'contract-service' | 'analyze-additional' | 'explain-quote'; requestId; answers?: Record<string, string> }): Promise<{ output: AgentOutput; runId: string }>` — `generateText({ model, system: instructions + skill file, prompt: renderContextPack(pack) + request (+ answers), output: Output.object({ schema: AgentOutputSchema }) })`; one retry on schema failure; inserts `agent_runs` (`provider`, `model`, `prompt_version` = git short SHA or `'dev'`, tokens, latency, `outcome: 'ok' | 'invalid_output' | 'error'`).
+- Produces: `getModel(env: AgentEnv): LanguageModel` — `anthropic` → `createAnthropic({ apiKey })(env.LLM_MODEL ?? 'claude-opus-5-5')`; `openai` → `createOpenAI({ apiKey })(env.LLM_MODEL ?? 'gpt-5')`; `mock` → `new MockLanguageModelV4({ doGenerate })` from `ai/test` that returns the fixture whose `match` regex matches the request text (see the verified names in the track introduction). Missing key → `AppError`-style error with message `ANTHROPIC_API_KEY is required` / `OPENAI_API_KEY is required`. Do not use the `"anthropic/model"` gateway string form (it needs a Vercel gateway key).
+- `apps/backend/src/agent/port.ts`: `createAgentPort(env): AgentPort` returning `{ buildContextPack, runAgent }` (the `AgentPort` type comes from Track A's `workflows/deps.ts`; Track A ships a placeholder `agent/port.ts` with the same export that the integrator replaces with this one at merge). `runAgent(deps, { pack: ContextPack; text: string; skill: 'contract-service' | 'analyze-additional' | 'explain-quote'; requestId; answers?: Record<string, string> }): Promise<{ output: AgentOutput; runId: string }>` — `generateText({ model, system: instructions + skill file, prompt: renderContextPack(pack) + request (+ answers), output: Output.object({ schema: AgentOutputSchema }) })`, read `result.output`, re-validate with `AgentOutputSchema.safeParse`; one retry on failure; inserts `agent_runs` (`provider`, `model`, `promptVersion` = git short SHA or `'dev'`, `inputTokens`/`outputTokens` from `result.usage`, `latencyMs`, `outcome: 'ok' | 'invalid_output' | 'error'`, `error`).
 - Fixtures `evals/scenarios/fixtures/`: `01-web-monday-summary.json` (included C1 + rule S2.report), `02-agent-amazon-source.json` (S3.base + S3.per_source ×1), `03-agent-sales-drop-alert.json` (S2.alert), `04-already-covered.json` (included C4), `05-needs-info.json` (`needsInfo` with the data-volume question, empty `lineItems`). Each `{ match: string; output: AgentOutput }`. The `output` objects must equal, field by field, the five rows of the table in Task A7 (`demo-agent-outputs.ts`): same keys, labels, rationales, `deliveryDays`, `confidence`. Both tracks write them from that table; at merge the integrator makes `mock-fixtures.ts` the single source and `demo-agent-outputs.ts` re-export it.
 - `instructions.md` (English): role, "classify every need as included or extra against the scope clauses, contract clauses and paid additionals alike", "ask when information changes the price", "never invent services, rules or prices; amounts are computed by the system", "cite the clause id or rule id for every line", output format note.
 
@@ -772,6 +850,8 @@ Design guidance: the implementer loads the `frontend-design` skill before D1 and
 ---
 
 ## Self-review notes (2026-11-07)
+
+- **Fool-proof revision (2026-11-07, after Track A started).** The plan, not the chat brief, carries the preflight (expected results per step, ports per track), the bugs rule, the report file with `STATUS: DONE`, the stack traps, and per track the files it may touch, the decisions already taken and the track's definition of done. A brief to a session can then be three lines: the track, the plan, the decision rule. Track B is revised this way; Tracks C and D get the same treatment before they start. Verified: the AI SDK 7 names in the Track B introduction were read from the published tarballs (`ai@7.0.165`, `@ai-sdk/anthropic@4.0.99`, `@ai-sdk/openai@4.0.111`), not run. Untested: `MockLanguageModelV4` with `Output.object` end to end; the first green `run.test.ts` is the proof.
 
 - Spec coverage: G1 → T4, A7, I4; G2 → A1–A5, A7, D3, D5; G3 → A3, A5, C1, I4; G4 → A6, C2, D4; G5 → D6; G6 → D2; G7 → A4, A5, A8, T1 CI (the five scenarios are `tests/scenarios/01…05`); G8 → T1, E2, S1–S3. Non-goals respected (no auth, no multi-tenant UI, no Vault beyond the 30-minute probe in I1).
 - The five scenario tests of spec 7.8 live in `tests/scenarios/` (Task A8, revised 2026-11-07), end to end through the HTTP API with the fixed demo outputs of `demo-agent-outputs.ts`; Track C extends scenario 3 with the real MCP tool once C1 lands.

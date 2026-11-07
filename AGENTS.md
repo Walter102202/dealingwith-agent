@@ -56,7 +56,7 @@ Decisions live in `docs/decisions/`, one file per decision, named `YYYY-MM-DD-<s
 2. `pnpm lint` and `pnpm typecheck` are green.
 3. Committed and pushed; `docs/milestones.md` ticked in the same commit.
 4. Any decision taken has a file in `docs/decisions/`.
-5. A short report (what was built, test output tail, decisions, anything the next task needs to know) is left for the integrator.
+5. A short report (what was built, test output tail, decisions, bugs fixed, anything the next task needs to know) is appended to `dealingwith-reports/track-<letter>.md` next to the repository (outside it) and pasted in the chat; the plan's "Reporting format" gives the fields.
 
 ## Where tests live
 
