@@ -11,6 +11,8 @@ Rules: one decision per file; never edit a past decision, write a new one that s
 
 ## Index
 
+- [2026-11-07 Persist payment preparation before calling PayPal](2026-11-07-payment-reservation-before-gateway.md)
+
 - [2026-11-07 Serialize quote versions on the request](2026-11-07-quote-version-allocation.md)
 
 - [2026-11-07 TypeScript 5.9, not 7](2026-11-07-typescript-5-9.md)
