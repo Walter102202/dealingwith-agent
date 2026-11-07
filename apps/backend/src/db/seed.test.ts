@@ -172,7 +172,7 @@ describe('resetDemoData', () => {
     expect(await db.select().from(schema.payments)).toHaveLength(0);
     expect(await db.select().from(schema.webhookEvents)).toHaveLength(0);
     expect(await db.select().from(schema.agentRuns)).toHaveLength(0);
-    expect(await db.select().from(schema.clientAgents)).toHaveLength(0);
+    expect(await db.select().from(schema.clientAgents)).toHaveLength(1);
     expect(await db.select().from(schema.services)).toHaveLength(3);
   });
 });

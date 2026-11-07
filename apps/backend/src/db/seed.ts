@@ -98,14 +98,14 @@ export async function seedDemo(db: Db): Promise<void> {
  */
 export async function resetDemoData(db: Db): Promise<void> {
   await db.transaction(async (tx) => {
-    // Order follows the foreign keys: runs and payments before quotes, quotes before requests,
-    // requests before the agents they reference.
+    // Order follows the foreign keys: runs and payments before quotes, quotes before requests.
+    // Connected client agents are kept: a reset restores the scripted scenario, it does not
+    // revoke the tokens a judge's agent is using (spec section 6; decision 2026-11-07).
     await tx.delete(schema.agentRuns);
     await tx.delete(schema.webhookEvents);
     await tx.delete(schema.payments);
     await tx.delete(schema.quotes);
     await tx.delete(schema.requests);
-    await tx.delete(schema.clientAgents);
 
     await tx
       .update(schema.projects)
