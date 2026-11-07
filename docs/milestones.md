@@ -4,7 +4,7 @@ A working guide for the MVP build. Milestones are outcomes, not dates. Each stag
 
 Legend: `[ ]` not started · `[~]` in progress · `[x]` done
 
-**Current position:** M0 in progress (T1 done).
+**Current position:** M0 in progress (T1, T2 done).
 
 ---
 
@@ -13,7 +13,7 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done
 Everything the parallel tracks depend on exists and is frozen.
 
 - [x] **Repository public with CI** (T1). Done when: `Walter102202/dealingwith-agent` is public with the MIT license visible, `docs/hackathon/` is ignored, and `pnpm lint`, `pnpm typecheck`, `pnpm test` are green in GitHub Actions.
-- [ ] **Shared contracts** (T2). Done when: `@dealingwith/contracts` exports the schemas for catalog, scope, agent output, quotes, mandates, policy decisions, payments and MCP tools, with money helpers tested.
+- [x] **Shared contracts** (T2). Done when: `@dealingwith/contracts` exports the schemas for catalog, scope, agent output, quotes, mandates, policy decisions, payments and MCP tools, with money helpers tested.
 - [ ] **Database schema and client** (T3). Done when: the ten tables migrate on PGlite and Postgres from the same SQL, and the test database helper works.
 - [ ] **Demo seed and reset** (T4). Done when: seeding twice yields one business, three services, project P1 with clauses C1–C3 and mandate M1 pending; reset restores that state while keeping the mandate's funding.
 
