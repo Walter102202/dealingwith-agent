@@ -10,7 +10,8 @@
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx --conditions=development src/db/migrate-cli.ts"
+    "db:migrate": "tsx --conditions=development src/db/migrate-cli.ts",
+    "seed": "tsx --conditions=development src/db/seed-cli.ts"
   },
   "dependencies": {
     "@dealingwith/contracts": "workspace:*",
