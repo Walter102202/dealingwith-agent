@@ -1,5 +1,6 @@
 export * from './agent.js';
 export * from './catalog.js';
+export * from './context.js';
 export * from './mandate.js';
 export * from './mcp.js';
 export * from './money.js';

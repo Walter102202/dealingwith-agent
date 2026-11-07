@@ -6,7 +6,7 @@ The demo seed runs on every deploy and must be idempotent (spec section 7.9). "R
 
 ## Decision
 
-`seedDemo` upserts the static catalog (business, services, client) by fixed id and creates the project and the mandate only when they do not exist. `resetDemoData` is the only operation that rewrites demo state: it deletes requests, quotes, payments, webhook events, agent runs and client agents; restores the project's clauses to C1–C3; resets `spent_cents` and the policy limits to the scripted values; and leaves `paypal_authorization_id`, `funding_amount_cents`, `funding_captured_cents` and `status` untouched.
+`seedDemo` upserts the static catalog (business, services, client) by fixed id and creates the project and the mandate only when they do not exist. `resetDemoData` is the only operation that rewrites demo state: it deletes requests, quotes, payments, webhook events, agent runs and client agents; restores the project's clauses to C1–C3; resets `spent_cents` and the policy limits to the scripted values; leaves `paypal_authorization_id`, `funding_amount_cents` and `funding_captured_cents` untouched; and keeps `status` except that `exhausted` becomes `active`, because spent is zero again and the funding is still there.
 
 ## Alternatives considered
 
@@ -17,4 +17,4 @@ The demo seed runs on every deploy and must be idempotent (spec section 7.9). "R
 
 - Redeploys are safe; only the explicit reset changes demo state.
 - Catalog edits (prices, inclusions) ship by changing `demo-data.ts` and redeploying.
-- A mandate whose status became `exhausted` keeps that status after a reset even though `spent_cents` is zero; the policies module (Task A3) owns the status transitions and may re-activate it. Revisit if the demo needs it.
+- After five judge runs exhaust the US$300 total, one reset makes request 3 pay again, which is what the button promises. The policies module (Task A3) owns every other status transition (`pending` → `active` on funding, `exhausted` when `spent + amount` would exceed the total, `expired`, `revoked`).

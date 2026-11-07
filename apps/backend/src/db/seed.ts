@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import type { Db } from './client.js';
 import { DEMO } from './demo-data.js';
 import * as schema from './schema.js';
@@ -92,8 +92,9 @@ export async function seedDemo(db: Db): Promise<void> {
 /**
  * "Reset demo data": removes everything the demo produced and restores the
  * scripted starting point. The mandate's funding (PayPal authorization id,
- * funding amount, funding captured) and its status survive, because a seed
- * cannot re-approve a PayPal authorization (spec section 6).
+ * funding amount, funding captured) survives, because a seed cannot
+ * re-approve a PayPal authorization (spec section 6). Its status survives too,
+ * except `exhausted`, which becomes `active` since spent is back to zero.
  */
 export async function resetDemoData(db: Db): Promise<void> {
   await db.transaction(async (tx) => {
@@ -119,6 +120,8 @@ export async function resetDemoData(db: Db): Promise<void> {
       .update(schema.mandates)
       .set({
         spentCents: 0,
+        // Spent is zero again, so an exhausted mandate is usable; every other status is kept.
+        status: sql`CASE WHEN ${schema.mandates.status} = 'exhausted' THEN 'active'::mandate_status ELSE ${schema.mandates.status} END`,
         perPurchaseLimitCents: DEMO.mandate.perPurchaseLimitCents,
         totalLimitCents: DEMO.mandate.totalLimitCents,
         expiresAt: DEMO.mandate.expiresAt,

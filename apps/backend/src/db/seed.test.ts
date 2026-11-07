@@ -97,6 +97,38 @@ describe('resetDemoData', () => {
     });
   });
 
+  test('re-activates an exhausted mandate while keeping its funding', async () => {
+    const db = await createTestDb();
+    await seedDemo(db);
+    await db
+      .update(schema.mandates)
+      .set({
+        status: 'exhausted',
+        spentCents: 30000,
+        paypalAuthorizationId: 'AUTH-DEMO-2',
+        fundingCapturedCents: 30000,
+      })
+      .where(eq(schema.mandates.id, DEMO.mandate.id));
+
+    await resetDemoData(db);
+
+    const [mandate] = await db.select().from(schema.mandates);
+    expect(mandate).toMatchObject({
+      status: 'active',
+      spentCents: 0,
+      paypalAuthorizationId: 'AUTH-DEMO-2',
+      fundingCapturedCents: 30000,
+    });
+  });
+
+  test('keeps a pending mandate pending after reset', async () => {
+    const db = await createTestDb();
+    await seedDemo(db);
+    await resetDemoData(db);
+    const [mandate] = await db.select().from(schema.mandates);
+    expect(mandate?.status).toBe('pending');
+  });
+
   test('deletes requests, quotes, payments, webhook events, agent runs and client agents', async () => {
     const db = await createTestDb();
     await seedDemo(db);
