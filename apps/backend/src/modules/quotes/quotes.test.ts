@@ -44,7 +44,8 @@ describe('createQuoteVersion', () => {
       status: 'published' as const,
     };
     const first = await createQuoteVersion(db, input);
-    const second = await createQuoteVersion(db, { ...input, quoteId: first.id });
+    // A Quote structurally satisfies PricedQuote; its version must never override allocation.
+    const second = await createQuoteVersion(db, { ...input, quoteId: first.id, priced: first });
     expect(second).toMatchObject({ id: first.id, version: 2, status: 'published' });
     expect(await getQuote(db, first.id, 1)).toMatchObject({ status: 'superseded' });
     expect(await getQuote(db, first.id)).toEqual(second);
