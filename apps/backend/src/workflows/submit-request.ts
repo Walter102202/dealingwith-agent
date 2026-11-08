@@ -1,4 +1,5 @@
 import type { Quote, RequestChannel } from '@dealingwith/contracts';
+import { AgentRunError } from '../agent/run.js';
 import { AppError } from '../lib/errors.js';
 import { getProject } from '../modules/projects/projects.js';
 import { PricingError } from '../modules/quotes/errors.js';
@@ -75,6 +76,12 @@ export async function submitRequest(deps: Deps, input: SubmitInput): Promise<Quo
   } catch (error) {
     await setRequestStatus(deps.db, request.id, 'failed');
     if (error instanceof PricingError) throw error;
+    if (error instanceof AgentRunError)
+      throw new AppError(
+        error.code === 'invalid_output' ? 'invalid_agent_output' : 'agent_failed',
+        error.message,
+        { status: error.status, cause: error },
+      );
     throw new AppError('agent_failed', 'The agent could not prepare a quote', {
       status: 502,
       cause: error,

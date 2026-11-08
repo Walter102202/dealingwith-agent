@@ -1,0 +1,31 @@
+{
+  "match": "Amazon sales as a second source",
+  "output": {
+    "lineItems": [
+      {
+        "kind": "rule",
+        "ref": {
+          "id": "S3.base",
+          "version": 1
+        },
+        "quantity": 1,
+        "label": "Data source integration: Amazon",
+        "rationale": "Clause C3 limits the contract to one data source (Shopify); a second source is priced with rule S3.base.v1."
+      },
+      {
+        "kind": "rule",
+        "ref": {
+          "id": "S3.per_source",
+          "version": 1
+        },
+        "quantity": 1,
+        "label": "Additional data source: Amazon",
+        "rationale": "One additional source, priced with rule S3.per_source.v1."
+      }
+    ],
+    "needsInfo": [],
+    "explanation": "Connecting Amazon as a second data source is an integration on top of your Shopify-only contract. No rush was requested, so standard delivery applies.",
+    "deliveryDays": 5,
+    "confidence": 0.9
+  }
+}

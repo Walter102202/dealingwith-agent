@@ -15,7 +15,8 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "typecheck": "pnpm -r --if-present typecheck",
-    "test": "vitest run"
+    "test": "vitest run",
+    "eval:live": "pnpm --filter @dealingwith/evals exec tsx --conditions=development live/run.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.6.6",

@@ -1,4 +1,4 @@
-import type { AgentOutput, ContextPack } from '@dealingwith/contracts';
+import type { AgentPort } from '../agent/port.js';
 import type { Db } from '../db/client.js';
 import type { Env } from '../env.js';
 import type { PaypalGateway } from '../integrations/paypal/gateway.js';
@@ -13,16 +13,5 @@ export type Deps = {
   logger: Logger;
   agent: AgentPort;
 };
-export type AgentPort = {
-  buildContextPack(db: Db, input: { clientId: string; projectId?: string }): Promise<ContextPack>;
-  runAgent(
-    deps: Deps,
-    input: {
-      pack: ContextPack;
-      text: string;
-      skill: 'contract-service' | 'analyze-additional' | 'explain-quote';
-      requestId: string;
-      answers?: Record<string, string>;
-    },
-  ): Promise<{ output: AgentOutput; runId: string }>;
-};
+/** The real port lives in `src/agent/port.ts`; the fake one in `./fake-agent.ts`. */
+export type { AgentPort };
