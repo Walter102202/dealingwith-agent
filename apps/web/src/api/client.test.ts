@@ -13,14 +13,21 @@ describe('api client', () => {
     vi.unstubAllGlobals();
   });
 
-  it('throws a ZodError when a 2xx body does not match the schema', async () => {
+  it('throws a ZodError when a 2xx body does not match the schema and logs it once', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => jsonResponse(200, { totalCents: 'eighty' })),
     );
-    await expect(
-      api.get('/api/quotes/x', z.object({ totalCents: z.number() })),
-    ).rejects.toBeInstanceOf(ZodError);
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      await expect(
+        api.get('/api/quotes/x', z.object({ totalCents: z.number() })),
+      ).rejects.toBeInstanceOf(ZodError);
+      expect(log).toHaveBeenCalledTimes(1);
+      expect(log.mock.calls[0]?.[0]).toBe('Response of /api/quotes/x failed its contract');
+    } finally {
+      log.mockRestore();
+    }
   });
 
   it('throws ApiRequestError with status, code and message on a non-2xx envelope', async () => {

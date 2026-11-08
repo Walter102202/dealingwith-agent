@@ -18,10 +18,8 @@ export class ApiRequestError extends Error {
 /** The message to show a person for any failure the UI catches. */
 export function errorMessage(error: unknown): string {
   if (error instanceof ApiRequestError) return error.message;
-  if (error instanceof ZodError) {
-    console.error(error);
+  if (error instanceof ZodError)
     return 'The server answered in an unexpected format. Reload the page; if it keeps happening, the app and the API are out of step.';
-  }
   if (error instanceof Error) return error.message;
   return 'Something went wrong.';
 }

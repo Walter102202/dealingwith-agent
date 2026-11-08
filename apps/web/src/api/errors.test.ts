@@ -3,14 +3,13 @@ import { ZodError } from 'zod';
 import { ApiRequestError, errorMessage } from './errors.js';
 
 describe('errorMessage', () => {
-  it('explains contract drift and logs the original error once', () => {
-    const error = new ZodError([]);
+  it('explains contract drift without side effects (it runs during render)', () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
-      expect(errorMessage(error)).toBe(
+      expect(errorMessage(new ZodError([]))).toBe(
         'The server answered in an unexpected format. Reload the page; if it keeps happening, the app and the API are out of step.',
       );
-      expect(log).toHaveBeenCalledExactlyOnceWith(error);
+      expect(log).not.toHaveBeenCalled();
     } finally {
       log.mockRestore();
     }

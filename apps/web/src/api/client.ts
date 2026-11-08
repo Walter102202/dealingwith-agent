@@ -1,5 +1,5 @@
 import { ApiErrorSchema } from '@dealingwith/contracts';
-import type { ZodType } from 'zod';
+import { ZodError, type ZodType } from 'zod';
 import { ApiRequestError } from './errors.js';
 
 export { ApiRequestError, errorMessage } from './errors.js';
@@ -17,7 +17,7 @@ async function request<T>(
 ): Promise<T> {
   if (FIXTURES_MODE) {
     const { dispatch } = await import('./fixtures/dispatch.js');
-    return schema.parse(await dispatch(method, path, body));
+    return parseBody(schema, await dispatch(method, path, body), path);
   }
   const init: RequestInit = {
     method,
@@ -30,7 +30,17 @@ async function request<T>(
   }
   const res = await fetch(path, init);
   if (!res.ok) throw await toApiError(res);
-  return schema.parse(await res.json());
+  return parseBody(schema, await res.json(), path);
+}
+
+/** Contract drift is logged once, here, where it happens; `errorMessage` stays pure for render paths. */
+function parseBody<T>(schema: ZodType<T>, body: unknown, path: string): T {
+  try {
+    return schema.parse(body);
+  } catch (error) {
+    if (error instanceof ZodError) console.error(`Response of ${path} failed its contract`, error);
+    throw error;
+  }
 }
 
 async function toApiError(res: Response): Promise<ApiRequestError> {
