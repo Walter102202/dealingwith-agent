@@ -43,7 +43,7 @@ describe('PayWithPayPal', () => {
     if (!buttons) throw new Error('Sandbox buttons not mounted');
     await act(async () => {
       const creation = buttons.createOrder();
-      await expect(creation).rejects.toBeInstanceOf(Error);
+      await expect(creation).rejects.toThrow('This quote is already paid.');
       await creation.catch(buttons.onError);
     });
     expect(onPaid).toHaveBeenCalledExactlyOnceWith(payment);

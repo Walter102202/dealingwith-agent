@@ -9,7 +9,13 @@ import styles from './PayWithPayPal.module.css';
 
 const PayPalSandboxButtons = lazy(() => import('./PayPalSandboxButtons.js'));
 
-class AlreadyPaidError extends Error {}
+/** Thrown from `createOrder` when accept already captured the quote; the buttons must not show it. */
+class AlreadyPaidError extends Error {
+  constructor() {
+    super('This quote is already paid.');
+    this.name = 'AlreadyPaidError';
+  }
+}
 
 interface PayWithPayPalProps {
   quoteId: string;
