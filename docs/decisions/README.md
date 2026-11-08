@@ -43,3 +43,4 @@ Rules: one decision per file; never edit a past decision, write a new one that s
 - [2026-11-07 Quote line position keys](2026-11-07-quote-line-position-keys.md)
 - [2026-11-07 Configuration consumer test providers](2026-11-07-config-consumer-test-providers.md)
 - [2026-11-08 MCP tests pin the SDK 1.32.2 shapes for invalid input and 401](2026-11-08-mcp-sdk-validation-and-401-shapes.md) — invalid tool input is an isError result, a 401 is StreamableHTTPError code 401; the tests assert those shapes.
+- [2026-11-08 One payment path in the web: the approval link, in every PayPal mode](2026-11-08-single-approve-link-payment-path.md) — the web drops the PayPal JS buttons; accept returns an approval link and PayPal returns to /pay/return.

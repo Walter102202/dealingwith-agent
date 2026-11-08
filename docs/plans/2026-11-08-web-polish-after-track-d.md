@@ -29,7 +29,7 @@
 - A signed-in person who opens a page of the other role is sent to their own home (`/dashboard` for a provider, `/` for a client), never to `/login`.
 - A response that fails its contracts schema shows one fixed sentence to the person and logs the Zod error to the console. The sentence: `The server answered in an unexpected format. Reload the page; if it keeps happening, the app and the API are out of step.`
 - The browser's own console line for a 401 on `GET /api/me` when nobody is signed in (item 13) is not a bug the web can fix: the request is needed to restore a session and browsers log every non-2xx response themselves. No change; the plan records it.
-- Item 7 (sandbox `createOrder` with an already captured order) is done only if `apps/web/src/components/PayPalSandboxButtons.tsx` still exists when you reach it. Walter may decide a single approve-link payment path first, which deletes that file; then skip the item and say so in the report.
+- Item 7 (sandbox `createOrder` with an already captured order) was done by Track W while `PayPalSandboxButtons.tsx` existed; on 2026-11-08 Walter chose the single approve-link payment path and the integrator removed that file and the PayPal JS SDK (`docs/decisions/2026-11-08-single-approve-link-payment-path.md`).
 
 ## Tasks
 

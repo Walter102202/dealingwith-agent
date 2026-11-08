@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '../test/render.js';
 
@@ -9,83 +9,52 @@ vi.mock('../api/client.js', async (importOriginal) => {
 });
 
 const navigationMock = vi.hoisted(() => ({ assign: vi.fn() }));
-const sandboxMock = vi.hoisted(() => ({
-  props: null as null | { createOrder: () => Promise<string>; onError: (error: unknown) => void },
-}));
-vi.mock('./PayPalSandboxButtons.js', () => ({
-  default: (props: NonNullable<typeof sandboxMock.props>) => {
-    sandboxMock.props = props;
-    return <span>Sandbox buttons ready</span>;
-  },
-}));
 vi.mock('../lib/navigation.js', () => ({ assign: navigationMock.assign }));
 
 import { PayWithPayPal } from './PayWithPayPal.js';
 
 const quoteId = 'b0000000-0000-4000-8000-000000000001';
+const config = (paypalMode: 'mock' | 'sandbox') => ({
+  paypalMode,
+  ...(paypalMode === 'sandbox' ? { paypalClientId: 'test-client-id' } : {}),
+  appUrl: 'http://localhost:5173',
+  demoMode: paypalMode === 'mock',
+});
 
 describe('PayWithPayPal', () => {
-  it('reports an already-paid sandbox order and rejects creation without an error message', async () => {
-    apiMock.get.mockResolvedValue({
-      paypalMode: 'sandbox',
-      paypalClientId: 'test',
-      appUrl: 'http://localhost:5173',
-      demoMode: false,
-    });
-    const payment = { id: 'payment', status: 'captured', paypalOrderId: 'CAPTURED-ORDER' };
-    apiMock.post.mockResolvedValue({ status: 'paid', payment });
-    const onPaid = vi.fn();
-    renderWithProviders(
-      <PayWithPayPal quoteId={quoteId} version={1} amountCents={8000} onPaid={onPaid} />,
-    );
-    await screen.findByText('Sandbox buttons ready');
-    const buttons = sandboxMock.props;
-    if (!buttons) throw new Error('Sandbox buttons not mounted');
-    await act(async () => {
-      const creation = buttons.createOrder();
-      await expect(creation).rejects.toThrow('This quote is already paid.');
-      await creation.catch(buttons.onError);
-    });
-    expect(onPaid).toHaveBeenCalledExactlyOnceWith(payment);
-    expect(screen.queryByRole('alert')).toBeNull();
-  });
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  it('in mock mode shows "Approve in mock PayPal" and sends the browser to the approval URL', async () => {
-    apiMock.get.mockResolvedValue({
-      paypalMode: 'mock',
-      appUrl: 'http://localhost:5173',
-      demoMode: true,
-    });
-    apiMock.post.mockResolvedValue({
-      status: 'approval_required',
-      approvalUrl: 'http://localhost:5173/pay/return?token=MOCK-ORDER-000001',
-    });
-    renderWithProviders(
-      <PayWithPayPal quoteId={quoteId} version={1} amountCents={8000} onPaid={() => {}} />,
-    );
-    const button = await screen.findByRole('button', { name: 'Approve in mock PayPal' });
-    fireEvent.click(button);
-    await waitFor(() => {
-      expect(navigationMock.assign).toHaveBeenCalledWith(
-        'http://localhost:5173/pay/return?token=MOCK-ORDER-000001',
+  it.each(['mock', 'sandbox'] as const)(
+    'in %s mode shows one "Pay with PayPal" button and sends the browser to the approval URL',
+    async (mode) => {
+      apiMock.get.mockResolvedValue(config(mode));
+      apiMock.post.mockResolvedValue({
+        status: 'approval_required',
+        approvalUrl: 'https://www.sandbox.paypal.com/checkoutnow?token=ORDER-1',
+      });
+      renderWithProviders(
+        <PayWithPayPal quoteId={quoteId} version={1} amountCents={8000} onPaid={() => {}} />,
       );
-    });
-    expect(apiMock.post).toHaveBeenCalledWith(
-      `/api/quotes/${quoteId}/accept`,
-      { version: 1 },
-      expect.anything(),
-    );
-  });
+      fireEvent.click(await screen.findByRole('button', { name: 'Pay with PayPal' }));
+      await waitFor(() => {
+        expect(navigationMock.assign).toHaveBeenCalledWith(
+          'https://www.sandbox.paypal.com/checkoutnow?token=ORDER-1',
+        );
+      });
+      expect(apiMock.post).toHaveBeenCalledWith(
+        `/api/quotes/${quoteId}/accept`,
+        { version: 1 },
+        expect.anything(),
+      );
+      expect(screen.queryByTestId('paypal-buttons')).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Approve in mock PayPal' })).toBeNull();
+    },
+  );
 
   it('a zero total answered "paid" without a payment counts as paid (real backend shape)', async () => {
-    apiMock.get.mockResolvedValue({
-      paypalMode: 'mock',
-      appUrl: 'http://localhost:5173',
-      demoMode: true,
-    });
+    apiMock.get.mockResolvedValue(config('mock'));
     apiMock.post.mockResolvedValue({
       status: 'paid',
       message: 'Nothing to pay: everything requested is already included in the project scope.',
@@ -98,29 +67,12 @@ describe('PayWithPayPal', () => {
     await waitFor(() => {
       expect(onPaid).toHaveBeenCalledTimes(1);
     });
+    expect(navigationMock.assign).not.toHaveBeenCalled();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('in sandbox mode renders the PayPal container and no mock button', async () => {
-    apiMock.get.mockResolvedValue({
-      paypalMode: 'sandbox',
-      paypalClientId: 'test-client-id',
-      appUrl: 'http://localhost:5173',
-      demoMode: false,
-    });
-    renderWithProviders(
-      <PayWithPayPal quoteId={quoteId} version={1} amountCents={8000} onPaid={() => {}} />,
-    );
-    expect(await screen.findByTestId('paypal-buttons')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Approve in mock PayPal' })).toBeNull();
-  });
-
   it('shows the denial message when accept is denied', async () => {
-    apiMock.get.mockResolvedValue({
-      paypalMode: 'mock',
-      appUrl: 'http://localhost:5173',
-      demoMode: true,
-    });
+    apiMock.get.mockResolvedValue(config('mock'));
     apiMock.post.mockResolvedValue({
       status: 'denied',
       reason: 'stale_version',
@@ -129,8 +81,20 @@ describe('PayWithPayPal', () => {
     renderWithProviders(
       <PayWithPayPal quoteId={quoteId} version={1} amountCents={8000} onPaid={() => {}} />,
     );
-    fireEvent.click(await screen.findByRole('button', { name: 'Approve in mock PayPal' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Pay with PayPal' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Quote v1 was replaced by v2.');
     expect(navigationMock.assign).not.toHaveBeenCalled();
+  });
+
+  it('shows an error when the backend answers approval_required without a link', async () => {
+    apiMock.get.mockResolvedValue(config('sandbox'));
+    apiMock.post.mockResolvedValue({ status: 'approval_required' });
+    renderWithProviders(
+      <PayWithPayPal quoteId={quoteId} version={1} amountCents={8000} onPaid={() => {}} />,
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Pay with PayPal' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'PayPal did not return an approval link.',
+    );
   });
 });
