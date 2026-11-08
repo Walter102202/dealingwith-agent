@@ -13,6 +13,9 @@ services:
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
     startCommand: pnpm --filter @dealingwith/backend start
     healthCheckPath: /healthz
+    # Custom domain (infra/README.md, last section). Render adds www. with a redirect to the root.
+    domains:
+      - dealingwith.si
     envVars:
       - key: NODE_VERSION
         value: "22"
