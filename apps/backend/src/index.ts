@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { serve } from '@hono/node-server';
 import { createAgentPort } from './agent/port.js';
 import { createApp } from './api/app.js';
@@ -12,7 +13,10 @@ import type { Deps } from './workflows/deps.js';
 import { createEventBus } from './workflows/events.js';
 import { processWebhook } from './workflows/webhooks.js';
 
-if (existsSync('.env')) process.loadEnvFile('.env');
+// `pnpm dev` runs this package from `apps/backend`; the shared `.env` lives at
+// the repo root, so the nearest one wins: the cwd, then up to two parents.
+const envFile = ['.env', '../.env', '../../.env'].map((p) => resolve(p)).find(existsSync);
+if (envFile) process.loadEnvFile(envFile);
 const env = loadEnv();
 const db = await createDb(env.DATABASE_URL);
 await runMigrations(db);
