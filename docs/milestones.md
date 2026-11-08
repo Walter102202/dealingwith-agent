@@ -72,7 +72,7 @@ Humans can do everything the agent can, and see what the agent did.
 
 The same code runs against PayPal sandbox, a real model and Render.
 
-- [ ] **Sandbox gateway** (I1). Done when: orders, captures, authorizations and partial captures succeed in the sandbox; the smoke script records the authorization expiry and the Vault probe result.
+- [x] **Sandbox gateway** (I1). Done when: orders, captures, authorizations and partial captures succeed in the sandbox; the smoke script records the authorization expiry and the Vault probe result.
 - [ ] **Webhooks verified** (I2). Done when: a sandbox capture produces a verified, processed webhook and a resend is recorded as duplicate.
 - [ ] **Live model passes** (I3). Done when: the live eval passes five of five with Anthropic and with OpenAI using the same prompts.
 - [ ] **Deployed on Render** (I4). Done when: the hosted URL serves the app, the webhook points at it, the demo mandate is funded once, and MCP works from Claude Desktop and Claude Code against the hosted URL.
