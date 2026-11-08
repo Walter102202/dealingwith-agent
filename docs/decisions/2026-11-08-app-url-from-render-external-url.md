@@ -9,6 +9,7 @@
 1. `APP_URL` resolves in this order: the explicit value, then Render's `RENDER_EXTERNAL_URL` (the service's own `https://<service>.onrender.com`, injected by Render), then the local default `http://localhost:3000`.
 2. When `RENDER_EXTERNAL_URL` is present the resolved `APP_URL` must be https; otherwise the backend refuses to start with `invalid_env` naming `APP_URL`.
 3. `loadEnv` treats an empty string as unset for every variable, so `APP_URL=` in a `.env` or a blank dashboard field behaves like a missing variable instead of failing URL validation or disabling a default.
+4. `RENDER_EXTERNAL_URL` is Render's variable, not ours: a trailing slash is normalised rather than refused, so the service can never be locked out by the shape of an injected value. `APP_URL`, which the operator types, keeps the strict no-trailing-slash rule.
 
 ## Alternatives considered
 
@@ -18,4 +19,4 @@
 
 ## Consequences
 
-On Render nothing needs to be typed for `APP_URL` until the domain is attached; the Blueprint keeps the variable dashboard-owned for that moment. Local behaviour is unchanged. `Env` gains an optional `RENDER_EXTERNAL_URL`; three tests pin the fallback, the https rule and the empty-means-unset rule. `infra/README.md`, `render.yaml` and `.env.example` describe the behaviour.
+On Render nothing needs to be typed for `APP_URL` until the domain is attached; the Blueprint keeps the variable dashboard-owned for that moment. Local behaviour is unchanged except for two variables whose empty value stopped being an error: `SESSION_SECRET=` falls back to the development default (still refused over https, so only plain-http local runs notice) and `PORT=` falls back to 3000 (before, it coerced to 0 and failed). `Env` gains an optional `RENDER_EXTERNAL_URL`; tests pin the fallback, the https rule, the blank-secret refusal on Render, the slash normalisation and the empty-means-unset rule. `infra/README.md`, `render.yaml` and `.env.example` describe the behaviour.

@@ -23,8 +23,14 @@ export const EnvSchema = z
      * (the service's own https URL) and only then to the local default.
      */
     APP_URL: publicUrl.optional(),
-    /** Injected by Render on every web service; absent elsewhere. */
-    RENDER_EXTERNAL_URL: publicUrl.optional(),
+    /**
+     * Injected by Render on every web service; absent elsewhere. Not ours to
+     * shape, so a trailing slash is normalised instead of refused.
+     */
+    RENDER_EXTERNAL_URL: z
+      .url()
+      .transform((url) => url.replace(/\/$/, ''))
+      .optional(),
     PORT: z.coerce.number().int().min(1).max(65535).default(3000),
     SESSION_SECRET: z.string().min(1).default(DEFAULT_SESSION_SECRET),
     DEMO_MODE: z

@@ -49,6 +49,12 @@ describe('loadEnv', () => {
       APP_URL: 'https://dealingwith.si',
     });
     expect(() => loadEnv({ ...render, APP_URL: 'http://localhost:3000' })).toThrow(/APP_URL/);
+    // The forgotten dashboard field: a blank secret on a hosted service refuses to start.
+    expect(() => loadEnv({ ...render, SESSION_SECRET: '' })).toThrow(/SESSION_SECRET/);
+    // Render's own variable is normalised, never refused.
+    expect(
+      loadEnv({ ...render, RENDER_EXTERNAL_URL: `${render.RENDER_EXTERNAL_URL}/` }),
+    ).toMatchObject({ APP_URL: render.RENDER_EXTERNAL_URL });
   });
   test('treats empty values as unset', () => {
     expect(loadEnv({ APP_URL: '', LLM_MODEL: '', DATABASE_URL: '' })).toMatchObject({
