@@ -5,7 +5,9 @@ import { api, errorMessage } from '../api/client.js';
 import { useApi } from '../api/hooks.js';
 import { routes } from '../api/routes.js';
 import { Card } from '../components/Card.js';
+import { ConnectAgent } from '../components/ConnectAgent.js';
 import { Layout } from '../components/Layout.js';
+import { MandatePanel } from '../components/MandatePanel.js';
 import { Money } from '../components/Money.js';
 import { QuoteCard } from '../components/QuoteCard.js';
 import { RequestBox } from '../components/RequestBox.js';
@@ -112,7 +114,19 @@ function ProjectBody({ view, onRequest, onAnswers, onPaid }: ProjectBodyProps) {
 
         <aside className={styles.aside} aria-label="Agent and budget">
           <Card title="Agent budget">
-            <p className="muted small">The mandate panel arrives in the next task.</p>
+            <MandatePanel
+              mandate={view.mandate}
+              projectId={project.id}
+              payments={view.payments}
+              onChange={onPaid}
+            />
+          </Card>
+          <Card title="Your agent">
+            <ConnectAgent
+              agents={view.agents}
+              {...(view.mandate ? { mandateId: view.mandate.id } : {})}
+              onChange={onPaid}
+            />
           </Card>
         </aside>
       </div>

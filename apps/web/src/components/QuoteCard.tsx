@@ -117,6 +117,7 @@ function AdjustForm({
 export function QuoteCard({ quote, onAccept, onAdjust, onAnswers }: QuoteCardProps) {
   const [adjusting, setAdjusting] = useState(false);
   const published = quote.status === 'published';
+  const payable = published || quote.status === 'accepted';
 
   return (
     <article className={styles.card} aria-labelledby={`quote-${quote.id}-${quote.version}`}>
@@ -152,7 +153,7 @@ export function QuoteCard({ quote, onAccept, onAdjust, onAnswers }: QuoteCardPro
             </div>
           </dl>
           <p className={styles.explanation}>{quote.explanation}</p>
-          {published ? (
+          {payable ? (
             <div className={styles.footer}>
               <div className={styles.pay}>
                 <span className={styles.payLabel}>Accept and pay with PayPal</span>
@@ -163,7 +164,7 @@ export function QuoteCard({ quote, onAccept, onAdjust, onAnswers }: QuoteCardPro
                   onPaid={(payment) => void onAccept(payment)}
                 />
               </div>
-              {adjusting ? (
+              {!published ? null : adjusting ? (
                 <AdjustForm onAdjust={onAdjust} onClose={() => setAdjusting(false)} />
               ) : (
                 <Button onClick={() => setAdjusting(true)}>Ask for an adjustment</Button>
