@@ -34,6 +34,11 @@ export function StorefrontPage() {
     setQuote(await api.post(routes.quotes.answers(quoteId), { answers }, QuoteSchema));
   };
 
+  /** The quote was paid in place (zero total or sandbox capture): show its paid version. */
+  const refreshQuote = async (current: Quote) => {
+    setQuote(await api.get(routes.quotes.get(current.id, current.version), QuoteSchema));
+  };
+
   const buy = async (service: Service) => {
     setBuying(service.id);
     setError(null);
@@ -100,7 +105,7 @@ export function StorefrontPage() {
         <section className={styles.result} aria-live="polite">
           <QuoteCard
             quote={quote}
-            onAccept={() => undefined}
+            onAccept={() => refreshQuote(quote)}
             onAdjust={(text) => answer(quote.id, { adjustment: text })}
             onAnswers={(answers) => answer(quote.id, answers)}
           />
