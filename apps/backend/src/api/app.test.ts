@@ -8,7 +8,7 @@ import {
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { signSession } from '../access/session.js';
 import { DEMO } from '../db/demo-data.js';
-import { businesses, clients, projects, services } from '../db/schema.js';
+import { businesses, clients, projects, requests, services } from '../db/schema.js';
 import { createHarness } from '../test/workflow-harness.js';
 import { makeEvent } from '../workflows/events.js';
 import { fakeAgentPort } from '../workflows/fake-agent.js';
@@ -117,6 +117,89 @@ describe('createApp', () => {
     );
     const chunk = await reader?.read();
     expect(new TextDecoder().decode(chunk?.value)).toContain('quote.paid');
+    controller.abort();
+    await reader?.cancel();
+  });
+  test('a provider stream without projectId only carries events of its own business', async () => {
+    const foreignBusinessId = randomUUID();
+    const foreignClientId = randomUUID();
+    const foreignServiceId = randomUUID();
+    const foreignProjectId = randomUUID();
+    const foreignRequestId = randomUUID();
+    await h.deps.db
+      .insert(businesses)
+      .values({ id: foreignBusinessId, name: 'Rival business', country: 'US' });
+    await h.deps.db.insert(clients).values({
+      id: foreignClientId,
+      businessId: foreignBusinessId,
+      name: 'Rival client',
+      email: 'rival@example.test',
+    });
+    await h.deps.db
+      .insert(services)
+      .values({ id: foreignServiceId, businessId: foreignBusinessId, name: 'Rival service' });
+    await h.deps.db.insert(projects).values({
+      id: foreignProjectId,
+      businessId: foreignBusinessId,
+      clientId: foreignClientId,
+      serviceId: foreignServiceId,
+      title: 'Rival project',
+    });
+    await h.deps.db.insert(requests).values({
+      id: foreignRequestId,
+      clientId: foreignClientId,
+      channel: 'web',
+      text: 'Rival storefront request',
+    });
+    const project = ProjectViewSchema.parse(
+      await (await app.request(`/api/projects/${DEMO.project.id}`, { headers: { cookie } })).json(),
+    );
+    const q = project.quotes[0];
+    if (!q) throw new Error('Missing quote');
+    const controller = new AbortController();
+    const response = await app.request('/api/events', {
+      headers: { cookie: provider },
+      signal: controller.signal,
+    });
+    expect(response.status).toBe(200);
+    const reader = response.body?.getReader();
+    const foreignProjectEvent = makeEvent(h.deps, {
+      type: 'quote.paid',
+      projectId: foreignProjectId,
+      quote: q,
+    });
+    const foreignStorefrontEvent = makeEvent(h.deps, {
+      type: 'quote.published',
+      projectId: null,
+      quote: { ...q, requestId: foreignRequestId },
+    });
+    const ownStorefrontEvent = makeEvent(h.deps, {
+      type: 'quote.published',
+      projectId: null,
+      quote: q,
+    });
+    const ownProjectEvent = makeEvent(h.deps, {
+      type: 'quote.paid',
+      projectId: DEMO.project.id,
+      quote: q,
+    });
+    for (const event of [
+      foreignProjectEvent,
+      foreignStorefrontEvent,
+      ownStorefrontEvent,
+      ownProjectEvent,
+    ])
+      h.deps.events.publish(event);
+    let received = '';
+    while (!received.includes(`id: ${ownProjectEvent.id}`)) {
+      const chunk = await reader?.read();
+      if (chunk?.done) break;
+      received += new TextDecoder().decode(chunk?.value);
+    }
+    expect(received).toContain(`id: ${ownStorefrontEvent.id}`);
+    expect(received).toContain(`id: ${ownProjectEvent.id}`);
+    expect(received).not.toContain(foreignProjectEvent.id);
+    expect(received).not.toContain(foreignStorefrontEvent.id);
     controller.abort();
     await reader?.cancel();
   });
