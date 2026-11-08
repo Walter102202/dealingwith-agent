@@ -1,0 +1,176 @@
+/*
+ * DealingWith design tokens. One light theme, one accent, an 8-pt grid.
+ * Display face: Fraunces (titles, totals). Text face: IBM Plex Sans (tabular figures).
+ */
+:root {
+  --paper: #f5f6f2;
+  --surface: #ffffff;
+  --surface-muted: #eef0ea;
+  --ink: #16211c;
+  --ink-soft: #5b665f;
+  --ink-faint: #8a948d;
+  --line: #d8ddd6;
+  --line-strong: #16211c;
+  --accent: #0e6b52;
+  --accent-deep: #0a5440;
+  --accent-tint: #e3f0ea;
+  --accent-ink: #ffffff;
+  --amber: #a35a0b;
+  --amber-tint: #fbefdc;
+  --danger: #a8321e;
+  --danger-tint: #fae6e1;
+  --info-tint: #e6ebf5;
+  --info: #35508f;
+
+  --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --font-text: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-md: 1.0625rem;
+  --text-lg: 1.375rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.5rem;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  --radius-control: 4px;
+  --radius-card: 8px;
+  --shadow-card: 0 1px 0 rgba(22, 33, 28, 0.06);
+  --focus-ring: 0 0 0 3px rgba(14, 107, 82, 0.35);
+  --content-width: 1080px;
+  --header-height: 56px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  margin: 0;
+}
+
+h1 {
+  font-size: var(--text-xl);
+}
+
+h2 {
+  font-size: var(--text-lg);
+}
+
+h3 {
+  font-size: var(--text-md);
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 2px;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+summary:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="date"],
+textarea {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+}
+
+input:disabled,
+textarea:disabled {
+  background: var(--surface-muted);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 88px;
+}
+
+label {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--ink-soft);
+  margin-bottom: var(--space-1);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--ink-soft);
+}
+
+.small {
+  font-size: var(--text-xs);
+}
+
+.stack > * + * {
+  margin-top: var(--space-4);
+}
+
+.error {
+  color: var(--danger);
+  background: var(--danger-tint);
+  border-radius: var(--radius-control);
+  padding: var(--space-2) var(--space-3);
+}

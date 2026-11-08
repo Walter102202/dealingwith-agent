@@ -4,7 +4,7 @@ A working guide for the MVP build. Milestones are outcomes, not dates. Each stag
 
 Legend: `[ ]` not started · `[~]` in progress · `[x]` done
 
-**Current position:** M0 and M2 done; Tracks A (A0-A8) and B merged into `main` on 2026-11-08; A9, C, D and E in progress on their branches.
+**Current position:** M0, M2 and the web (D1-D6) done; Tracks A (A0-A8), B and D merged into `main` on 2026-11-08; A9, C and E in progress on their branches.
 
 ---
 
@@ -59,12 +59,12 @@ An external agent, with a token issued in the portal, requests quotes and pays w
 
 Humans can do everything the agent can, and see what the agent did.
 
-- [ ] **App shell** (D1). Done when: routing, demo login, typed API client and the visual system are in place.
-- [ ] **Storefront** (D2). Done when: the three services are visible and a fixed-price service can be bought.
-- [ ] **Project page and quote card** (D3). Done when: a request produces a quote card with included and extra lines, rationale and sources, and the page updates live when a payment completes.
-- [ ] **Mandate panel and Connect my agent** (D4). Done when: a mandate can be set and funded, remaining budget and headroom are visible, tokens can be issued and revoked.
-- [ ] **Return pages** (D5). Done when: PayPal redirects land on a receipt or on the funded mandate.
-- [ ] **Provider dashboard** (D6). Done when: the AG Studio dashboard shows revenue by service, pipeline, unpaid additionals and requests over time with the product theme, and "Reset demo data" works. Fallback: the same with AG Grid and AG Charts Community if AG Studio cannot be used.
+- [x] **App shell** (D1). Done when: routing, demo login, typed API client and the visual system are in place.
+- [x] **Storefront** (D2). Done when: the three services are visible and a fixed-price service can be bought.
+- [x] **Project page and quote card** (D3). Done when: a request produces a quote card with included and extra lines, rationale and sources, and the page updates live when a payment completes.
+- [x] **Mandate panel and Connect my agent** (D4). Done when: a mandate can be set and funded, remaining budget and headroom are visible, tokens can be issued and revoked.
+- [x] **Return pages** (D5). Done when: PayPal redirects land on a receipt or on the funded mandate.
+- [x] **Provider dashboard** (D6). Done when: the AG Studio dashboard shows revenue by service, pipeline, unpaid additionals and requests over time with the product theme, and "Reset demo data" works. Fallback: the same with AG Grid and AG Charts Community if AG Studio cannot be used.
 
 ---
 

@@ -1,0 +1,38 @@
+.page {
+  max-width: 520px;
+  margin: var(--space-7) auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.title {
+  font-size: var(--text-2xl);
+}
+
+.lead {
+  color: var(--ink-soft);
+  font-size: var(--text-md);
+  max-width: 44ch;
+}
+
+.doors {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+@media (max-width: 600px) {
+  .page {
+    margin-top: var(--space-5);
+  }
+
+  .title {
+    font-size: var(--text-xl);
+  }
+
+  .doors {
+    align-items: stretch;
+  }
+}

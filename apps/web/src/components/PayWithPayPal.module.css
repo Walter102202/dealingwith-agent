@@ -1,0 +1,12 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.paypal {
+  width: 100%;
+  max-width: 320px;
+  min-height: 40px;
+}
