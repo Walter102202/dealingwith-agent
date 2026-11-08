@@ -1,5 +1,6 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { renderWithProviders } from '../test/render.js';
 
 vi.mock('../api/client.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api/client.js')>();
@@ -32,7 +33,7 @@ describe('QuoteCard', () => {
     if (!line) throw new Error('Missing rule fixture');
     const log = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
-      render(
+      renderWithProviders(
         <QuoteCard
           quote={{
             ...requestOne,
@@ -56,7 +57,9 @@ describe('QuoteCard', () => {
     }
   });
   it('shows included and extra lines, delivery, total and both actions for a published quote', () => {
-    render(<QuoteCard quote={requestOne} onAccept={noop} onAdjust={noop} onAnswers={noop} />);
+    renderWithProviders(
+      <QuoteCard quote={requestOne} onAccept={noop} onAdjust={noop} onAnswers={noop} />,
+    );
     expect(screen.getByRole('heading', { name: 'Quote v1' })).toBeInTheDocument();
     const included = screen.getByText('Per-branch view').closest('li');
     expect(included).not.toBeNull();
@@ -71,7 +74,9 @@ describe('QuoteCard', () => {
   });
 
   it('expands a line to show the rule it cites', () => {
-    render(<QuoteCard quote={requestOne} onAccept={noop} onAdjust={noop} onAnswers={noop} />);
+    renderWithProviders(
+      <QuoteCard quote={requestOne} onAccept={noop} onAdjust={noop} onAnswers={noop} />,
+    );
     const extra = screen.getByText('Weekly Monday summary email').closest('li') as HTMLElement;
     fireEvent.click(within(extra).getByText('Why this line'));
     expect(within(extra).getByText('Rule S2.report.v1')).toBeInTheDocument();
@@ -81,7 +86,9 @@ describe('QuoteCard', () => {
   });
 
   it('renders the questions and "Send answers" for a needs-info quote', () => {
-    render(<QuoteCard quote={needsInfo} onAccept={noop} onAdjust={noop} onAnswers={noop} />);
+    renderWithProviders(
+      <QuoteCard quote={needsInfo} onAccept={noop} onAdjust={noop} onAnswers={noop} />,
+    );
     expect(
       screen.getByLabelText('Is the slowness caused by data volume or by the dashboard design?'),
     ).toBeInTheDocument();
@@ -91,7 +98,9 @@ describe('QuoteCard', () => {
 
   it('posts the adjustment text through onAdjust', async () => {
     const onAdjust = vi.fn(async () => {});
-    render(<QuoteCard quote={requestOne} onAccept={noop} onAdjust={onAdjust} onAnswers={noop} />);
+    renderWithProviders(
+      <QuoteCard quote={requestOne} onAccept={noop} onAdjust={onAdjust} onAnswers={noop} />,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Ask for an adjustment' }));
     fireEvent.change(screen.getByLabelText('What should change?'), {
       target: { value: 'Send it on Tuesdays instead' },

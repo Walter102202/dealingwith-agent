@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
+import { AppConfigProvider } from './api/config.js';
 import { Layout } from './components/Layout.js';
 import { RequireSession } from './components/RequireSession.js';
 import { LoginPage } from './pages/LoginPage.js';
@@ -17,45 +18,47 @@ export function App() {
   return (
     <BrowserRouter>
       <SessionProvider>
-        <Routes>
-          <Route path="/" element={<StorefrontPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route
-            path="/portal/projects/:id"
-            element={
-              <RequireSession as="client">
-                <ProjectPage />
-              </RequireSession>
-            }
-          />
-          <Route
-            path="/portal/mandates/:id/funded"
-            element={
-              <RequireSession as="client">
-                <MandateFundedPage />
-              </RequireSession>
-            }
-          />
-          <Route path="/pay/return" element={<PayReturnPage />} />
-          <Route path="/pay/cancel" element={<PayCancelPage />} />
-          <Route
-            path="/dashboard"
-            element={
-              <RequireSession as="provider">
-                <Suspense
-                  fallback={
-                    <Layout>
-                      <p className="muted">Loading dashboard…</p>
-                    </Layout>
-                  }
-                >
-                  <DashboardPage />
-                </Suspense>
-              </RequireSession>
-            }
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <AppConfigProvider>
+          <Routes>
+            <Route path="/" element={<StorefrontPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route
+              path="/portal/projects/:id"
+              element={
+                <RequireSession as="client">
+                  <ProjectPage />
+                </RequireSession>
+              }
+            />
+            <Route
+              path="/portal/mandates/:id/funded"
+              element={
+                <RequireSession as="client">
+                  <MandateFundedPage />
+                </RequireSession>
+              }
+            />
+            <Route path="/pay/return" element={<PayReturnPage />} />
+            <Route path="/pay/cancel" element={<PayCancelPage />} />
+            <Route
+              path="/dashboard"
+              element={
+                <RequireSession as="provider">
+                  <Suspense
+                    fallback={
+                      <Layout>
+                        <p className="muted">Loading dashboard…</p>
+                      </Layout>
+                    }
+                  >
+                    <DashboardPage />
+                  </Suspense>
+                </RequireSession>
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AppConfigProvider>
       </SessionProvider>
     </BrowserRouter>
   );

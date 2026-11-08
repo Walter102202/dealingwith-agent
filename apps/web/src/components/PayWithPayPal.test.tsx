@@ -1,5 +1,6 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { renderWithProviders } from '../test/render.js';
 
 const apiMock = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }));
 vi.mock('../api/client.js', async (importOriginal) => {
@@ -34,7 +35,9 @@ describe('PayWithPayPal', () => {
     const payment = { id: 'payment', status: 'captured', paypalOrderId: 'CAPTURED-ORDER' };
     apiMock.post.mockResolvedValue({ status: 'paid', payment });
     const onPaid = vi.fn();
-    render(<PayWithPayPal quoteId={quoteId} version={1} amountCents={8000} onPaid={onPaid} />);
+    renderWithProviders(
+      <PayWithPayPal quoteId={quoteId} version={1} amountCents={8000} onPaid={onPaid} />,
+    );
     await screen.findByText('Sandbox buttons ready');
     const buttons = sandboxMock.props;
     if (!buttons) throw new Error('Sandbox buttons not mounted');
@@ -60,7 +63,9 @@ describe('PayWithPayPal', () => {
       status: 'approval_required',
       approvalUrl: 'http://localhost:5173/pay/return?token=MOCK-ORDER-000001',
     });
-    render(<PayWithPayPal quoteId={quoteId} version={1} amountCents={8000} onPaid={() => {}} />);
+    renderWithProviders(
+      <PayWithPayPal quoteId={quoteId} version={1} amountCents={8000} onPaid={() => {}} />,
+    );
     const button = await screen.findByRole('button', { name: 'Approve in mock PayPal' });
     fireEvent.click(button);
     await waitFor(() => {
@@ -86,7 +91,9 @@ describe('PayWithPayPal', () => {
       message: 'Nothing to pay: everything requested is already included in the project scope.',
     });
     const onPaid = vi.fn();
-    render(<PayWithPayPal quoteId={quoteId} version={1} amountCents={0} onPaid={onPaid} />);
+    renderWithProviders(
+      <PayWithPayPal quoteId={quoteId} version={1} amountCents={0} onPaid={onPaid} />,
+    );
     fireEvent.click(await screen.findByRole('button', { name: 'Accept at no cost' }));
     await waitFor(() => {
       expect(onPaid).toHaveBeenCalledTimes(1);
@@ -101,7 +108,9 @@ describe('PayWithPayPal', () => {
       appUrl: 'http://localhost:5173',
       demoMode: false,
     });
-    render(<PayWithPayPal quoteId={quoteId} version={1} amountCents={8000} onPaid={() => {}} />);
+    renderWithProviders(
+      <PayWithPayPal quoteId={quoteId} version={1} amountCents={8000} onPaid={() => {}} />,
+    );
     expect(await screen.findByTestId('paypal-buttons')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Approve in mock PayPal' })).toBeNull();
   });
@@ -117,7 +126,9 @@ describe('PayWithPayPal', () => {
       reason: 'stale_version',
       message: 'Quote v1 was replaced by v2.',
     });
-    render(<PayWithPayPal quoteId={quoteId} version={1} amountCents={8000} onPaid={() => {}} />);
+    renderWithProviders(
+      <PayWithPayPal quoteId={quoteId} version={1} amountCents={8000} onPaid={() => {}} />,
+    );
     fireEvent.click(await screen.findByRole('button', { name: 'Approve in mock PayPal' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Quote v1 was replaced by v2.');
     expect(navigationMock.assign).not.toHaveBeenCalled();
