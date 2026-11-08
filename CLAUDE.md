@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Read `AGENTS.md` first. It is the source of truth for the repo map, the rules that never bend (integer cents, the model never prices, `(quoteId, version)` everywhere, idempotent PayPal calls and webhooks, English only, `docs/hackathon/` never committed), the decision rule, the decision-log format and the definition of done. This file adds what `AGENTS.md` does not: how the pieces fit together and the commands beyond the basics.
+Read `CONSTITUTION.md` first: it is the highest authority in this repository (principles, invariants, how work moves, review and merge, CI/CD, governance). Then `AGENTS.md`, the source of truth for the repo map, the rules that never bend (integer cents, the model never prices, `(quoteId, version)` everywhere, idempotent PayPal calls and webhooks, English only, `docs/hackathon/` never committed), the decision rule, the decision-log format and the definition of done. This file adds what those two do not: how the pieces fit together and the commands beyond the basics.
 
 ## Commands
 
@@ -78,4 +78,4 @@ React 19, react-router 7, Vite, plain CSS with CSS Modules and design tokens (no
 - One `.env` at the repo root serves backend and Vite. For the mock payment round-trip under `pnpm dev` set `APP_URL=http://localhost:5173`; the default `:3000` only serves a built web.
 - `pnpm build` relies on pnpm's topological order to build `contracts` before `backend`. The backend build copies `src/agent/**/*.md` into `dist/agent` (`scripts/copy-prompts.mjs`) because tsc emits no Markdown; prompts stay Markdown so they can be reviewed as text.
 - Biome, not ESLint or Prettier: single quotes, semicolons, trailing commas, line width 100, `noExplicitAny` is an error. tsc runs with `exactOptionalPropertyTypes` and `noUncheckedIndexedAccess`, so omit optional fields rather than passing `undefined`.
-- `track/<letter>` branches are the parallel lanes from the plan; `main` is the integrated state. Task reports go to `../dealingwith-reports/track-<letter>.md`, outside the repo, in the format from the plan's "Reporting format" section.
+- `track/<letter>` branches are the parallel lanes from the plan; `main` is the integrated state and changes only through a pull request with green CI (`docs/ci-cd.md`). Task reports go to `../dealingwith-reports/track-<letter>.md`, outside the repo, in the format from the plan's "Reporting format" section.

@@ -96,8 +96,20 @@ The thirteen minors Track D's final review deferred, closed without changing the
 - [x] **Correctness fixes** (W2). Done when: the other role is redirected to its own home, contract drift shows one readable sentence, quote line keys never collide, an already captured order in sandbox is reported as paid.
 - [x] **Code health** (W3). Done when: `/api/config` is fetched once through a context and the fixtures handlers are split by domain with the same tests green.
 
+## G — Governance and team
+
+Added 2026-11-08 when David joined. Policy: `CONSTITUTION.md`; runbook: `docs/ci-cd.md`.
+
+- [x] **Constitution** (G1). Done when: `CONSTITUTION.md` exists at the root and is cited from `AGENTS.md`, `CLAUDE.md` and the README.
+- [ ] **CI gates** (G2). Done when: three parallel jobs (`checks`, `build`, `hygiene`) run on every push, each under four minutes, and the run on `main` is green.
+- [ ] **`main` protected** (G3, Walter). Done when: the ruleset in `infra/github/main-ruleset.json` is active on GitHub and a direct push to `main` is rejected.
+- [ ] **Gated delivery** (G4, with I4). Done when: `render.yaml` sets `autoDeployTrigger: checksPass` and a red CI on `main` does not deploy.
+- [ ] **David onboarded** (G5). Done when: David has write access and has read `CONSTITUTION.md`, `AGENTS.md`, `CLAUDE.md` and `docs/ci-cd.md`.
+
 ## Walter's actions (outside the code)
 
+- [ ] Apply the `main` ruleset: `gh api -X POST repos/Walter102202/dealingwith-agent/rulesets --input infra/github/main-ruleset.json` (G3).
+- [ ] Give David write access to the repository (G5).
 - [ ] AG Studio trial license key requested.
 - [ ] PayPal sandbox: US business account, US personal (judge) account, REST app linked to the US business account; credentials only in the local `.env`.
 - [ ] Render account ready with the sponsor credits.

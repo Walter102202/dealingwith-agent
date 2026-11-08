@@ -115,7 +115,7 @@ pnpm build      # every package to dist/
 pnpm --filter @dealingwith/backend seed   # seed the demo data into DATABASE_URL
 ```
 
-Open http://localhost:5173. Everything runs locally without credentials: `PAYPAL_MODE=mock`, `LLM_PROVIDER=mock` and an embedded PostgreSQL (PGlite). Copy `.env.example` to `.env` to change defaults; for the mock payment round-trip in development set `APP_URL=http://localhost:5173`, because the default `http://localhost:3000` serves only a built web (`pnpm build`). Conventions for coding agents: [`AGENTS.md`](AGENTS.md). Decisions: [`docs/decisions/`](docs/decisions/).
+Open http://localhost:5173. Everything runs locally without credentials: `PAYPAL_MODE=mock`, `LLM_PROVIDER=mock` and an embedded PostgreSQL (PGlite). Copy `.env.example` to `.env` to change defaults; for the mock payment round-trip in development set `APP_URL=http://localhost:5173`, because the default `http://localhost:3000` serves only a built web (`pnpm build`). How the team works, for humans and agents: [`CONSTITUTION.md`](CONSTITUTION.md), then [`AGENTS.md`](AGENTS.md). CI gates and deployment: [`docs/ci-cd.md`](docs/ci-cd.md). Decisions: [`docs/decisions/`](docs/decisions/).
 
 ## License
 

@@ -1,0 +1,34 @@
+# A constitution above every other document, and three CI gates under four minutes
+
+## Context
+
+A second human (David) joins the project on 2026-11-08, so far built by Walter with Claude Code and Codex sessions coordinated by an integrator session. The rules of the project lived in `AGENTS.md`, in the briefs pasted to each session, in Walter's standing instructions to the integrator, and in habit. CI ran one job (lint, typecheck, test) on every push, took about 2 min 15 s, did not build for production, did not check migrations against the schema, did not scan for secrets, and `main` had no protection: anyone with write access could push, force-push or delete it. The product deploys to Render from `main` (Task I4), so a broken or compromised `main` becomes a broken or compromised demo.
+
+Walter asked for two things: a complete, clear `CONSTITUTION.md` cited from `CLAUDE.md` and `AGENTS.md`, and a CI/CD process that is simple, robust, runs in under four minutes and prevents disasters.
+
+## Decision
+
+1. **`CONSTITUTION.md` is the highest authority in the repository.** Ten articles: purpose and principles, invariants, engineering standards, how work moves, review and merge, decisions, secrets and safety, CI/CD, communication, governance. Precedence: constitution, then `AGENTS.md`, then `CLAUDE.md`, then design, plan, decisions and milestones. It changes only through a pull request approved by Walter with a version bump and a decision file. `AGENTS.md`, `CLAUDE.md` and the README cite it; `AGENTS.md` keeps the repo map, commands and definition of done; `CLAUDE.md` keeps how the code is wired.
+2. **CI is three parallel jobs, each with `timeout-minutes: 4`.** `checks` (frozen install, lint, typecheck, tests), `build` (migration drift check with `db:generate`, production build, boot of `dist/index.js` against in-memory PGlite answering `/healthz` and serving `/login`), `hygiene` (no private or ignored file tracked, `.gitignore` still lists the private paths, the gitleaks CLI over every commit of every branch, pinned by version and verified against the release checksums). Concurrency cancels the previous run of the same branch, never on `main`, so every `main` commit keeps the verdict the deploy gate reads. `checks` measured 2 min 15 s on `main` on 2026-11-08; `build` and `hygiene` are expected under about a minute each (build 6 s and boot 1 s locally) and are confirmed on their first run.
+3. **`main` is protected by a GitHub ruleset declared in `infra/github/main-ruleset.json`:** pull request required, the three jobs required and strict (branch up to date), review threads resolved, no force-push, no deletion, no bypass actors, required approvals 0 (the constitution requires an independent review recorded in the pull request; GitHub does not count it so a two-person team is not blocked on solo days). Applying the ruleset is a repository setting and therefore Walter's action.
+4. **Delivery is gated by CI.** The Render Blueprint sets `branch: main` and `autoDeployTrigger: checksPass`, so a commit on `main` deploys only after its CI run passes. Rollback is Render's rollback to the previous deploy, then a fix-forward pull request. Migrations stay additive because a rollback does not undo them.
+5. **A pull request template** records what, why, verification, the constitutional checklist and the review.
+
+## Alternatives considered
+
+- **Keep the rules in `AGENTS.md` and the briefs.** Rejected: a newcomer cannot reconstruct the operating model from a conventions file plus chat history, and nothing stated what wins when documents disagree.
+- **One sequential CI job with the new steps.** Rejected: it would reach about 3 min 30 s today and cross four minutes with the next hundred tests. Three parallel jobs keep wall-clock time at the slowest job (the tests) and let a reviewer see at a glance which gate failed.
+- **Deploy from GitHub Actions with a Render deploy hook.** Rejected: it adds a secret to GitHub and a second place where deployment logic lives. `autoDeployTrigger: checksPass` expresses the same rule in the Blueprint with no secret.
+- **Require one approving review in GitHub.** Deferred: with two humans, every pull request would wait for the other person, including on days one of them works alone. The constitution makes the independent review mandatory and recorded; the ruleset can be raised to one approval with a one-line change when the team grows.
+- **Use `gitleaks/gitleaks-action`.** Rejected after reading its source (v3.0.0, `src/index.js`): on push events it scans only the commits in the push payload and on pull requests only `base^..head`; the whole history is scanned only on `workflow_dispatch` or `schedule`. A secret committed before the scan existed would never be found. The CLI, downloaded from the release with its checksum verified, scans the whole repository in seconds and depends on no third-party action code.
+- **Add `pnpm audit` and Dependabot now.** Rejected for the hackathon window: both produce noise unrelated to the demo and `pnpm audit` is slow and non-deterministic. Revisit after submission.
+- **Upgrade the actions to their Node 24 majors (`checkout@v6`, `setup-node@v5`).** Deferred: the v4 actions ran green on 2026-11-08 and the week has no room for a tooling surprise. Only `gitleaks-action` enters at v3, its current major.
+
+## Consequences
+
+- Easier: a new contributor reads one document and knows what wins, what never bends and how a change reaches production. A reviewer has a checklist. A broken build, a missing migration, a leaked secret or a force-push cannot reach `main` or the demo.
+- Harder: every change to `main`, including the integrator's, goes through a pull request. Walter's "go" to the integrator now means "open the pull request and merge it", one step more than the direct merge used until 2026-11-08. The strict status-check policy re-runs CI after the branch is updated with `main`, about two and a half minutes per merge.
+- The ruleset takes effect only when Walter applies it; until then the constitution states the rule and CI enforces the checks, but GitHub does not block a direct push.
+- The hygiene job will flag any value that looks like a secret, including fixtures. The remedy is a commented `.gitleaks.toml` allowlist entry, never disabling the job. A real leak is handled by rotating the secret; history is never rewritten.
+- Article X requires Walter's approval for amendments to the constitution, but with zero required approvals GitHub does not enforce it: anyone with write access could merge an amendment. Accepted for a two-person team; a `CODEOWNERS` line for `CONSTITUTION.md` becomes meaningful once required approvals go to 1.
+- Revisit after the hackathon: required approvals 1, Node 24 action majors, Dependabot, `pnpm audit` on a schedule rather than on every push.
