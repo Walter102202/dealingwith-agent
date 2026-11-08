@@ -41,22 +41,3 @@
   margin-top: var(--space-5);
   max-width: 64ch;
 }
-
-.lines {
-  list-style: none;
-  margin: 0 0 var(--space-3);
-  padding: 0;
-}
-
-.lines li {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-2) 0;
-  border-bottom: 1px solid var(--line);
-}
-
-.explanation {
-  color: var(--ink-soft);
-  margin-bottom: var(--space-4);
-}

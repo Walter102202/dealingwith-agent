@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { Layout } from './components/Layout.js';
 import { LoginPage } from './pages/LoginPage.js';
+import { ProjectPage } from './pages/ProjectPage.js';
 import { StorefrontPage } from './pages/StorefrontPage.js';
 import { type Role, SessionProvider, useSession } from './session.js';
 
@@ -40,7 +41,7 @@ export function App() {
             path="/portal/projects/:id"
             element={
               <RequireSession as="client">
-                <Placeholder name="Project" />
+                <ProjectPage />
               </RequireSession>
             }
           />

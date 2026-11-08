@@ -60,7 +60,7 @@ Humans can do everything the agent can, and see what the agent did.
 
 - [x] **App shell** (D1). Done when: routing, demo login, typed API client and the visual system are in place.
 - [x] **Storefront** (D2). Done when: the three services are visible and a fixed-price service can be bought.
-- [ ] **Project page and quote card** (D3). Done when: a request produces a quote card with included and extra lines, rationale and sources, and the page updates live when a payment completes.
+- [x] **Project page and quote card** (D3). Done when: a request produces a quote card with included and extra lines, rationale and sources, and the page updates live when a payment completes.
 - [ ] **Mandate panel and Connect my agent** (D4). Done when: a mandate can be set and funded, remaining budget and headroom are visible, tokens can be issued and revoked.
 - [ ] **Return pages** (D5). Done when: PayPal redirects land on a receipt or on the funded mandate.
 - [ ] **Provider dashboard** (D6). Done when: the AG Studio dashboard shows revenue by service, pipeline, unpaid additionals and requests over time with the product theme, and "Reset demo data" works. Fallback: the same with AG Grid and AG Charts Community if AG Studio cannot be used.

@@ -5,10 +5,8 @@ import { z } from 'zod';
 import { api, errorMessage } from '../api/client.js';
 import { useApi } from '../api/hooks.js';
 import { routes } from '../api/routes.js';
-import { Card } from '../components/Card.js';
 import { Layout } from '../components/Layout.js';
-import { Money } from '../components/Money.js';
-import { PayWithPayPal } from '../components/PayWithPayPal.js';
+import { QuoteCard } from '../components/QuoteCard.js';
 import { RequestBox } from '../components/RequestBox.js';
 import { ServiceCard } from '../components/ServiceCard.js';
 import { BRAND } from '../demo-brand.js';
@@ -16,31 +14,6 @@ import { useSession } from '../session.js';
 import styles from './StorefrontPage.module.css';
 
 const fetchServices = () => api.get(routes.services, z.array(ServiceSchema));
-
-/** Quote preview for storefront requests. D3 replaces this with the full quote card. */
-function QuotePreview({ quote }: { quote: Quote }) {
-  return (
-    <Card title={`Quote v${quote.version}`} aside={<Money cents={quote.totalCents} size="total" />}>
-      <ul className={styles.lines}>
-        {quote.lineItems.map((line) => (
-          <li key={`${line.kind}-${line.label}`}>
-            <span>{line.label}</span>
-            <Money cents={line.amountCents} />
-          </li>
-        ))}
-      </ul>
-      <p className={styles.explanation}>{quote.explanation}</p>
-      {quote.status === 'published' ? (
-        <PayWithPayPal
-          quoteId={quote.id}
-          version={quote.version}
-          amountCents={quote.totalCents}
-          onPaid={() => undefined}
-        />
-      ) : null}
-    </Card>
-  );
-}
 
 /** `/`: the provider's services, a direct purchase, and the request box. */
 export function StorefrontPage() {
@@ -55,6 +28,10 @@ export function StorefrontPage() {
   const createRequest = async (text: string) => {
     const result = await api.post(routes.requests.create, { text }, QuoteSchema);
     setQuote(result);
+  };
+
+  const answer = async (quoteId: string, answers: Record<string, string>) => {
+    setQuote(await api.post(routes.quotes.answers(quoteId), { answers }, QuoteSchema));
   };
 
   const buy = async (service: Service) => {
@@ -121,7 +98,12 @@ export function StorefrontPage() {
 
       {quote ? (
         <section className={styles.result} aria-live="polite">
-          <QuotePreview quote={quote} />
+          <QuoteCard
+            quote={quote}
+            onAccept={() => undefined}
+            onAdjust={(text) => answer(quote.id, { adjustment: text })}
+            onAnswers={(answers) => answer(quote.id, answers)}
+          />
         </section>
       ) : null}
     </Layout>
