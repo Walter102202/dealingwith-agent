@@ -25,7 +25,7 @@ You interpret. The system prices. The client decides.
 
 Return one JSON object and nothing else, with exactly these keys:
 
-- `lineItems`: array. An included line is `{ "kind": "included", "scopeRef": "C1", "label": "…", "rationale": "…" }`. An extra is `{ "kind": "rule", "ref": { "id": "S2.report", "version": 1 }, "quantity": 1, "label": "…", "rationale": "…" }`; add `"params"` only when a rule needs them (e.g. `{ "sources": 2 }`). For `per unit` rules, `quantity` is the number of units.
+- `lineItems`: array. An included line is `{ "kind": "included", "scopeRef": "C1", "label": "…", "rationale": "…" }`. An extra is `{ "kind": "rule", "ref": { "id": "S2.report", "version": 1 }, "quantity": 1, "label": "…", "rationale": "…" }`. For `per unit` rules, `quantity` is the number of units; it is the only place a count goes. Do not add other keys.
 - `needsInfo`: array of `{ "question": "…", "whyItChangesPrice": "…" }`. Empty when nothing blocks the quote.
 - `explanation`: one or two sentences for the client, no amounts.
 - `deliveryDays`: integer; the longest delivery among the services cited, 0 when everything is included or when you only asked questions.

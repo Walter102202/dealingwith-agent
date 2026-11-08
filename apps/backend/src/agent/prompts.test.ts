@@ -10,6 +10,10 @@ describe('loadInstructions', () => {
     expect(text).toMatch(/ask[^.]*changes the price/i);
     expect(text).toContain('"lineItems"');
   });
+
+  test('the system prompt never suggests putting unit counts in params', () => {
+    expect(loadInstructions()).not.toMatch(/"sources": 2/);
+  });
 });
 
 describe('loadSkill', () => {
@@ -20,6 +24,12 @@ describe('loadSkill', () => {
       expect(text.length).toBeGreaterThan(200);
       expect(text).toMatch(/^# /m);
     }
+  });
+
+  test('analyze-additional makes any included clause win over an excluded one', () => {
+    const text = loadSkill('analyze-additional');
+    expect(text).toMatch(/included clause[^.]*(covers|wins|decides)/i);
+    expect(text).not.toMatch(/first clause whose text covers the need decides/i);
   });
 
   test('a path-like skill name is rejected', () => {

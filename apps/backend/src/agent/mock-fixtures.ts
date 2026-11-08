@@ -46,7 +46,7 @@ export const MOCK_FIXTURES: readonly MockFixture[] = [
           quantity: 1,
           label: 'Data source integration: Amazon',
           rationale:
-            'A second data source is excluded by clause C3 (one data source: Shopify) and priced with rule S3.base.v1.',
+            'Clause C3 limits the contract to one data source (Shopify); a second source is priced with rule S3.base.v1.',
         },
         {
           kind: 'rule',

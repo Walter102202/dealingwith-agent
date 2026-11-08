@@ -1,13 +1,14 @@
 import { type AgentOutput, AgentOutputSchema, type ContextPack } from '@dealingwith/contracts';
-import { generateText, type LanguageModel, NoObjectGeneratedError, Output } from 'ai';
+import { generateText, NoObjectGeneratedError, NoOutputGeneratedError, Output } from 'ai';
 import type { Db } from '../db/client.js';
 import * as schema from '../db/schema.js';
 import { renderContextPack } from './context/render.js';
 import { loadInstructions, loadSkill, resolvePromptVersion, type SkillName } from './prompts.js';
+import type { ModelObject } from './provider.js';
 
 export type AgentRunDeps = {
   db: Db;
-  model: LanguageModel;
+  model: ModelObject;
   /** Recorded in `agent_runs.provider` and `agent_runs.model`. */
   provider: string;
   modelName: string;
@@ -68,26 +69,21 @@ export async function runAgent(deps: AgentRunDeps, input: AgentRunInput): Promis
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
     const prompt = attempt === 1 ? basePrompt : withCorrection(basePrompt, lastSchemaError);
-    try {
-      const result = await generateText({
-        model: deps.model,
-        system,
-        prompt,
-        output: Output.object({ schema: AgentOutputSchema }),
-      });
-      addUsage(usage, result.usage);
+    const attemptResult = await generateOnce(deps.model, system, prompt, usage);
+    if (attemptResult.kind === 'ok') {
       const runId = await recordRun(deps, input, { outcome: 'ok', usage, startedAt });
-      return { output: result.output, runId };
-    } catch (error) {
-      if (NoObjectGeneratedError.isInstance(error)) {
-        addUsage(usage, error.usage);
-        lastSchemaError = describeError(error);
-        continue;
-      }
-      const message = describeError(error);
-      const runId = await recordRun(deps, input, { outcome: 'error', usage, startedAt, message });
-      throw new AgentRunError('agent_failed', message, runId);
+      return { output: attemptResult.output, runId };
     }
+    if (attemptResult.kind === 'error') {
+      const runId = await recordRun(deps, input, {
+        outcome: 'error',
+        usage,
+        startedAt,
+        message: attemptResult.message,
+      });
+      throw new AgentRunError('agent_failed', attemptResult.message, runId);
+    }
+    lastSchemaError = attemptResult.message;
   }
 
   const runId = await recordRun(deps, input, {
@@ -101,6 +97,73 @@ export async function runAgent(deps: AgentRunDeps, input: AgentRunInput): Promis
     `The agent's output did not match the schema after ${MAX_ATTEMPTS} attempts: ${lastSchemaError}`,
     runId,
   );
+}
+
+type Attempt =
+  | { kind: 'ok'; output: AgentOutput }
+  | { kind: 'invalid'; message: string }
+  | { kind: 'error'; message: string };
+
+/**
+ * Anthropic: ask for native structured output (the default mode falls back to
+ * an optional JSON tool when the schema has an open record, and the model may
+ * then answer in prose). OpenAI: the schema has optional keys and a union, which
+ * its strict mode rejects, so validation stays on our side (Zod, every run).
+ */
+const PROVIDER_OPTIONS = {
+  anthropic: { structuredOutputMode: 'outputFormat' },
+  openai: { strictJsonSchema: false },
+} as const;
+
+async function generateOnce(
+  model: ModelObject,
+  system: string,
+  prompt: string,
+  usage: Usage,
+): Promise<Attempt> {
+  try {
+    const result = await generateText({
+      model,
+      system,
+      prompt,
+      output: Output.object({ schema: AgentOutputSchema }),
+      providerOptions: PROVIDER_OPTIONS,
+    });
+    addUsage(usage, result.usage);
+    // The getter throws NoOutputGeneratedError when the model produced no text (refusal, length).
+    const output = AgentOutputSchema.parse(result.output);
+    const amountInText = findAmountInText(output);
+    if (amountInText) {
+      return { kind: 'invalid', message: `the output text contains an amount: "${amountInText}"` };
+    }
+    return { kind: 'ok', output };
+  } catch (error) {
+    if (NoObjectGeneratedError.isInstance(error)) {
+      addUsage(usage, error.usage);
+      return { kind: 'invalid', message: describeError(error) };
+    }
+    if (NoOutputGeneratedError.isInstance(error)) {
+      return { kind: 'invalid', message: describeError(error) };
+    }
+    return { kind: 'error', message: describeError(error) };
+  }
+}
+
+/** `US$80`, `$ 80.00`, `80 USD`, `80 dollars`: the model must never write amounts (spec section 4). */
+const AMOUNT_IN_TEXT = /(?:US)?\$\s?\d|\b\d[\d,.]*\s?(?:USD|dollars?)\b/i;
+
+function findAmountInText(output: AgentOutput): string | null {
+  const texts = [
+    output.explanation,
+    ...output.lineItems.flatMap((line) => [line.label, line.rationale]),
+    ...output.needsInfo.flatMap((item) => [item.question, item.whyItChangesPrice]),
+  ];
+  for (const text of texts) {
+    if (AMOUNT_IN_TEXT.test(text)) {
+      return text;
+    }
+  }
+  return null;
 }
 
 function buildPrompt(input: AgentRunInput): string {

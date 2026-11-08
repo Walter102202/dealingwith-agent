@@ -32,6 +32,15 @@ describe('getModel', () => {
     expect(getModel({ ...env, LLM_MODEL: 'gpt-5-mini' }).modelId).toBe('gpt-5-mini');
   });
 
+  test('accepts an env whose optional fields may be undefined (Zod-inferred Env)', () => {
+    const fromZod: {
+      LLM_PROVIDER: 'mock';
+      LLM_MODEL?: string | undefined;
+      OPENAI_API_KEY?: string | undefined;
+    } = { LLM_PROVIDER: 'mock', LLM_MODEL: undefined, OPENAI_API_KEY: undefined };
+    expect(describeModel(fromZod).model).toBe('mock-fixtures');
+  });
+
   test('an empty LLM_MODEL means the default', () => {
     const env = { LLM_PROVIDER: 'openai' as const, OPENAI_API_KEY: 'k', LLM_MODEL: '' };
     expect(getModel(env).modelId).toBe('gpt-5');

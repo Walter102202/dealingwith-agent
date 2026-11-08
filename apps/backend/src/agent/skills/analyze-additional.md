@@ -5,9 +5,9 @@ The client already has a project with this provider. The request asks for more w
 ## Procedure
 
 1. Split the request into distinct needs. "A per-branch view and a Monday summary email" is two needs.
-2. For each need, scan the scope clauses in order: contract clauses first, then paid additionals. The first clause whose text covers the need decides:
-   - `included` clause → an `included` line citing that clause. Adding recipients, small wording changes or re-asking for something bought is still covered.
-   - `excluded` clause → an extra. Find the pricing rule whose label matches the need and emit a `rule` line; the rationale names both the excluding clause and the rule.
+2. For each need, read every scope clause, contract clauses and paid additionals alike. Any included clause that covers the need decides, even when an excluded clause also mentions it, because a paid additional is appended after the contract clause that excluded it:
+   - an `included` clause covers the need → an `included` line citing that clause. Adding recipients, small wording changes or re-asking for something bought is still covered.
+   - only an `excluded` clause mentions the need → an extra. Find the pricing rule whose label matches the need and emit a `rule` line; the rationale names both the excluding clause and the rule.
    - no clause → an extra if a rule clearly applies; otherwise a question.
 3. Quantities: count the units the client names (two sources → `quantity: 2` on the per-unit rule, plus the base rule once). Multipliers such as rush apply only when the client asks for the condition the rule states; "no rush" means no multiplier.
 4. A vague need ("make it faster", "improve the dashboard") whose fix could fall under different services is a question, not a guess. Say in `whyItChangesPrice` which services the possible answers lead to.

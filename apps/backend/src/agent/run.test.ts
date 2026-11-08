@@ -238,6 +238,88 @@ describe('runAgent with a scripted model', () => {
     expect(call?.responseFormat?.type).toBe('json');
   });
 
+  test('the call asks Anthropic for native structured output and OpenAI for non-strict JSON schema', async () => {
+    const model = textModel([VALID_OUTPUT]);
+    const text = "Alert me by email when any branch's daily sales drop more than 20%.";
+    const requestId = await newRequest(text);
+    await runAgent(
+      { db, model, provider: 'test', modelName: 'scripted' },
+      { pack, text, skill: 'analyze-additional', requestId },
+    );
+    expect(model.doGenerateCalls[0]?.providerOptions).toEqual({
+      anthropic: { structuredOutputMode: 'outputFormat' },
+      openai: { strictJsonSchema: false },
+    });
+  });
+
+  test('a refusal with no text is retried once and recorded as one invalid_output run', async () => {
+    const model = new MockLanguageModelV3({
+      provider: 'test',
+      modelId: 'refusing',
+      doGenerate: async () => ({
+        content: [],
+        finishReason: { unified: 'content-filter', raw: 'refusal' },
+        usage: {
+          inputTokens: { total: 50, noCache: 50, cacheRead: 0, cacheWrite: 0 },
+          outputTokens: { total: 0, text: 0, reasoning: 0 },
+        },
+        warnings: [],
+      }),
+    });
+    const text = 'Send the Monday summary to our regional managers too.';
+    const requestId = await newRequest(text);
+    await expect(
+      runAgent(
+        { db, model, provider: 'test', modelName: 'refusing' },
+        { pack, text, skill: 'analyze-additional', requestId },
+      ),
+    ).rejects.toMatchObject({ code: 'invalid_output' });
+    expect(model.doGenerateCalls).toHaveLength(2);
+    const runs = await db
+      .select()
+      .from(schema.agentRuns)
+      .where(eq(schema.agentRuns.requestId, requestId));
+    expect(runs).toHaveLength(1);
+    expect(runs[0]).toMatchObject({ outcome: 'invalid_output', inputTokens: 100 });
+  });
+
+  test('an amount written into the text is treated like a schema failure', async () => {
+    const withPriceInText = VALID_OUTPUT.replace(
+      'Daily sales drop alert (20%)',
+      'Daily sales drop alert (US$60.00)',
+    );
+    const model = textModel([withPriceInText, VALID_OUTPUT]);
+    const text = "Alert me by email when any branch's daily sales drop more than 20%.";
+    const requestId = await newRequest(text);
+    const { output, runId } = await runAgent(
+      { db, model, provider: 'test', modelName: 'scripted' },
+      { pack, text, skill: 'analyze-additional', requestId },
+    );
+    expect(model.doGenerateCalls).toHaveLength(2);
+    expect(JSON.stringify(model.doGenerateCalls[1]?.prompt)).toMatch(/amount/i);
+    expect(output.lineItems[0]?.label).toBe('Daily sales drop alert (20%)');
+    const [run] = await db.select().from(schema.agentRuns).where(eq(schema.agentRuns.id, runId));
+    expect(run?.outcome).toBe('ok');
+  });
+
+  test('an amount in the explanation on both attempts ends as invalid_output naming the text', async () => {
+    const withPrice = VALID_OUTPUT.replace('One alert automation.', 'One alert, 60 USD.');
+    const model = textModel([withPrice]);
+    const text = "Alert me by email when any branch's daily sales drop more than 20%.";
+    const requestId = await newRequest(text);
+    await expect(
+      runAgent(
+        { db, model, provider: 'test', modelName: 'scripted' },
+        { pack, text, skill: 'analyze-additional', requestId },
+      ),
+    ).rejects.toMatchObject({ code: 'invalid_output' });
+    const [run] = await db
+      .select()
+      .from(schema.agentRuns)
+      .where(eq(schema.agentRuns.requestId, requestId));
+    expect(run?.error).toMatch(/60 USD/);
+  });
+
   test('a transport failure is recorded as error and rethrown', async () => {
     const model = new MockLanguageModelV3({
       doGenerate: async () => {

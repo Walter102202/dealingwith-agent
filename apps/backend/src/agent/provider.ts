@@ -12,9 +12,9 @@ export type ModelObject = Exclude<LanguageModel, string>;
 /** The slice of the environment the agent reads (spec section 7.3). */
 export type LlmEnv = {
   LLM_PROVIDER: LlmProvider;
-  LLM_MODEL?: string;
-  ANTHROPIC_API_KEY?: string;
-  OPENAI_API_KEY?: string;
+  LLM_MODEL?: string | undefined;
+  ANTHROPIC_API_KEY?: string | undefined;
+  OPENAI_API_KEY?: string | undefined;
 };
 
 export const DEFAULT_MODELS: Record<LlmProvider, string> = {

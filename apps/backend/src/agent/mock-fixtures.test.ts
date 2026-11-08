@@ -83,6 +83,16 @@ describe('MOCK_FIXTURES', () => {
     }
   });
 
+  test('a rationale that says a clause excludes the need names an excluded clause', () => {
+    const excludedClauses = ['C2'];
+    for (const fixture of MOCK_FIXTURES) {
+      for (const line of fixture.output.lineItems) {
+        const cited = /excluded by clause (C\d+)/.exec(line.rationale)?.[1];
+        if (cited) expect(excludedClauses).toContain(cited);
+      }
+    }
+  });
+
   test('the JSON files in evals/scenarios/fixtures are the same five fixtures, field by field', () => {
     const files = readdirSync(FIXTURES_DIR)
       .filter((f) => f.endsWith('.json'))
