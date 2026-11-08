@@ -40,6 +40,25 @@ describe('AgentOutputSchema', () => {
     expect(parsed).toMatchObject({ kind: 'rule', quantity: 1 });
   });
 
+  test('a rule intent may cite the clause that excludes the need', () => {
+    const parsed = AgentOutputSchema.parse({
+      lineItems: [
+        {
+          kind: 'rule',
+          ref: { id: 'S2.report', version: 1 },
+          scopeRef: 'C2',
+          label: 'Weekly Monday summary email',
+          rationale: 'Clause C2 excludes scheduled emails; rule S2.report prices one.',
+        },
+      ],
+      needsInfo: [],
+      explanation: 'One extra.',
+      deliveryDays: 1,
+      confidence: 0.9,
+    });
+    expect(parsed.lineItems[0]?.kind === 'rule' && parsed.lineItems[0].scopeRef).toBe('C2');
+  });
+
   test('rejects an unknown intent kind', () => {
     const result = LineItemIntentSchema.safeParse({
       kind: 'price',

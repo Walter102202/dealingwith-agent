@@ -1,0 +1,27 @@
+{
+  "match": "summary email every Monday",
+  "output": {
+    "lineItems": [
+      {
+        "kind": "included",
+        "scopeRef": "C1",
+        "label": "Per-branch view",
+        "rationale": "Covered by clause C1: five views including a per-branch view."
+      },
+      {
+        "kind": "rule",
+        "ref": {
+          "id": "S2.report",
+          "version": 1
+        },
+        "quantity": 1,
+        "label": "Weekly Monday summary email",
+        "rationale": "Scheduled emails are excluded by clause C2 and priced with rule S2.report.v1."
+      }
+    ],
+    "needsInfo": [],
+    "explanation": "The per-branch view is already part of your dashboard. The Monday summary email is a scheduled report automation, which is an extra on this project.",
+    "deliveryDays": 1,
+    "confidence": 0.9
+  }
+}

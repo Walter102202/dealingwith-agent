@@ -1,4 +1,5 @@
 import type { Quote, RequestChannel } from '@dealingwith/contracts';
+import { AgentRunError } from '../agent/run.js';
 import { AppError } from '../lib/errors.js';
 import { getProject } from '../modules/projects/projects.js';
 import { PricingError } from '../modules/quotes/errors.js';
@@ -30,6 +31,12 @@ export async function submitRequest(deps: Deps, input: SubmitInput): Promise<Quo
     const request = await getRequest(deps.db, previous.requestId);
     if (request.clientId !== input.clientId)
       throw new AppError('forbidden', 'Quote belongs to another client', { status: 403 });
+    if (previous.status !== 'needs_info')
+      throw new AppError(
+        'quote_not_awaiting_answers',
+        'Only a quote that needs information accepts answers',
+        { status: 409 },
+      );
   } else if (
     input.projectId &&
     (await getProject(deps.db, input.projectId)).clientId !== input.clientId
@@ -75,6 +82,12 @@ export async function submitRequest(deps: Deps, input: SubmitInput): Promise<Quo
   } catch (error) {
     await setRequestStatus(deps.db, request.id, 'failed');
     if (error instanceof PricingError) throw error;
+    if (error instanceof AgentRunError)
+      throw new AppError(
+        error.code === 'invalid_output' ? 'invalid_agent_output' : 'agent_failed',
+        error.message,
+        { status: error.status, cause: error },
+      );
     throw new AppError('agent_failed', 'The agent could not prepare a quote', {
       status: 502,
       cause: error,

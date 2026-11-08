@@ -1,0 +1,19 @@
+{
+  "name": "@dealingwith/evals",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Live model eval for the DealingWith Agent: runs the five demo requests against a real provider and grades the classification. Not part of CI.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "eval:live": "tsx --conditions=development live/run.ts"
+  },
+  "devDependencies": {
+    "@dealingwith/contracts": "workspace:*",
+    "@types/node": "^22.20.5",
+    "drizzle-orm": "^0.45.4",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3",
+    "vitest": "^5.1.0"
+  }
+}

@@ -6,7 +6,7 @@ Spec section 5 makes the provider dashboard an AG Studio dashboard (sponsor priz
 
 ## Decision
 
-Track D builds the dashboard on `ag-studio-react` from the start, without waiting for the key. The key, when Walter obtains it, is applied through `VITE_AG_STUDIO_LICENSE` using the entry point the installed package documents. The pivot rule narrows to one condition: AG Studio does not render at all without a key by the pivot date.
+Track D builds the dashboard on `ag-studio-react` from the start, without waiting for the key. The key, when Walter obtains it, is applied through `VITE_AG_STUDIO_LICENSE` on `<AgStudioProvider licenseKey>` (verified in `ag-studio-react@3.1.0` type declarations on 2026-11-07); the saved dashboard definition travels as `initialState` (`AgReportState`). The pivot rule narrows to one condition: AG Studio does not render at all without a key by the pivot date.
 
 ## Alternatives considered
 

@@ -4,7 +4,7 @@ A working guide for the MVP build. Milestones are outcomes, not dates. Each stag
 
 Legend: `[ ]` not started · `[~]` in progress · `[x]` done
 
-**Current position:** M0 done, Phase 1 tracks may start.
+**Current position:** M0, M2, M3 and the web (D1-D6) done; Tracks A (A0-A8), B, C and D merged into `main` on 2026-11-08; A9, W and E pending on their branches.
 
 ---
 
@@ -32,6 +32,7 @@ A quote can be priced, accepted and paid end to end against the mock PayPal gate
 - [x] **Access** (A6). Done when: demo sessions are signed cookies and agent tokens are hashed, revocable and come with connection snippets.
 - [x] **HTTP API** (A7). Done when: the routes of the plan answer with validated bodies, SSE events stream per project, the built web is served statically and `/healthz` responds.
 - [x] **Scenario tests** (A8). Done when: `tests/scenarios/01…05` pass from the repo root and prove the five expectations of spec section 7.8 through the HTTP API.
+- [ ] **Payment hardening** (A9). Done when: inactive, expired or unfunded mandates and PayPal-side capture failures return an approval link instead of a denial or a 502; an approved order is captured by webhook without a browser session; expired orders are recreated; a fixed-price purchase needs no agent; a pricing failure ends in `needs_info`, never a 422; mandate payments name their mandate and their captures reconcile by invoice id; the webhook id is optional until registered.
 
 ---
 
@@ -39,9 +40,9 @@ A quote can be priced, accepted and paid end to end against the mock PayPal gate
 
 The DealingWith Agent interprets requests against the project's scope and produces structured intents, with Claude, OpenAI or the mock provider interchangeably.
 
-- [ ] **Context pack** (B1). Done when: the pack for P1 carries services, rules, clauses (including paid additionals), prior quotes and mandate summary, every item with its id.
-- [ ] **Provider switch and structured run** (B2). Done when: `LLM_PROVIDER=anthropic|openai|mock` selects the model, the output is validated against the schema, and every run is recorded in `agent_runs`.
-- [ ] **Live eval** (B3). Done when: `pnpm eval:live` grades the five demo requests and reports pass or fail per request.
+- [x] **Context pack** (B1). Done when: the pack for P1 carries services, rules, clauses (including paid additionals), prior quotes and mandate summary, every item with its id.
+- [x] **Provider switch and structured run** (B2). Done when: `LLM_PROVIDER=anthropic|openai|mock` selects the model, the output is validated against the schema, and every run is recorded in `agent_runs`.
+- [x] **Live eval** (B3). Done when: `pnpm eval:live` grades the five demo requests and reports pass or fail per request.
 
 ---
 
@@ -49,8 +50,8 @@ The DealingWith Agent interprets requests against the project's scope and produc
 
 An external agent, with a token issued in the portal, requests quotes and pays within its mandate.
 
-- [ ] **MCP server** (C1). Done when: the eight tools and the `quote://` resource work over Streamable HTTP with the bearer header and the capability URL; unknown or revoked tokens get 401; scopes limit tools to the client's projects.
-- [ ] **Connection guide** (C2). Done when: `docs/mcp.md` documents auth and tools, and the snippets are verified against Claude Code locally.
+- [x] **MCP server** (C1). Done when: the eight tools and the `quote://` resource work over Streamable HTTP with the bearer header and the capability URL; unknown or revoked tokens get 401; scopes limit tools to the client's projects.
+- [x] **Connection guide** (C2). Done when: `docs/mcp.md` documents auth and tools, and the snippets are verified against Claude Code locally.
 
 ---
 
@@ -58,12 +59,12 @@ An external agent, with a token issued in the portal, requests quotes and pays w
 
 Humans can do everything the agent can, and see what the agent did.
 
-- [ ] **App shell** (D1). Done when: routing, demo login, typed API client and the visual system are in place.
-- [ ] **Storefront** (D2). Done when: the three services are visible and a fixed-price service can be bought.
-- [ ] **Project page and quote card** (D3). Done when: a request produces a quote card with included and extra lines, rationale and sources, and the page updates live when a payment completes.
-- [ ] **Mandate panel and Connect my agent** (D4). Done when: a mandate can be set and funded, remaining budget and headroom are visible, tokens can be issued and revoked.
-- [ ] **Return pages** (D5). Done when: PayPal redirects land on a receipt or on the funded mandate.
-- [ ] **Provider dashboard** (D6). Done when: the AG Studio dashboard shows revenue by service, pipeline, unpaid additionals and requests over time with the product theme, and "Reset demo data" works. Fallback: the same with AG Grid and AG Charts Community if AG Studio cannot be used.
+- [x] **App shell** (D1). Done when: routing, demo login, typed API client and the visual system are in place.
+- [x] **Storefront** (D2). Done when: the three services are visible and a fixed-price service can be bought.
+- [x] **Project page and quote card** (D3). Done when: a request produces a quote card with included and extra lines, rationale and sources, and the page updates live when a payment completes.
+- [x] **Mandate panel and Connect my agent** (D4). Done when: a mandate can be set and funded, remaining budget and headroom are visible, tokens can be issued and revoked.
+- [x] **Return pages** (D5). Done when: PayPal redirects land on a receipt or on the funded mandate.
+- [x] **Provider dashboard** (D6). Done when: the AG Studio dashboard shows revenue by service, pipeline, unpaid additionals and requests over time with the product theme, and "Reset demo data" works. Fallback: the same with AG Grid and AG Charts Community if AG Studio cannot be used.
 
 ---
 
@@ -86,6 +87,14 @@ The same code runs against PayPal sandbox, a real model and Render.
 - [ ] **Devpost** (S3). Done when: the submission is complete with repo, video, hosted URL and the AG Grid sponsor prize opted in.
 
 ---
+
+## W — Web polish after Track D
+
+The thirteen minors Track D's final review deferred, closed without changing the demo (`docs/plans/2026-11-08-web-polish-after-track-d.md`).
+
+- [ ] **Visible fixes** (W1). Done when: the dashboard title comes from the session, dead mandates offer no Authorize, the storefront receipt links back to the storefront, every money string is `formatUsd`, charts use the product palette.
+- [ ] **Correctness fixes** (W2). Done when: the other role is redirected to its own home, contract drift shows one readable sentence, quote line keys never collide, an already captured order in sandbox is reported as paid.
+- [ ] **Code health** (W3). Done when: `/api/config` is fetched once through a context and the fixtures handlers are split by domain with the same tests green.
 
 ## Walter's actions (outside the code)
 

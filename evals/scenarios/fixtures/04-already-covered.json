@@ -1,0 +1,17 @@
+{
+  "match": "regional managers too",
+  "output": {
+    "lineItems": [
+      {
+        "kind": "included",
+        "scopeRef": "C4",
+        "label": "Monday summary to regional managers",
+        "rationale": "Covered by clause C4: the weekly Monday summary email you already purchased."
+      }
+    ],
+    "needsInfo": [],
+    "explanation": "Adding recipients to the Monday summary email is part of the automation you already paid for, so there is nothing to pay.",
+    "deliveryDays": 0,
+    "confidence": 0.9
+  }
+}

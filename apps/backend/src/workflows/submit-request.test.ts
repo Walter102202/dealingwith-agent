@@ -1,10 +1,11 @@
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { DEMO } from '../db/demo-data.js';
-import { agentRuns, requests } from '../db/schema.js';
+import { agentRuns, quotes, requests } from '../db/schema.js';
+import { AppError } from '../lib/errors.js';
 import { PricingError } from '../modules/quotes/errors.js';
 import { getRequest } from '../modules/requests/requests.js';
-import { createHarness } from '../test/workflow-harness.js';
+import { createHarness, publishedQuote } from '../test/workflow-harness.js';
 import { fakeAgentPort } from './fake-agent.js';
 import { submitRequest } from './submit-request.js';
 
@@ -16,6 +17,33 @@ afterEach(async () => {
   await h.close();
 });
 describe('submitRequest', () => {
+  test('answers on a quote that is not awaiting information are rejected and nothing changes', async () => {
+    const published = await publishedQuote(h.deps, {
+      intents: [
+        {
+          kind: 'rule',
+          ref: { id: 'S2.report', version: 1 },
+          quantity: 1,
+          label: 'Weekly email',
+          rationale: 'Rule S2.report',
+        },
+      ],
+    });
+    const attempt = submitRequest(h.deps, {
+      quoteId: published.id,
+      answers: { anything: 'yes' },
+      clientId: DEMO.client.id,
+      channel: 'web',
+    });
+    await expect(attempt).rejects.toMatchObject({
+      code: 'quote_not_awaiting_answers',
+      status: 409,
+    });
+    await expect(attempt).rejects.toBeInstanceOf(AppError);
+    const rows = await h.deps.db.select().from(quotes).where(eq(quotes.quoteId, published.id));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.status).toBe('published');
+  });
   test('prices the Monday request and records its run and published event', async () => {
     const q = await submitRequest(h.deps, {
       clientId: DEMO.client.id,

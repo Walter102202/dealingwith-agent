@@ -16,6 +16,8 @@ export const IncludedLineItemIntentSchema = z.strictObject({
 export const RuleLineItemIntentSchema = z.strictObject({
   kind: z.literal('rule'),
   ref: RuleRefSchema,
+  /** Optional: the scope clause that excludes this need (e.g. `C2`), so the quote can show why it is an extra. */
+  scopeRef: z.string().min(1).optional(),
   quantity: z.number().int().positive().default(1),
   params: z.record(z.string(), z.unknown()).optional(),
   label: z.string().min(1),
