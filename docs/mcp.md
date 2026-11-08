@@ -214,11 +214,11 @@ Data source integration
 
 ## Hosted verification (2026-11-08)
 
-Against the Render deployment (`https://dealingwith-agent.onrender.com`, PayPal sandbox, Anthropic model), with a token issued from the hosted portal and revoked afterwards:
+Against the Render deployment, first on its Render URL (`https://dealingwith-agent.onrender.com`) and the same day on the domain `https://dealingwith.si` (PayPal sandbox, Anthropic model), with a token issued from the hosted portal and revoked afterwards:
 
 - `MCP_URL=https://dealingwith-agent.onrender.com/mcp MCP_TOKEN=… pnpm --filter @dealingwith/backend mcp:smoke` listed the nine tools and the three services, the same output as the local run above.
 - An SDK client over the `Authorization` header ran the agent path of demo request 3 (`list_projects`, `request_quote` "Alert me by email when any branch's daily sales drop more than 20%.", `accept_quote`): the quote came to US$60.00 and `accept_quote` returned `paid`; PayPal captured US$60.00 against the mandate's authorization and the service log recorded `webhook.processed` for the capture.
 - The capability URL `https://dealingwith-agent.onrender.com/mcp/dwa_…` with no header listed the same nine tools, which is the path Claude Desktop and claude.ai connectors use.
 - "Reset demo data" afterwards left the mandate funded and the project back at clauses C1 to C3.
 
-When the domain `dealingwith.si` is attached the host in every snippet changes with it (`infra/README.md`, last section).
+The hosted MCP endpoint is `https://dealingwith.si/mcp`; the Render URL still answers but the snippets and the PayPal webhook use the domain (`infra/README.md`, last section).

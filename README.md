@@ -12,7 +12,7 @@ DealingWith Agent answers them. The hero flow is the change order during a proje
 
 ## Demo
 
-- Hosted demo: https://dealingwith-agent.onrender.com (PayPal sandbox, real model calls, real data).
+- Hosted demo: https://dealingwith.si (PayPal sandbox, real model calls, real data).
 - Video: `TBD: video link`
 - Demo logins (no password): on the login page choose "Enter as client (Mara)" or "Enter as provider (Andes Data Studio)".
 - PayPal sandbox buyer account for judges: `TBD: judge account`. This is test data, not a secret; the sandbox never moves real money.
@@ -33,7 +33,7 @@ Requests 2 and 3 can also be typed on the web; the mandate only applies when the
 
 ## Connect your agent
 
-On the project page, "Connect my agent" issues a token (shown once) and prints three snippets with the host already filled in. Below, `<host>` is `dealingwith-agent.onrender.com` for the hosted demo.
+On the project page, "Connect my agent" issues a token (shown once) and prints three snippets with the host already filled in. Below, `<host>` is `dealingwith.si` for the hosted demo.
 
 Claude Code:
 
