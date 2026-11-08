@@ -12,12 +12,12 @@ DealingWith Agent answers them. The hero flow is the change order during a proje
 
 ## Demo
 
-- Hosted demo: `TBD: hosted URL`
-- Video: `TBD: video`
+- Hosted demo: https://dealingwith-agent.onrender.com (PayPal sandbox, real model calls, real data).
+- Video: `TBD: video link`
 - Demo logins (no password): on the login page choose "Enter as client (Mara)" or "Enter as provider (Andes Data Studio)".
 - PayPal sandbox buyer account for judges: `TBD: judge account`. This is test data, not a secret; the sandbox never moves real money.
 
-The demo business is Andes Data Studio, a data consultancy. Its client Lukas Retail GmbH (contact Mara Keller) contracted project P1, "Retail KPI dashboard", with three scope clauses: five views including a per-branch view (included), automations, scheduled emails and alerts (excluded), one data source, Shopify (included). Mara's agent holds mandate M1: at most US$100.00 per purchase and US$300.00 in total, funded once with a PayPal authorization. If the mandate panel reads "Not authorized yet", click "Authorize with PayPal" and approve with the judge account first.
+The demo business is Andes Data Studio, a data consultancy. Its client Lukas Retail GmbH (contact Mara Keller) contracted project P1, "Retail KPI dashboard", with three scope clauses: five views including a per-branch view (included), automations, scheduled emails and alerts (excluded), one data source, Shopify (included). Mara's agent holds mandate M1: at most US$100.00 per purchase and US$300.00 in total, funded once with a PayPal authorization. On the hosted demo the mandate is already funded, and "Reset demo data" keeps that funding. If the panel ever reads "Not authorized yet", click "Authorize with PayPal" and approve with the judge account first.
 
 ## How judges test in two minutes
 
@@ -33,7 +33,7 @@ Requests 2 and 3 can also be typed on the web; the mandate only applies when the
 
 ## Connect your agent
 
-On the project page, "Connect my agent" issues a token (shown once) and prints three snippets. Replace `<host>` and the token with yours.
+On the project page, "Connect my agent" issues a token (shown once) and prints three snippets with the host already filled in. Below, `<host>` is `dealingwith-agent.onrender.com` for the hosted demo.
 
 Claude Code:
 
@@ -60,7 +60,7 @@ Tools: `list_services`, `list_projects`, `get_project`, `request_quote`, `answer
 
 ## Architecture
 
-One Node process (Hono) serves the JSON API, the MCP endpoint, the PayPal webhook and the built web app. The agent produces line-item intents; a deterministic pricing engine turns them into amounts; a policy module gates agent spending against the mandate. Details in [`docs/architecture.md`](docs/architecture.md).
+One Node process (Hono) serves the JSON API, the MCP endpoint, the PayPal webhook and the built web app. The agent produces line-item intents; a deterministic pricing engine turns them into amounts; a policy module gates agent spending against the mandate. Details in [`docs/architecture.md`](docs/architecture.md). The hosted demo runs on Render from [`render.yaml`](render.yaml): a commit on `main` deploys only after CI passes ([`infra/README.md`](infra/README.md), [`docs/ci-cd.md`](docs/ci-cd.md)).
 
 ```mermaid
 flowchart LR
@@ -85,7 +85,7 @@ Design: [`docs/design/2026-11-07-dealingwith-agent-mvp-design.md`](docs/design/2
 
 ## Evals and tests
 
-`pnpm test` runs 71 test files and 289 tests on an in-memory PostgreSQL (PGlite) with the mock PayPal gateway and the mock model; no credentials needed. The five scenarios in [`tests/scenarios/`](tests/scenarios/) drive the real HTTP API, pricing engine, policies and payment state machine with fixed agent outputs:
+`pnpm test` runs 74 test files and 359 tests on an in-memory PostgreSQL (PGlite) with the mock PayPal gateway and the mock model; no credentials needed. The five scenarios in [`tests/scenarios/`](tests/scenarios/) drive the real HTTP API, pricing engine, policies and payment state machine with fixed agent outputs:
 
 1. `01-already-included`: a request covered by a contract clause or a paid additional is included at US$0.00 and creates no payment.
 2. `02-needs-info`: missing information produces a question and nothing is published.
@@ -99,7 +99,7 @@ Design: [`docs/design/2026-11-07-dealingwith-agent-mvp-design.md`](docs/design/2
 
 - Sandbox only. Live PayPal does not exist in this codebase.
 - MCP authentication is a per-agent bearer token, revocable from the portal. OAuth is the production path.
-- In live PayPal an authorization lasts 29 days with a 3-day honor period; sandbox authorizations do not expire. When the funding headroom falls below the per-purchase limit the mandate panel offers "Re-authorize". Vault is the production path for standing mandates.
+- A PayPal authorization lasts 29 days, in the sandbox too (live adds a 3-day honor period). When the funding headroom falls below the per-purchase limit the mandate panel offers "Re-authorize"; an expired authorization needs the same click. Vault is the production path for standing mandates.
 - Sessions are demo logins (signed cookies), not real authentication.
 - One business. The data model carries `business_id` everywhere; the UI manages one provider.
 

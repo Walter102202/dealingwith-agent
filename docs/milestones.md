@@ -4,7 +4,7 @@ A working guide for the MVP build. Milestones are outcomes, not dates. Each stag
 
 Legend: `[ ]` not started · `[~]` in progress · `[x]` done
 
-**Current position:** M0, M2, M3, the web (D1-D6), W, A9, E (E2), I1 and I2 done and merged into `main` on 2026-11-08; G1-G3 done the same day; I3 done on 2026-11-08 (live eval 5/5 with Anthropic and with OpenAI); I4 has its Blueprint (`render.yaml`, `infra/README.md`) on `main` and waits for the Render account.
+**Current position:** M0, M2, M3, the web (D1-D6), W, A9, E (E2), I1 and I2 done and merged into `main` on 2026-11-08; G1-G3 done the same day; I3 and I4 done on 2026-11-08 (live eval 5/5 with both providers; the service is live at `https://dealingwith-agent.onrender.com` with webhook, funded mandate and MCP verified from outside); G4 done the same day. Open: the domain `dealingwith.si` (declared in the Blueprint, DNS pending), G5, I5 and M6.
 
 ---
 
@@ -75,7 +75,7 @@ The same code runs against PayPal sandbox, a real model and Render.
 - [x] **Sandbox gateway** (I1). Done when: orders, captures, authorizations and partial captures succeed in the sandbox; the smoke script records the authorization expiry and the Vault probe result.
 - [x] **Webhooks verified** (I2). Done when: a sandbox capture produces a verified, processed webhook and a resend is recorded as duplicate.
 - [x] **Live model passes** (I3; 5/5 with `claude-opus-5-5` and 5/5 with `gpt-6.1-sol` on 2026-11-08). Done when: the live eval passes five of five with Anthropic and with OpenAI using the same prompts.
-- [~] **Deployed on Render** (I4; Blueprint and `infra/README.md` on `main` since 2026-11-08, the deploy waits for the Render account). Done when: the hosted URL serves the app, the webhook points at it, the demo mandate is funded once, and MCP works from Claude Desktop and Claude Code against the hosted URL.
+- [x] **Deployed on Render** (I4; live on 2026-11-08 at `https://dealingwith-agent.onrender.com`: webhook registered and processing, mandate funded with a US$2,000.00 authorization that expires 2026-12-07 and must be renewed on 2026-11-30, MCP smoke and Claude Code verified from outside; the domain `dealingwith.si` follows `infra/README.md`, last section). Done when: the hosted URL serves the app, the webhook points at it, the demo mandate is funded once, and MCP works from Claude Desktop and Claude Code against the hosted URL.
 - [ ] **Pre-submission checks** (I5). Done when: a fresh browser completes the five demo requests on the hosted URL, CI is green, nothing private is in the repo, both Render services are on the always-on plans of the Blueprint (`0.5c-512mb`, `0.1c-256mb`).
 
 ---
@@ -103,16 +103,16 @@ Added 2026-11-08 when David joined. Policy: `CONSTITUTION.md`; runbook: `docs/ci
 - [x] **Constitution** (G1). Done when: `CONSTITUTION.md` exists at the root and is cited from `AGENTS.md`, `CLAUDE.md` and the README.
 - [x] **CI gates** (G2). Done when: three parallel jobs (`checks`, `build`, `hygiene`) run on every push, each under four minutes, and the run on `main` is green.
 - [x] **`main` protected** (G3, Walter). Done when: the ruleset in `infra/github/main-ruleset.json` is active on GitHub and a direct push to `main` is rejected.
-- [ ] **Gated delivery** (G4, with I4). Done when: `render.yaml` sets `autoDeployTrigger: checksPass` and a red CI on `main` does not deploy.
+- [x] **Gated delivery** (G4; `autoDeployTrigger: checksPass` in effect since 2026-11-08, PRs #6 to #8 deployed only after their green run; with the `main` ruleset a red `main` cannot be produced by a merge). Done when: `render.yaml` sets `autoDeployTrigger: checksPass` and a red CI on `main` does not deploy.
 - [ ] **David onboarded** (G5). Done when: David has write access and has read `CONSTITUTION.md`, `AGENTS.md`, `CLAUDE.md` and `docs/ci-cd.md`.
 
 ## Walter's actions (outside the code)
 
 - [x] Apply the `main` ruleset (active since 2026-11-08, id 26787773): `gh api -X POST repos/Walter102202/dealingwith-agent/rulesets --input infra/github/main-ruleset.json` (G3).
-- [ ] Give David write access to the repository (G5).
+- [~] Give David write access to the repository (G5; invitation with write permission sent on 2026-11-08 to `satisfymath`, pending his acceptance).
 - [ ] AG Studio trial license key requested.
 - [x] PayPal sandbox: US business account, US personal (judge) account, REST app linked to the US business account; credentials only in the local `.env` (done 2026-11-08; I1 and I2 verified against them).
-- [ ] Render account ready with the sponsor credits.
+- [x] Render account ready with the sponsor credits (2026-11-08; US$50 hackathon credit).
 - [ ] YouTube channel ready.
 - [ ] Devpost project draft opened.
 - [x] Execution mode chosen: hybrid, Codex and Claude Code sessions per track with an integrator session (2026-11-07).
