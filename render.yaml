@@ -41,8 +41,8 @@ services:
         sync: false
       - key: OPENAI_API_KEY
         sync: false
-      # Dashboard-owned: the Render URL after the first deploy, https://dealingwith.si once the
-      # domain is attached (infra/README.md, step 2 and the last section). No trailing slash.
+      # Dashboard-owned and empty until the domain is attached: the backend falls back to Render's
+      # RENDER_EXTERNAL_URL and refuses a non-https value (infra/README.md). No trailing slash.
       - key: APP_URL
         sync: false
       # Demo logins, demo seed and "Reset demo data" until real authentication ships after the

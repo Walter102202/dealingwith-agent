@@ -39,6 +39,24 @@ describe('loadEnv', () => {
   ])('rejects invalid configuration %j', (source) => {
     expect(() => loadEnv(source)).toThrow();
   });
+  test('on Render, APP_URL defaults to the service URL and must be https', () => {
+    const render = {
+      RENDER_EXTERNAL_URL: 'https://dealingwith-agent.onrender.com',
+      SESSION_SECRET: 'generated-by-render',
+    };
+    expect(loadEnv(render)).toMatchObject({ APP_URL: 'https://dealingwith-agent.onrender.com' });
+    expect(loadEnv({ ...render, APP_URL: 'https://dealingwith.si' })).toMatchObject({
+      APP_URL: 'https://dealingwith.si',
+    });
+    expect(() => loadEnv({ ...render, APP_URL: 'http://localhost:3000' })).toThrow(/APP_URL/);
+  });
+  test('treats empty values as unset', () => {
+    expect(loadEnv({ APP_URL: '', LLM_MODEL: '', DATABASE_URL: '' })).toMatchObject({
+      APP_URL: 'http://localhost:3000',
+      DATABASE_URL: 'pglite://.data/dev',
+    });
+    expect(loadEnv({ LLM_MODEL: '' }).LLM_MODEL).toBeUndefined();
+  });
   test('parses explicit values', () => {
     expect(
       loadEnv({
