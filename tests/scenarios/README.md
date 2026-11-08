@@ -1,0 +1,3 @@
+# Commerce scenarios
+
+Run `pnpm vitest run tests` from the repository root, or `pnpm test` for every workspace. These five scenarios run the real HTTP API, deterministic pricing, policies and payment workflows against in-memory PGlite and a local PayPal mock: purchased scope stays included, missing information prevents publication, MCP-channel requests remain visible on the web, pending payments do not change scope, and duplicate accepts/captures/webhooks cannot duplicate payments or additionals. Scenario 3 calls the shared workflow with `channel: 'mcp'`; Track C extends it with the actual MCP transport. No network or credentials are needed.

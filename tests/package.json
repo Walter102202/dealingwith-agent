@@ -1,0 +1,14 @@
+{
+  "name": "@dealingwith/scenarios",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@dealingwith/contracts": "workspace:*",
+    "@types/node": "^22.20.5",
+    "typescript": "~5.9.3",
+    "vitest": "^5.1.0"
+  }
+}

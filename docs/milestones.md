@@ -23,15 +23,15 @@ Everything the parallel tracks depend on exists and is frozen.
 
 A quote can be priced, accepted and paid end to end against the mock PayPal gateway, with no credentials.
 
-- [ ] **Backend foundations** (A0). Done when: `loadEnv` validates every variable with the documented defaults, the logger writes redacted JSON lines, and `AppError`, `compact` and `formatUsd` are tested.
-- [ ] **Pricing engine** (A1). Done when: included lines cost US$0 and cite a clause; rule lines price from the catalog; the rush multiplier applies; unknown refs fail loudly; version drift resolves to the current rule.
-- [ ] **Requests, quote versions, project scope** (A2). Done when: a new version supersedes the previous one and paid extras are appended to the project as clauses exactly once.
-- [ ] **Policies** (A3). Done when: every reason (inactive, expired, wrong project, currency, stale version, per purchase, total, funding) is tested and the spend reservation holds a row lock.
-- [ ] **Mock PayPal gateway** (A4). Done when: create, approve, capture, authorize and partial capture behave like the sandbox, with a local approve page and emitted webhooks.
-- [ ] **Payments and workflows** (A5). Done when: web accept returns an approval link; agent accept pays within the mandate or returns `approval_required`; capture and webhooks are idempotent; mandate funding activates the mandate.
-- [ ] **Access** (A6). Done when: demo sessions are signed cookies and agent tokens are hashed, revocable and come with connection snippets.
-- [ ] **HTTP API** (A7). Done when: the routes of the plan answer with validated bodies, SSE events stream per project, the built web is served statically and `/healthz` responds.
-- [ ] **Scenario tests** (A8). Done when: `tests/scenarios/01…05` pass from the repo root and prove the five expectations of spec section 7.8 through the HTTP API.
+- [x] **Backend foundations** (A0). Done when: `loadEnv` validates every variable with the documented defaults, the logger writes redacted JSON lines, and `AppError`, `compact` and `formatUsd` are tested.
+- [x] **Pricing engine** (A1). Done when: included lines cost US$0 and cite a clause; rule lines price from the catalog; the rush multiplier applies; unknown refs fail loudly; version drift resolves to the current rule.
+- [x] **Requests, quote versions, project scope** (A2). Done when: a new version supersedes the previous one and paid extras are appended to the project as clauses exactly once.
+- [x] **Policies** (A3). Done when: every reason (inactive, expired, wrong project, currency, stale version, per purchase, total, funding) is tested and the spend reservation holds a row lock.
+- [x] **Mock PayPal gateway** (A4). Done when: create, approve, capture, authorize and partial capture behave like the sandbox, with a local approve page and emitted webhooks.
+- [x] **Payments and workflows** (A5). Done when: web accept returns an approval link; agent accept pays within the mandate or returns `approval_required`; capture and webhooks are idempotent; mandate funding activates the mandate.
+- [x] **Access** (A6). Done when: demo sessions are signed cookies and agent tokens are hashed, revocable and come with connection snippets.
+- [x] **HTTP API** (A7). Done when: the routes of the plan answer with validated bodies, SSE events stream per project, the built web is served statically and `/healthz` responds.
+- [x] **Scenario tests** (A8). Done when: `tests/scenarios/01…05` pass from the repo root and prove the five expectations of spec section 7.8 through the HTTP API.
 - [ ] **Payment hardening** (A9). Done when: inactive, expired or unfunded mandates and PayPal-side capture failures return an approval link instead of a denial or a 502; an approved order is captured by webhook without a browser session; expired orders are recreated; a fixed-price purchase needs no agent; a pricing failure ends in `needs_info`, never a 422; mandate payments name their mandate and their captures reconcile by invoice id; the webhook id is optional until registered.
 
 ---
