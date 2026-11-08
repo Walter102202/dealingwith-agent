@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { renderWithProviders } from '../test/render.js';
 
 const apiMock = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }));
 vi.mock('../api/client.js', async (importOriginal) => {
@@ -32,12 +32,10 @@ const client = {
 };
 
 const renderLayout = () =>
-  render(
-    <MemoryRouter>
-      <Layout>
-        <p>body</p>
-      </Layout>
-    </MemoryRouter>,
+  renderWithProviders(
+    <Layout>
+      <p>body</p>
+    </Layout>,
   );
 
 describe('Layout reset demo data', () => {

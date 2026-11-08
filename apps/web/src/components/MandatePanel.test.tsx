@@ -38,6 +38,21 @@ const funded: Mandate = {
 const noop = async () => {};
 
 describe('MandatePanel', () => {
+  it.each(['revoked', 'expired', 'exhausted'] as const)(
+    'does not offer funding for a %s mandate',
+    (status) => {
+      render(
+        <MandatePanel
+          mandate={{ ...pending, status }}
+          projectId={DEMO_IDS.project}
+          payments={[]}
+          onChange={noop}
+        />,
+      );
+      expect(screen.queryByRole('button', { name: 'Authorize with PayPal' })).toBeNull();
+      expect(screen.getByText(`This mandate is ${status}.`)).toBeInTheDocument();
+    },
+  );
   it('shows spend against the total limit and offers to authorize a pending mandate', () => {
     render(
       <MandatePanel mandate={pending} projectId={DEMO_IDS.project} payments={[]} onChange={noop} />,

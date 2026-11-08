@@ -39,4 +39,7 @@ Rules: one decision per file; never edit a past decision, write a new one that s
 - [2026-11-07 Live eval imports the backend by path and simulates the first payment](2026-11-07-live-eval-imports-backend-by-path.md)
 - [2026-11-07 AG Studio: saved dashboard definition, theme and license entry points](2026-11-07-ag-studio-definition-loading.md)
 - [2026-11-08 MCP endpoint: stateless Streamable HTTP, one server per request](2026-11-08-mcp-stateless-per-request.md) — every request authenticates the agent token and builds a fresh server and transport; no sessions.
+- [2026-11-07 Web chart palette](2026-11-07-web-chart-palette.md)
+- [2026-11-07 Quote line position keys](2026-11-07-quote-line-position-keys.md)
+- [2026-11-07 Configuration consumer test providers](2026-11-07-config-consumer-test-providers.md)
 - [2026-11-08 MCP tests pin the SDK 1.32.2 shapes for invalid input and 401](2026-11-08-mcp-sdk-validation-and-401-shapes.md) — invalid tool input is an isError result, a 401 is StreamableHTTPError code 401; the tests assert those shapes.

@@ -4,7 +4,7 @@ A working guide for the MVP build. Milestones are outcomes, not dates. Each stag
 
 Legend: `[ ]` not started · `[~]` in progress · `[x]` done
 
-**Current position:** M0, M2, M3 and the web (D1-D6) done; Tracks A (A0-A8), B, C and D merged into `main` on 2026-11-08; A9, W and E pending on their branches.
+**Current position:** M0, M2, M3, the web (D1-D6) and W done; Tracks A (A0-A8), B, C, D and W merged into `main` on 2026-11-08; A9 and E in progress; I waits for credentials.
 
 ---
 
@@ -92,9 +92,9 @@ The same code runs against PayPal sandbox, a real model and Render.
 
 The thirteen minors Track D's final review deferred, closed without changing the demo (`docs/plans/2026-11-08-web-polish-after-track-d.md`).
 
-- [ ] **Visible fixes** (W1). Done when: the dashboard title comes from the session, dead mandates offer no Authorize, the storefront receipt links back to the storefront, every money string is `formatUsd`, charts use the product palette.
-- [ ] **Correctness fixes** (W2). Done when: the other role is redirected to its own home, contract drift shows one readable sentence, quote line keys never collide, an already captured order in sandbox is reported as paid.
-- [ ] **Code health** (W3). Done when: `/api/config` is fetched once through a context and the fixtures handlers are split by domain with the same tests green.
+- [x] **Visible fixes** (W1). Done when: the dashboard title comes from the session, dead mandates offer no Authorize, the storefront receipt links back to the storefront, every money string is `formatUsd`, charts use the product palette.
+- [x] **Correctness fixes** (W2). Done when: the other role is redirected to its own home, contract drift shows one readable sentence, quote line keys never collide, an already captured order in sandbox is reported as paid.
+- [x] **Code health** (W3). Done when: `/api/config` is fetched once through a context and the fixtures handlers are split by domain with the same tests green.
 
 ## Walter's actions (outside the code)
 

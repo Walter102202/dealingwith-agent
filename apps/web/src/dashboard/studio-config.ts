@@ -5,7 +5,7 @@ import type { AgReportState } from 'ag-studio';
  * pipeline by status and channel, unpaid additionals, requests over time.
  *
  * Shape learned from `onStateUpdated` in the editor (decision
- * 2026-11-08-ag-studio-definition-loading): field ids are `<sourceId>.<field>`,
+ * 2026-11-07-ag-studio-definition-loading): field ids are `<sourceId>.<field>`,
  * date components are `<field>.<unit>`, widget filters live under
  * `filter.widget[<widgetId>]`, the canvas is 24 columns of 16 px rows.
  */

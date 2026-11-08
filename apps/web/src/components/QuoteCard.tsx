@@ -137,8 +137,9 @@ export function QuoteCard({ quote, onAccept, onAdjust, onAnswers }: QuoteCardPro
       ) : (
         <>
           <ul className={styles.lines}>
-            {quote.lineItems.map((line) => (
-              <Line key={`${line.kind}-${line.label}`} line={line} />
+            {quote.lineItems.map((line, index) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: Line order is fixed within a quote version; labels can repeat.
+              <Line key={`${index}-${line.kind}`} line={line} />
             ))}
           </ul>
           <dl className={styles.facts}>

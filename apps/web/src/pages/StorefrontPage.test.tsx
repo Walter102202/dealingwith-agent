@@ -1,5 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const apiMock = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }));
@@ -20,6 +19,7 @@ import { DEMO_IDS } from '../api/fixtures/demo-ids.js';
 import { handlers } from '../api/fixtures/handlers.js';
 import { hardResetState } from '../api/fixtures/state.js';
 import { routes } from '../api/routes.js';
+import { renderWithProviders } from '../test/render.js';
 import { StorefrontPage } from './StorefrontPage.js';
 
 const config = { paypalMode: 'mock', appUrl: 'http://localhost:5173', demoMode: true };
@@ -56,11 +56,7 @@ describe('StorefrontPage', () => {
       throw new Error(`unexpected POST ${path}`);
     });
 
-    render(
-      <MemoryRouter>
-        <StorefrontPage />
-      </MemoryRouter>,
-    );
+    renderWithProviders(<StorefrontPage />);
     fireEvent.change(await screen.findByLabelText('Describe what you need'), {
       target: { value: 'Send the Monday summary to our regional managers too.' },
     });
