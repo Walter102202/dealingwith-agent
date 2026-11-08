@@ -1,0 +1,15 @@
+{
+  "match": "load faster",
+  "output": {
+    "lineItems": [],
+    "needsInfo": [
+      {
+        "question": "Is the slowness caused by data volume or by the dashboard design?",
+        "whyItChangesPrice": "More data means a data source integration; a redesign means a new dashboard build."
+      }
+    ],
+    "explanation": "Before quoting I need to know what is making the dashboard slow, because the two likely causes map to different services.",
+    "deliveryDays": 0,
+    "confidence": 0.4
+  }
+}

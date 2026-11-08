@@ -1,0 +1,21 @@
+{
+  "match": "daily sales drop more than 20%",
+  "output": {
+    "lineItems": [
+      {
+        "kind": "rule",
+        "ref": {
+          "id": "S2.alert",
+          "version": 1
+        },
+        "quantity": 1,
+        "label": "Daily sales drop alert (20%)",
+        "rationale": "Alerts are excluded by clause C2 and priced with rule S2.alert.v1."
+      }
+    ],
+    "needsInfo": [],
+    "explanation": "A threshold alert email on an existing dashboard is an automation, which your contract excludes, so it is quoted as an extra.",
+    "deliveryDays": 1,
+    "confidence": 0.9
+  }
+}
