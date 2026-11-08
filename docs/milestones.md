@@ -101,7 +101,7 @@ The thirteen minors Track D's final review deferred, closed without changing the
 Added 2026-11-08 when David joined. Policy: `CONSTITUTION.md`; runbook: `docs/ci-cd.md`.
 
 - [x] **Constitution** (G1). Done when: `CONSTITUTION.md` exists at the root and is cited from `AGENTS.md`, `CLAUDE.md` and the README.
-- [ ] **CI gates** (G2). Done when: three parallel jobs (`checks`, `build`, `hygiene`) run on every push, each under four minutes, and the run on `main` is green.
+- [x] **CI gates** (G2). Done when: three parallel jobs (`checks`, `build`, `hygiene`) run on every push, each under four minutes, and the run on `main` is green.
 - [ ] **`main` protected** (G3, Walter). Done when: the ruleset in `infra/github/main-ruleset.json` is active on GitHub and a direct push to `main` is rejected.
 - [ ] **Gated delivery** (G4, with I4). Done when: `render.yaml` sets `autoDeployTrigger: checksPass` and a red CI on `main` does not deploy.
 - [ ] **David onboarded** (G5). Done when: David has write access and has read `CONSTITUTION.md`, `AGENTS.md`, `CLAUDE.md` and `docs/ci-cd.md`.
