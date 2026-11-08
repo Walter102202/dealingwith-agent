@@ -21,6 +21,8 @@ interface ConnectAgentProps {
 
 /** Issues agent tokens, shows the connection snippets once, and lists and revokes agents. */
 export function ConnectAgent({ agents, mandateId, onChange }: ConnectAgentProps) {
+  // The API keeps revoked agents in the list (with `revokedAt`); only live ones are shown.
+  const liveAgents = agents.filter((agent) => agent.revokedAt === undefined);
   const id = useId();
   const [open, setOpen] = useState(false);
   const [label, setLabel] = useState('');
@@ -115,9 +117,9 @@ export function ConnectAgent({ agents, mandateId, onChange }: ConnectAgentProps)
         </Button>
       )}
 
-      {agents.length > 0 ? (
+      {liveAgents.length > 0 ? (
         <ul className={styles.list} aria-label="Connected agents">
-          {agents.map((agent) => (
+          {liveAgents.map((agent) => (
             <li key={agent.id} className={styles.agent}>
               <div className={styles.agentText}>
                 <span className={styles.agentLabel}>{agent.label}</span>

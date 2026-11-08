@@ -28,6 +28,13 @@ describe('ConnectAgent', () => {
     vi.clearAllMocks();
   });
 
+  it('hides agents the API returns as revoked', () => {
+    const revoked: ClientAgent = { ...agent, revokedAt: '2026-11-08T11:00:00.000Z' };
+    render(<ConnectAgent agents={[revoked]} onChange={vi.fn(async () => {})} />);
+    expect(screen.queryByText("Mara's assistant")).not.toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Connected agents' })).not.toBeInTheDocument();
+  });
+
   it('issues a token once and shows the three connection snippets', async () => {
     apiMock.post.mockResolvedValue({
       token,
