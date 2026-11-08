@@ -34,3 +34,4 @@ Rules: one decision per file; never edit a past decision, write a new one that s
 - [2026-11-07 formatUsd lives in @dealingwith/contracts](2026-11-07-format-usd-in-contracts.md)
 - [2026-11-07 Payment.mandateId and scopeRef on rule intents](2026-11-07-payment-mandate-id-and-rule-scope-ref.md)
 - [2026-11-08 MCP endpoint: stateless Streamable HTTP, one server per request](2026-11-08-mcp-stateless-per-request.md) — every request authenticates the agent token and builds a fresh server and transport; no sessions.
+- [2026-11-08 MCP tests pin the SDK 1.32.2 shapes for invalid input and 401](2026-11-08-mcp-sdk-validation-and-401-shapes.md) — invalid tool input is an isError result, a 401 is StreamableHTTPError code 401; the tests assert those shapes.
