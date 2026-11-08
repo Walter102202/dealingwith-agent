@@ -15,14 +15,14 @@ DealingWith Agent turns service requests into paid work. A service business publ
 - `tests/` — the five scenario tests (`tests/scenarios/`).
 - `evals/` — live model eval (`pnpm eval:live`), not part of CI.
 - `docs/` — design, plan, milestones, roadmap, decisions, MCP guide, demo script. `docs/hackathon/` is local analysis and is git-ignored.
-- `infra/` — Render Blueprint and deployment notes.
+- `infra/` — Render Blueprint and deployment notes (created in Phase 2, Task I4).
 - `.github/workflows/` — CI: lint, typecheck, test on every push.
 
 ## Commands
 
 ```bash
 pnpm install                                  # install every workspace
-pnpm dev                                      # backend with tsx watch (web joins in Phase 1)
+pnpm dev                                      # backend (tsx watch) and web (Vite) in parallel
 pnpm test                                     # vitest run, all workspaces
 pnpm lint                                     # biome check .
 pnpm typecheck                                # tsc --noEmit in every package
