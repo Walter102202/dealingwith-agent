@@ -9,6 +9,8 @@ import styles from './PayWithPayPal.module.css';
 
 const PayPalSandboxButtons = lazy(() => import('./PayPalSandboxButtons.js'));
 
+class AlreadyPaidError extends Error {}
+
 interface PayWithPayPalProps {
   quoteId: string;
   version: number;
@@ -65,6 +67,10 @@ export function PayWithPayPal({ quoteId, version, amountCents, onPaid }: PayWith
   const createOrder = async () => {
     setError(null);
     const result = await accept();
+    if (result.status === 'paid') {
+      onPaid(result.payment);
+      throw new AlreadyPaidError();
+    }
     const orderId = result.payment?.paypalOrderId;
     if (!orderId) throw new Error('PayPal did not return an order.');
     return orderId;
@@ -111,7 +117,9 @@ export function PayWithPayPal({ quoteId, version, amountCents, onPaid }: PayWith
               clientId={sandbox}
               createOrder={createOrder}
               onApprove={capture}
-              onError={(e) => setError(errorMessage(e))}
+              onError={(e) => {
+                if (!(e instanceof AlreadyPaidError)) setError(errorMessage(e));
+              }}
             />
           </Suspense>
         </div>

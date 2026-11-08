@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const apiMock = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }));
@@ -8,6 +8,15 @@ vi.mock('../api/client.js', async (importOriginal) => {
 });
 
 const navigationMock = vi.hoisted(() => ({ assign: vi.fn() }));
+const sandboxMock = vi.hoisted(() => ({
+  props: null as null | { createOrder: () => Promise<string>; onError: (error: unknown) => void },
+}));
+vi.mock('./PayPalSandboxButtons.js', () => ({
+  default: (props: NonNullable<typeof sandboxMock.props>) => {
+    sandboxMock.props = props;
+    return <span>Sandbox buttons ready</span>;
+  },
+}));
 vi.mock('../lib/navigation.js', () => ({ assign: navigationMock.assign }));
 
 import { PayWithPayPal } from './PayWithPayPal.js';
@@ -15,6 +24,28 @@ import { PayWithPayPal } from './PayWithPayPal.js';
 const quoteId = 'b0000000-0000-4000-8000-000000000001';
 
 describe('PayWithPayPal', () => {
+  it('reports an already-paid sandbox order and rejects creation without an error message', async () => {
+    apiMock.get.mockResolvedValue({
+      paypalMode: 'sandbox',
+      paypalClientId: 'test',
+      appUrl: 'http://localhost:5173',
+      demoMode: false,
+    });
+    const payment = { id: 'payment', status: 'captured', paypalOrderId: 'CAPTURED-ORDER' };
+    apiMock.post.mockResolvedValue({ status: 'paid', payment });
+    const onPaid = vi.fn();
+    render(<PayWithPayPal quoteId={quoteId} version={1} amountCents={8000} onPaid={onPaid} />);
+    await screen.findByText('Sandbox buttons ready');
+    const buttons = sandboxMock.props;
+    if (!buttons) throw new Error('Sandbox buttons not mounted');
+    await act(async () => {
+      const creation = buttons.createOrder();
+      await expect(creation).rejects.toBeInstanceOf(Error);
+      await creation.catch(buttons.onError);
+    });
+    expect(onPaid).toHaveBeenCalledExactlyOnceWith(payment);
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
   afterEach(() => {
     vi.clearAllMocks();
   });

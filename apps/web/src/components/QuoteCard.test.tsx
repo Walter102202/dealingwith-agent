@@ -27,6 +27,34 @@ if (!requestOne || !needsInfo) throw new Error('fixtures missing');
 const noop = async () => {};
 
 describe('QuoteCard', () => {
+  it('renders repeated rule labels without duplicate keys', () => {
+    const line = requestOne.lineItems.find((item) => item.kind === 'rule');
+    if (!line) throw new Error('Missing rule fixture');
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      render(
+        <QuoteCard
+          quote={{
+            ...requestOne,
+            status: 'paid',
+            lineItems: [
+              { ...line, label: 'Additional data source' },
+              { ...line, label: 'Additional data source' },
+            ],
+          }}
+          onAccept={noop}
+          onAdjust={noop}
+          onAnswers={noop}
+        />,
+      );
+      expect(screen.getAllByRole('listitem')).toHaveLength(2);
+      expect(
+        log.mock.calls.some((call) => call.some((value) => String(value).includes('same key'))),
+      ).toBe(false);
+    } finally {
+      log.mockRestore();
+    }
+  });
   it('shows included and extra lines, delivery, total and both actions for a published quote', () => {
     render(<QuoteCard quote={requestOne} onAccept={noop} onAdjust={noop} onAnswers={noop} />);
     expect(screen.getByRole('heading', { name: 'Quote v1' })).toBeInTheDocument();
