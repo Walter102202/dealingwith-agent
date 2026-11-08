@@ -11,7 +11,8 @@ import styles from './QuoteCard.module.css';
 interface QuoteCardProps {
   quote: Quote;
   /** Called when a payment completes without leaving the page (sandbox capture). */
-  onAccept: (payment: Payment) => Promise<void> | void;
+  /** The quote was paid in place (sandbox capture or zero total); the backend sends no payment for a zero total. */
+  onAccept: (payment?: Payment) => Promise<void> | void;
   /** Free-text adjustment; the page posts it as `answers.adjustment`. */
   onAdjust: (text: string) => Promise<void>;
   onAnswers: (answers: Record<string, string>) => Promise<void>;

@@ -13,8 +13,12 @@ interface PayWithPayPalProps {
   quoteId: string;
   version: number;
   amountCents: number;
-  /** Called after a capture completes in the sandbox flow (the mock flow returns through `/pay/return`). */
-  onPaid: (payment: Payment) => void;
+  /**
+   * Called when the quote is paid in place: after a sandbox capture, or when
+   * accept answers `paid` directly (zero total: the backend sends no payment).
+   * The mock flow returns through `/pay/return` instead.
+   */
+  onPaid: (payment?: Payment) => void;
 }
 
 /**
@@ -43,7 +47,7 @@ export function PayWithPayPal({ quoteId, version, amountCents, onPaid }: PayWith
     setError(null);
     try {
       const result = await accept();
-      if (result.status === 'paid' && result.payment) {
+      if (result.status === 'paid') {
         onPaid(result.payment);
         return;
       }

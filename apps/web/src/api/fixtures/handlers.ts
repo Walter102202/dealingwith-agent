@@ -208,6 +208,15 @@ export const handlers = {
         message: 'This quote still needs your answers before it can be accepted.',
       };
     }
+    if (latest.totalCents === 0) {
+      latest.status = 'paid';
+      latest.paidAt = nowIso();
+      appendPaidClauses(latest);
+      return {
+        status: 'paid',
+        message: 'Nothing to pay: everything requested is already included in the project scope.',
+      };
+    }
     let payment = state.payments.find((p) => p.quoteId === id && p.quoteVersion === latest.version);
     if (!payment) {
       payment = {
@@ -225,10 +234,6 @@ export const handlers = {
       latest.status = 'accepted';
       latest.acceptedAt = nowIso();
     }
-    if (latest.totalCents === 0)
-      return handlers
-        .captureOrder(payment.paypalOrderId as string)
-        .then((captured) => ({ status: 'paid', payment: captured }));
     return {
       status: 'approval_required',
       approvalUrl: `${origin()}/pay/return?token=${payment.paypalOrderId}`,

@@ -44,6 +44,25 @@ describe('PayWithPayPal', () => {
     );
   });
 
+  it('a zero total answered "paid" without a payment counts as paid (real backend shape)', async () => {
+    apiMock.get.mockResolvedValue({
+      paypalMode: 'mock',
+      appUrl: 'http://localhost:5173',
+      demoMode: true,
+    });
+    apiMock.post.mockResolvedValue({
+      status: 'paid',
+      message: 'Nothing to pay: everything requested is already included in the project scope.',
+    });
+    const onPaid = vi.fn();
+    render(<PayWithPayPal quoteId={quoteId} version={1} amountCents={0} onPaid={onPaid} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Accept at no cost' }));
+    await waitFor(() => {
+      expect(onPaid).toHaveBeenCalledTimes(1);
+    });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('in sandbox mode renders the PayPal container and no mock button', async () => {
     apiMock.get.mockResolvedValue({
       paypalMode: 'sandbox',

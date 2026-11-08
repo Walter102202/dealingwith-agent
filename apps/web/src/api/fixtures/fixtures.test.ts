@@ -76,6 +76,25 @@ describe('fixtures', () => {
     expect(fourth.lineItems[0]?.kind).toBe('included');
   });
 
+  it('accepting a zero-total quote answers paid without a payment, like the backend', async () => {
+    const first = await handlers.createProjectRequest(DEMO_IDS.project, {
+      text: 'I need a per-branch view and a summary email every Monday.',
+    });
+    const accepted = await handlers.acceptQuote(first.id, { version: 1 });
+    await handlers.captureOrder(accepted.payment?.paypalOrderId as string);
+    const fourth = await handlers.createProjectRequest(DEMO_IDS.project, {
+      text: 'Send the Monday summary to our regional managers too.',
+    });
+    const paymentsBefore = (await handlers.getProject(DEMO_IDS.project)).payments.length;
+    const result = await handlers.acceptQuote(fourth.id, { version: 1 });
+    expect(result.status).toBe('paid');
+    expect(result.payment).toBeUndefined();
+    expect(result.message).toMatch(/Nothing to pay/);
+    const view = await handlers.getProject(DEMO_IDS.project);
+    expect(view.payments).toHaveLength(paymentsBefore);
+    expect(view.quotes.find((q) => q.id === fourth.id)?.status).toBe('paid');
+  });
+
   it('reset restores the initial state', async () => {
     const first = await handlers.createProjectRequest(DEMO_IDS.project, {
       text: 'summary email every Monday',
