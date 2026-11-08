@@ -83,7 +83,7 @@ function Receipt({ payment, quote }: { payment: Payment; quote: Quote | null }) 
       </p>
       <p className={styles.links}>
         <Link to={projectId ? `/portal/projects/${projectId}` : '/'} className={styles.primaryLink}>
-          Back to project
+          {projectId ? 'Back to project' : 'Back to the storefront'}
         </Link>
       </p>
     </Card>

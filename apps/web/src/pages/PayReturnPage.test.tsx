@@ -31,45 +31,50 @@ describe('PayReturnPage', () => {
     vi.clearAllMocks();
   });
 
-  it('captures the order and renders the receipt with a link back to the project', async () => {
-    apiMock.post.mockResolvedValue({
-      id: 'd0000000-0000-4000-8000-000000000001',
-      quoteId,
-      quoteVersion: 1,
-      mode: 'pay_now',
-      paypalOrderId: 'MOCK-ORDER-000001',
-      paypalCaptureId: 'MOCK-CAPTURE-000001',
-      amountCents: 8000,
-      currency: 'USD',
-      status: 'captured',
-      createdAt: '2026-11-08T15:00:00.000Z',
-    });
-    apiMock.get.mockResolvedValue({
-      id: quoteId,
-      requestId: 'c0000000-0000-4000-8000-000000000001',
-      projectId,
-      version: 1,
-      status: 'paid',
-      lineItems: [],
-      subtotalCents: 8000,
-      totalCents: 8000,
-      currency: 'USD',
-      explanation: '',
-      deliveryDays: 1,
-      needsInfo: [],
-    });
-    renderAt('/pay/return?token=MOCK-ORDER-000001&PayerID=MOCKPAYER01');
-    expect(
-      await screen.findByText('Paid US$80.00 · Quote v1 · Capture id MOCK-CAPTURE-000001'),
-    ).toBeInTheDocument();
-    expect(apiMock.post).toHaveBeenCalledWith(
-      '/api/paypal/orders/MOCK-ORDER-000001/capture',
-      {},
-      expect.anything(),
-    );
-    const back = await screen.findByRole('link', { name: 'Back to project' });
-    expect(back).toHaveAttribute('href', `/portal/projects/${projectId}`);
-  });
+  it.each([true, false])(
+    'captures the order and links to its origin (project: %s)',
+    async (hasProject) => {
+      apiMock.post.mockResolvedValue({
+        id: 'd0000000-0000-4000-8000-000000000001',
+        quoteId,
+        quoteVersion: 1,
+        mode: 'pay_now',
+        paypalOrderId: 'MOCK-ORDER-000001',
+        paypalCaptureId: 'MOCK-CAPTURE-000001',
+        amountCents: 8000,
+        currency: 'USD',
+        status: 'captured',
+        createdAt: '2026-11-08T15:00:00.000Z',
+      });
+      apiMock.get.mockResolvedValue({
+        id: quoteId,
+        requestId: 'c0000000-0000-4000-8000-000000000001',
+        ...(hasProject ? { projectId } : {}),
+        version: 1,
+        status: 'paid',
+        lineItems: [],
+        subtotalCents: 8000,
+        totalCents: 8000,
+        currency: 'USD',
+        explanation: '',
+        deliveryDays: 1,
+        needsInfo: [],
+      });
+      renderAt('/pay/return?token=MOCK-ORDER-000001&PayerID=MOCKPAYER01');
+      expect(
+        await screen.findByText('Paid US$80.00 · Quote v1 · Capture id MOCK-CAPTURE-000001'),
+      ).toBeInTheDocument();
+      expect(apiMock.post).toHaveBeenCalledWith(
+        '/api/paypal/orders/MOCK-ORDER-000001/capture',
+        {},
+        expect.anything(),
+      );
+      const back = await screen.findByRole('link', {
+        name: hasProject ? 'Back to project' : 'Back to the storefront',
+      });
+      expect(back).toHaveAttribute('href', hasProject ? `/portal/projects/${projectId}` : '/');
+    },
+  );
 
   it('shows the API error message when the capture fails', async () => {
     apiMock.post.mockRejectedValue(

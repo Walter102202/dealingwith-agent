@@ -198,6 +198,7 @@ export function MandatePanel({ mandate, projectId, payments, onChange }: Mandate
   if (!mandate) return <MandateForm projectId={projectId} onChange={onChange} />;
 
   const backed = Boolean(mandate.funding.paypalAuthorizationId);
+  const canFund = mandate.status === 'pending' || mandate.status === 'active';
   const headroom = Math.max(
     0,
     mandate.funding.fundingAmountCents - mandate.funding.fundingCapturedCents,
@@ -246,10 +247,10 @@ export function MandatePanel({ mandate, projectId, payments, onChange }: Mandate
         )}
       </dl>
 
-      {funding ? (
-        <FundForm mandate={mandate} label={fundLabel} onDone={() => setFunding(false)} />
-      ) : (
-        (!backed || needsReauth) && (
+      {canFund && (!backed || needsReauth) ? (
+        funding ? (
+          <FundForm mandate={mandate} label={fundLabel} onDone={() => setFunding(false)} />
+        ) : (
           <div>
             <Button
               variant={needsReauth ? 'secondary' : 'primary'}
@@ -259,7 +260,9 @@ export function MandatePanel({ mandate, projectId, payments, onChange }: Mandate
             </Button>
           </div>
         )
-      )}
+      ) : !canFund ? (
+        <p className="muted small">This mandate is {mandate.status}.</p>
+      ) : null}
 
       <section>
         <h3 className={styles.subheading}>Payments by your agent</h3>

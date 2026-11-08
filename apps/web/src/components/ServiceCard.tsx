@@ -1,4 +1,4 @@
-import type { Service } from '@dealingwith/contracts';
+import { formatUsd, type Service } from '@dealingwith/contracts';
 import { Button } from './Button.js';
 import { Money } from './Money.js';
 import styles from './ServiceCard.module.css';
@@ -18,18 +18,13 @@ export function fixedPrice(service: Service): number | null {
 function ruleSummary(service: Service): string {
   return service.pricingRules
     .map((rule) => {
-      if (rule.type === 'fixed') return `${rule.label} ${formatShort(rule.amountCents)}`;
+      if (rule.type === 'fixed') return `${rule.label} ${formatUsd(rule.amountCents)}`;
       if (rule.type === 'per_unit')
-        return `${rule.label} ${formatShort(rule.amountCents)} per ${rule.unit}`;
+        return `${rule.label} ${formatUsd(rule.amountCents)} per ${rule.unit}`;
       return `${rule.label} +${rule.percent}%`;
     })
     .join(' · ');
 }
-
-const formatShort = (cents: number) =>
-  cents % 100 === 0
-    ? `US$${(cents / 100).toLocaleString('en-US')}`
-    : `US$${(cents / 100).toFixed(2)}`;
 
 /** One service of the storefront: what it is, what it includes and excludes, its price. */
 export function ServiceCard({ service, onBuy, busy = false }: ServiceCardProps) {

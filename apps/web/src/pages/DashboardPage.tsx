@@ -10,6 +10,7 @@ import { studioLicenseKey } from '../dashboard/license.js';
 import { toStudioSources } from '../dashboard/sources.js';
 import { DASHBOARD_STATE } from '../dashboard/studio-config.js';
 import { dashboardTheme } from '../dashboard/theme.js';
+import { useSession } from '../session.js';
 import styles from './DashboardPage.module.css';
 
 const fetchDashboard = () => api.get(routes.dashboard.data, DashboardDataSchema);
@@ -23,6 +24,7 @@ declare global {
 
 /** `/dashboard`: the provider's AG Studio dashboard over quotes, lines, payments and requests. */
 export default function DashboardPage() {
+  const { session } = useSession();
   const dashboard = useApi(fetchDashboard);
   const data = dashboard.data;
   const studioData = useMemo(() => (data ? toStudioSources(data) : null), [data]);
@@ -40,7 +42,9 @@ export default function DashboardPage() {
       <div className={styles.page}>
         <header className={styles.head}>
           <div>
-            <h1 className={styles.title}>Andes Data Studio</h1>
+            <h1 className={styles.title}>
+              {session?.role === 'provider' ? session.name : 'Dashboard'}
+            </h1>
             <p className="muted small">Quotes, additionals and payments across every client.</p>
           </div>
           {remaining !== null ? (
