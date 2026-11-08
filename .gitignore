@@ -22,3 +22,6 @@ coverage/
 
 # Playwright MCP browser snapshots (local tooling)
 .playwright-mcp/
+
+# Private per-developer notes for Claude Code
+CLAUDE.local.md
