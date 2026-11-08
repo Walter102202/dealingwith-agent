@@ -16,3 +16,5 @@ Walter decided on 2026-11-08: the web uses one path in every mode. `POST /api/qu
 ## Consequences
 
 One flow to verify in I1 and I4 and to show in the demo. The sandbox checkout opens as a page instead of inside our site, so the web looks less "embedded"; the buttons can return after the hackathon once the link path is proven in production. The backend capture route still needs no browser cookie for `pay_now` orders (Task A9 item 2), because the return page may open in another browser.
+
+Wording of the quote card's accept label partially superseded by [2026-11-08 quote card accept label](2026-11-08-quote-card-accept-label.md).

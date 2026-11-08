@@ -189,7 +189,7 @@ Backend started from the `track/c` worktree with `PORT=3002 APP_URL=http://local
 SDK client (`MCP_URL=http://localhost:3002/mcp MCP_TOKEN=… pnpm --filter @dealingwith/backend mcp:smoke`):
 
 ```text
-Tools (8): list_services, get_project, request_quote, answer_questions, get_quote, accept_quote, get_payment, get_mandate
+Tools (9): list_services, list_projects, get_project, request_quote, answer_questions, get_quote, accept_quote, get_payment, get_mandate
 Services (3): Analytics dashboard build, Automations, Data source integration
 ```
 

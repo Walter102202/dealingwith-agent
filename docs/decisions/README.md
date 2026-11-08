@@ -50,4 +50,5 @@ Rules: one decision per file; never edit a past decision, write a new one that s
 - [2026-11-08 Demo script targets the hosted sandbox, with Claude Code as the agent](2026-11-08-demo-script-targets-hosted-sandbox.md) — the video is recorded on the hosted URL; one recording pause to add the MCP server.
 - [2026-11-08 One payment path in the web: the approval link, in every PayPal mode](2026-11-08-single-approve-link-payment-path.md) — the web drops the PayPal JS buttons; accept returns an approval link and PayPal returns to /pay/return.
 - [2026-11-08-list-projects-tool](2026-11-08-list-projects-tool.md) — a ninth MCP tool so agents can discover project ids
+- [2026-11-08 Quote card accept label](2026-11-08-quote-card-accept-label.md) — the label reads "Accept quote v<n>", the button names the action; the spec string "Accept and pay with PayPal" is retired.
 - [2026-11-08 Constitution and CI gates](2026-11-08-constitution-and-ci-gates.md) — `CONSTITUTION.md` above every other document; three parallel CI jobs under four minutes; `main` protected by a ruleset; Render deploys only after CI passes.
