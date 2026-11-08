@@ -11,15 +11,18 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --conditions=development src/db/migrate-cli.ts",
-    "seed": "tsx --conditions=development src/db/seed-cli.ts"
+    "seed": "tsx --conditions=development src/db/seed-cli.ts",
+    "mcp:smoke": "node scripts/mcp-smoke.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "4.0.99",
     "@ai-sdk/openai": "4.0.111",
     "@dealingwith/contracts": "workspace:*",
     "@electric-sql/pglite": "^0.5.15",
+    "@hono/mcp": "0.3.5",
     "@hono/node-server": "^2.1.6",
     "@hono/zod-validator": "^0.9.1",
+    "@modelcontextprotocol/sdk": "1.32.2",
     "ai": "7.0.165",
     "drizzle-orm": "^0.45.4",
     "hono": "^4.13.17",

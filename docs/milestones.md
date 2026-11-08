@@ -4,7 +4,7 @@ A working guide for the MVP build. Milestones are outcomes, not dates. Each stag
 
 Legend: `[ ]` not started · `[~]` in progress · `[x]` done
 
-**Current position:** M0, M2 and the web (D1-D6) done; Tracks A (A0-A8), B and D merged into `main` on 2026-11-08; A9, C and E in progress on their branches.
+**Current position:** M0, M2, M3 and the web (D1-D6) done; Tracks A (A0-A8), B, C and D merged into `main` on 2026-11-08; A9, W and E pending on their branches.
 
 ---
 
@@ -50,8 +50,8 @@ The DealingWith Agent interprets requests against the project's scope and produc
 
 An external agent, with a token issued in the portal, requests quotes and pays within its mandate.
 
-- [ ] **MCP server** (C1). Done when: the eight tools and the `quote://` resource work over Streamable HTTP with the bearer header and the capability URL; unknown or revoked tokens get 401; scopes limit tools to the client's projects.
-- [ ] **Connection guide** (C2). Done when: `docs/mcp.md` documents auth and tools, and the snippets are verified against Claude Code locally.
+- [x] **MCP server** (C1). Done when: the eight tools and the `quote://` resource work over Streamable HTTP with the bearer header and the capability URL; unknown or revoked tokens get 401; scopes limit tools to the client's projects.
+- [x] **Connection guide** (C2). Done when: `docs/mcp.md` documents auth and tools, and the snippets are verified against Claude Code locally.
 
 ---
 

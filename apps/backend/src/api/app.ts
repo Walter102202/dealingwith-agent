@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { Hono } from 'hono';
 import { MockPaypalGateway } from '../integrations/paypal/mock.js';
 import { createMockPaypalRoutes } from '../integrations/paypal/mock-routes.js';
+import { mcpRoutes } from '../mcp/routes.js';
 import type { Deps } from '../workflows/deps.js';
 import type { ApiEnv } from './auth.js';
 import { onError } from './errors.js';
@@ -51,6 +52,7 @@ export function createApp(deps: Deps): Hono<ApiEnv> {
     dashboardRoutes(),
     demoRoutes(),
     webhookRoutes(),
+    mcpRoutes(),
   ])
     app.route('/', routes);
   if (deps.env.PAYPAL_MODE === 'mock' && deps.paypal instanceof MockPaypalGateway)
