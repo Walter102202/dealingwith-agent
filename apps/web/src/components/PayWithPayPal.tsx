@@ -1,12 +1,7 @@
-import {
-  AcceptQuoteResultSchema,
-  AppConfigSchema,
-  type Payment,
-  PaymentSchema,
-} from '@dealingwith/contracts';
+import { AcceptQuoteResultSchema, type Payment, PaymentSchema } from '@dealingwith/contracts';
 import { lazy, Suspense, useCallback, useState } from 'react';
 import { api, errorMessage } from '../api/client.js';
-import { useApi } from '../api/hooks.js';
+import { useAppConfig } from '../api/config.js';
 import { routes } from '../api/routes.js';
 import { assign } from '../lib/navigation.js';
 import { Button } from './Button.js';
@@ -22,14 +17,12 @@ interface PayWithPayPalProps {
   onPaid: (payment: Payment) => void;
 }
 
-const fetchConfig = () => api.get(routes.config, AppConfigSchema);
-
 /**
  * Accept and pay a quote version. Sandbox: the PayPal buttons. Mock: one
  * button that sends the browser to the mock approval page.
  */
 export function PayWithPayPal({ quoteId, version, amountCents, onPaid }: PayWithPayPalProps) {
-  const config = useApi(fetchConfig);
+  const config = useAppConfig();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
