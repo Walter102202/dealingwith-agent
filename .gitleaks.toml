@@ -1,0 +1,9 @@
+# Allowlist for the hygiene CI job (docs/ci-cd.md). Keep the default rules on; add one entry per
+# false positive, with the reason. A real secret is rotated, never allowlisted.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "The web fixtures' localStorage key name (apps/web/src/api/fixtures/state.ts) is a constant slug, not a credential"
+regexTarget = "line"
+regexes = ['''const STORAGE_KEY = ''']

@@ -19,8 +19,8 @@ branch push ──► CI (3 jobs, parallel, < 4 min each) ──► pull request
 | Job | Steps | Catches | Duration |
 |---|---|---|---|
 | `checks (lint, typecheck, test)` | `pnpm install --frozen-lockfile`, `pnpm lint`, `pnpm typecheck`, `pnpm test` | Lockfile drift, formatting, type errors, failing tests (351 tests in 73 files) | 2 min 15 s, measured on `main` on 2026-11-08 |
-| `build (production build, migrations, boot)` | `db:generate` must produce no diff; `pnpm build`; start `dist/index.js` with in-memory PGlite; `/healthz` answers `{"ok":true}` and `/login` serves the web build | Schema edited without its migration (Render would boot against a stale database); a build that passes typecheck but fails to compile or copy its prompts; a server that builds but does not start or does not serve the web | about 1 min expected (build 6 s and boot 1 s locally); confirm on the first run |
-| `hygiene (secrets, tracked files)` | `git ls-files` contains no `docs/hackathon/`, `.env`, `.env.*` (except `.env.example`), keys or certificates; `.gitignore` still lists `docs/hackathon/`, `.env`, `.data/`; the gitleaks CLI (pinned version, checksum-verified) over every commit of every branch | A secret or the private hackathon analysis reaching GitHub | under 1 min expected; confirm on the first run |
+| `build (production build, migrations, boot)` | `db:generate` must produce no diff; `pnpm build`; start `dist/index.js` with in-memory PGlite; `/healthz` answers `{"ok":true}` and `/login` serves the web build | Schema edited without its migration (Render would boot against a stale database); a build that passes typecheck but fails to compile or copy its prompts; a server that builds but does not start or does not serve the web | 25 s, measured on `main` on 2026-11-08 |
+| `hygiene (secrets, tracked files)` | `git ls-files` contains no `docs/hackathon/`, `.env`, `.env.*` (except `.env.example`), keys or certificates; `.gitignore` still lists `docs/hackathon/`, `.env`, `.data/`; the gitleaks CLI (pinned version, checksum-verified) over every commit of every branch | A secret or the private hackathon analysis reaching GitHub | 6 s, measured on `main` on 2026-11-08 (97 commits) |
 
 The drift check runs `drizzle-kit generate`, which asks interactively when a rename is ambiguous; in CI that would hang until the timeout. Generate renames locally and commit the SQL; CI only confirms there is nothing left to generate.
 
@@ -65,7 +65,7 @@ Merge method: merge commit or squash. Rebase-merging is disabled because it rewr
 2. Reproduce locally with the command in the table above.
 3. Fix with a new commit on the same branch; CI runs again on its own.
 4. If a test is flaky (passes locally, fails in CI without a code change), fix the cause the same day or quarantine it with `it.skip` plus an issue that names the owner. A quarantined test is a debt with a name, not a solved problem.
-5. If `hygiene` fails on gitleaks for a value that is not a secret (a fixture, a documented pattern), add an allowlist entry to `.gitleaks.toml` at the repository root, starting the file with `[extend]` and `useDefault = true` so the default rules stay on, with a comment that says what the value is. If it is a secret, rotate it in the provider immediately; the leaked value becomes worthless and history is not rewritten (Constitution, Article IV.6). Then remove it from the working tree with a normal commit.
+5. If `hygiene` fails on gitleaks for a value that is not a secret (a fixture, a documented pattern), add an entry to `.gitleaks.toml` at the repository root (it already extends the default rules), with a comment that says what the value is; prefer a line regex over a path so a real secret in the same file is still caught. If it is a secret, rotate it in the provider immediately; the leaked value becomes worthless and history is not rewritten (Constitution, Article IV.6). Then remove it from the working tree with a normal commit.
 
 ## Delivery
 
