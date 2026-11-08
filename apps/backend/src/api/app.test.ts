@@ -8,7 +8,7 @@ import {
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { signSession } from '../access/session.js';
 import { DEMO } from '../db/demo-data.js';
-import { businesses, clients, projects, requests, services } from '../db/schema.js';
+import { businesses, clients, projects, quotes, requests, services } from '../db/schema.js';
 import { createHarness } from '../test/workflow-harness.js';
 import { makeEvent } from '../workflows/events.js';
 import { fakeAgentPort } from '../workflows/fake-agent.js';
@@ -202,6 +202,37 @@ describe('createApp', () => {
     expect(received).not.toContain(foreignStorefrontEvent.id);
     controller.abort();
     await reader?.cancel();
+  });
+  test('a storefront quote of another business is not readable by a provider or client of ours', async () => {
+    const otherBusinessId = randomUUID();
+    const otherClientId = randomUUID();
+    const otherRequestId = randomUUID();
+    const otherQuoteId = randomUUID();
+    await h.deps.db
+      .insert(businesses)
+      .values({ id: otherBusinessId, name: 'Third business', country: 'US' });
+    await h.deps.db.insert(clients).values({
+      id: otherClientId,
+      businessId: otherBusinessId,
+      name: 'Third client',
+      email: 'third@example.test',
+    });
+    await h.deps.db.insert(requests).values({
+      id: otherRequestId,
+      clientId: otherClientId,
+      channel: 'web',
+      text: 'Storefront request of another business',
+    });
+    await h.deps.db.insert(quotes).values({
+      quoteId: otherQuoteId,
+      version: 1,
+      requestId: otherRequestId,
+      status: 'published',
+      explanation: 'Other tenant',
+    });
+    const path = `/api/quotes/${otherQuoteId}/versions`;
+    expect((await app.request(path, { headers: { cookie: provider } })).status).toBe(403);
+    expect((await app.request(path, { headers: { cookie } })).status).toBe(403);
   });
   test('resets demo data and returns JSON for missing API routes', async () => {
     expect((await app.request('/api/demo/reset', json({}, provider))).status).toBe(200);

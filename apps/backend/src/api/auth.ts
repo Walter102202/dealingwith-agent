@@ -1,8 +1,10 @@
 import type { Session } from '@dealingwith/contracts';
+import { eq } from 'drizzle-orm';
 import type { Context, MiddlewareHandler } from 'hono';
 import { getCookie } from 'hono/cookie';
 import { SESSION_COOKIE, verifySession } from '../access/session.js';
 import type { Db } from '../db/client.js';
+import { clients } from '../db/schema.js';
 import type { Env } from '../env.js';
 import { AppError } from '../lib/errors.js';
 import { getProject } from '../modules/projects/projects.js';
@@ -51,6 +53,16 @@ export async function requireOwnsQuote(
   const request = await getRequest(db, quote.requestId);
   if (session.role === 'client' && request.clientId !== session.clientId)
     throw new AppError('forbidden', 'You cannot access this quote', { status: 403 });
-  if (quote.projectId) await requireClientOwnsProject(db, quote.projectId, session);
+  if (quote.projectId) {
+    await requireClientOwnsProject(db, quote.projectId, session);
+  } else {
+    // Storefront quote: the tenant is the request's client, not a project.
+    const [client] = await db
+      .select({ businessId: clients.businessId })
+      .from(clients)
+      .where(eq(clients.id, request.clientId));
+    if (client?.businessId !== session.businessId)
+      throw new AppError('forbidden', 'You cannot access this quote', { status: 403 });
+  }
   return quote;
 }
