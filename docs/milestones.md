@@ -4,7 +4,7 @@ A working guide for the MVP build. Milestones are outcomes, not dates. Each stag
 
 Legend: `[ ]` not started · `[~]` in progress · `[x]` done
 
-**Current position:** M0, M2, M3, the web (D1-D6) and W done; Tracks A (A0-A8), B, C, D and W merged into `main` on 2026-11-08; A9 and E in progress; I waits for credentials.
+**Current position:** M0, M2, M3, the web (D1-D6), W, A9, E (E2) and I1 done; Tracks A, B, C, D, W, E and I1 merged into `main` on 2026-11-08; I2 (webhooks) in progress on `track/i`; I3 waits for the model API keys; I4 (Render) not started.
 
 ---
 
