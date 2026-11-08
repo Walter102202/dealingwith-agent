@@ -6,6 +6,14 @@ const ErrorBody = z.object({
   name: z.string().optional(),
   details: z.array(z.object({ issue: z.string().optional() })).optional(),
 });
+export class PaypalHttpError extends PaypalError {
+  constructor(
+    code: string,
+    readonly httpStatus: number,
+  ) {
+    super(code, [401, 403, 408, 429].includes(httpStatus) ? 503 : httpStatus);
+  }
+}
 export async function paypalJson(
   path: string,
   init: RequestInit,
@@ -13,7 +21,10 @@ export async function paypalJson(
 ): Promise<unknown> {
   let response: Response;
   try {
-    response = await fetch(`${SANDBOX_URL}${path}`, init);
+    response = await fetch(`${SANDBOX_URL}${path}`, {
+      ...init,
+      signal: AbortSignal.timeout(15_000),
+    });
   } catch {
     throw new PaypalError('PAYPAL_UNREACHABLE', 502);
   }
@@ -25,7 +36,7 @@ export async function paypalJson(
   }
   if (!response.ok) {
     const error = ErrorBody.safeParse(body);
-    throw new PaypalError(
+    throw new PaypalHttpError(
       error.success
         ? (error.data.details?.[0]?.issue ?? error.data.name ?? `HTTP_${response.status}`)
         : `HTTP_${response.status}`,
@@ -68,6 +79,12 @@ export function createTokenSource(options: {
     return token;
   }
   return {
+    invalidate(rejectedToken: string): void {
+      if (token === rejectedToken) {
+        token = undefined;
+        expiresAt = 0;
+      }
+    },
     async getAccessToken(): Promise<string> {
       if (token && now() < expiresAt) return token;
       pending ??= refresh().finally(() => {
