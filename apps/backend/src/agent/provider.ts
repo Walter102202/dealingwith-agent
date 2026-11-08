@@ -19,7 +19,7 @@ export type LlmEnv = {
 
 export const DEFAULT_MODELS: Record<LlmProvider, string> = {
   anthropic: 'claude-opus-5-5',
-  openai: 'gpt-5',
+  openai: 'gpt-6-astra',
   mock: 'mock-fixtures',
 };
 

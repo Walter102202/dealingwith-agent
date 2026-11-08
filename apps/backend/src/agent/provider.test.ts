@@ -26,10 +26,10 @@ describe('getModel', () => {
     expect(getModel({ ...env, LLM_MODEL: 'claude-sonnet-5-5' }).modelId).toBe('claude-sonnet-5-5');
   });
 
-  test('openai defaults to gpt-5 and LLM_MODEL overrides it', () => {
+  test('openai defaults to gpt-6-astra and LLM_MODEL overrides it', () => {
     const env = { LLM_PROVIDER: 'openai' as const, OPENAI_API_KEY: 'test-key' };
-    expect(getModel(env).modelId).toBe('gpt-5');
-    expect(getModel({ ...env, LLM_MODEL: 'gpt-5-mini' }).modelId).toBe('gpt-5-mini');
+    expect(getModel(env).modelId).toBe('gpt-6-astra');
+    expect(getModel({ ...env, LLM_MODEL: 'gpt-6-luna' }).modelId).toBe('gpt-6-luna');
   });
 
   test('accepts an env whose optional fields may be undefined (Zod-inferred Env)', () => {
@@ -43,6 +43,6 @@ describe('getModel', () => {
 
   test('an empty LLM_MODEL means the default', () => {
     const env = { LLM_PROVIDER: 'openai' as const, OPENAI_API_KEY: 'k', LLM_MODEL: '' };
-    expect(getModel(env).modelId).toBe('gpt-5');
+    expect(getModel(env).modelId).toBe('gpt-6-astra');
   });
 });
