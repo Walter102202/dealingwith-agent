@@ -43,3 +43,4 @@ Rules: one decision per file; never edit a past decision, write a new one that s
 - [2026-11-07 Quote line position keys](2026-11-07-quote-line-position-keys.md)
 - [2026-11-07 Configuration consumer test providers](2026-11-07-config-consumer-test-providers.md)
 - [2026-11-08 MCP tests pin the SDK 1.32.2 shapes for invalid input and 401](2026-11-08-mcp-sdk-validation-and-401-shapes.md) — invalid tool input is an isError result, a 401 is StreamableHTTPError code 401; the tests assert those shapes.
+- [2026-11-08 Demo script targets the hosted sandbox, with Claude Code as the agent](2026-11-08-demo-script-targets-hosted-sandbox.md) — the video is recorded on the hosted URL; one recording pause to add the MCP server.

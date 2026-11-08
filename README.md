@@ -2,31 +2,120 @@
 
 **Turn service requests into paid work.**
 
-A service business publishes its services and pricing rules once. Clients, or their AI agents, ask for work in plain language. The DealingWith Agent interprets the request against the contracted scope, prices it with deterministic rules, explains the price, and the client pays with PayPal. Humans use the web; agents use our MCP server. Both operate on the same versioned quotes and payments.
+Built for the PayPal AI Hackathon (November 2026). Public repository, MIT license.
 
-Built for the PayPal AI Hackathon (November 2026).
+## Problem and promise
 
-> **Status: work in progress.** The hosted demo, video and judge instructions will land here before submission.
+Freelancers and small service firms lose time preparing quotes and chasing payment for extras, and their clients increasingly delegate purchasing to AI assistants. Today a client's agent can buy a product from a catalog, but it cannot contract custom work whose scope and price change: "is this already included in what I paid for?" and "what does the extra cost, and why?" are unanswered.
 
-## Documents
+DealingWith Agent answers them. The hero flow is the change order during a project: the client asks for something, the agent says what is already included (US$0.00), what is extra and why, with a price derived from the provider's own rules, and the client, or their agent within a pre-authorized budget, pays with PayPal. The project updates with the new scope. Humans use the web; agents use our MCP server; both operate on the same versioned quotes and payments.
 
-- Design: [`docs/design/2026-11-07-dealingwith-agent-mvp-design.md`](docs/design/2026-11-07-dealingwith-agent-mvp-design.md)
-- Implementation plan: [`docs/plans/2026-11-07-dealingwith-agent-mvp-plan.md`](docs/plans/2026-11-07-dealingwith-agent-mvp-plan.md)
-- Milestones: [`docs/milestones.md`](docs/milestones.md)
-- Decisions: [`docs/decisions/`](docs/decisions/)
-- Conventions for coding agents: [`AGENTS.md`](AGENTS.md)
+## Demo
+
+- Hosted demo: `TBD: hosted URL`
+- Video: `TBD: video`
+- Demo logins (no password): on the login page choose "Enter as client (Mara)" or "Enter as provider (Andes Data Studio)".
+- PayPal sandbox buyer account for judges: `TBD: judge account`. This is test data, not a secret; the sandbox never moves real money.
+
+The demo business is Andes Data Studio, a data consultancy. Its client Lukas Retail GmbH (contact Mara Keller) contracted project P1, "Retail KPI dashboard", with three scope clauses: five views including a per-branch view (included), automations, scheduled emails and alerts (excluded), one data source, Shopify (included). Mara's agent holds mandate M1: at most US$100.00 per purchase and US$300.00 in total, backed by a PayPal authorization.
+
+## How judges test in two minutes
+
+Sign in as Mara. The project page has a request box labelled "Describe what you need". Type the five requests below, in order, from a reset state (the provider dashboard has a "Reset demo data" button).
+
+1. "I need a per-branch view and a summary email every Monday." The quote marks the per-branch view as included at US$0.00 (clause C1) and prices the Monday summary at US$80.00 (rule `S2.report.v1`), delivery 1 day. "Accept and pay with PayPal", pay with the judge account, and the project gains clause C4 "Weekly Monday summary email". Total paid: US$80.00.
+2. "Add our Amazon sales as a second source, no rush." Sent by Mara's agent over MCP, the quote comes to US$190.00 (US$150.00 base plus US$40.00 for one source). That is over the mandate's US$100.00 per-purchase limit, so the agent gets `approval_required` and an approval link for a human to pay. On the web the same quote shows "Accept and pay with PayPal".
+3. "Alert me by email when any branch's daily sales drop more than 20%." Sent by the agent, the US$60.00 alert (rule `S2.alert.v1`) is within the mandate: the agent's `accept_quote` returns `paid`, PayPal captures US$60.00 against the authorization, clause C5 is appended, and the project page updates live without a reload.
+4. "Send the Monday summary to our regional managers too." Already covered by the clause paid in request 1: included at US$0.00, nothing to pay. The engine respects paid additionals.
+5. "Make the dashboard load faster." One question back: is the slowness caused by data volume or by the dashboard design? Nothing is priced or published until it is answered.
+
+Requests 2 and 3 can also be typed on the web; the mandate only applies when the agent pays. To run them as the agent, see the next section.
+
+## Connect your agent
+
+On the project page, "Connect my agent" issues a token (shown once) and prints three snippets. Replace `<host>` and the token with yours.
+
+Claude Code:
+
+```text
+claude mcp add --transport http dealingwith https://<host>/mcp --header "Authorization: Bearer dwa_…"
+```
+
+Cursor (`.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "dealingwith": {
+      "url": "https://<host>/mcp",
+      "headers": { "Authorization": "Bearer dwa_…" }
+    }
+  }
+}
+```
+
+Claude Desktop and claude.ai custom connectors cannot send headers, so they use a capability URL. Settings → Connectors → Add custom connector, paste `https://<host>/mcp/dwa_…`, choose "No sign in". Treat the URL as a secret: anyone with the link can act as your agent.
+
+Tools: `list_services`, `get_project`, `request_quote`, `answer_questions`, `get_quote`, `accept_quote`, `get_payment`, `get_mandate`. `accept_quote` spends money only within the client's mandate; otherwise it returns an approval link. The full guide, with request and response shapes, is [`docs/mcp.md`](docs/mcp.md).
+
+## Architecture
+
+One Node process (Hono) serves the JSON API, the MCP endpoint, the PayPal webhook and the built web app. The agent produces line-item intents; a deterministic pricing engine turns them into amounts; a policy module gates agent spending against the mandate. Details in [`docs/architecture.md`](docs/architecture.md).
+
+```mermaid
+flowchart LR
+  Browser["Browser (React web app)"] -->|JSON API, SSE| Backend["Hono backend: API, MCP, webhooks, static web"]
+  Agent["MCP client (Claude Code, Claude Desktop, Cursor)"] -->|Streamable HTTP /mcp| Backend
+  Backend --> DB[("Postgres")]
+  Backend -->|orders, authorizations, captures| PayPal["PayPal sandbox"]
+  PayPal -->|webhooks| Backend
+  Backend -->|structured output| LLM["Claude or OpenAI"]
+```
+
+Design: [`docs/design/2026-11-07-dealingwith-agent-mvp-design.md`](docs/design/2026-11-07-dealingwith-agent-mvp-design.md). Plan: [`docs/plans/2026-11-07-dealingwith-agent-mvp-plan.md`](docs/plans/2026-11-07-dealingwith-agent-mvp-plan.md). Progress: [`docs/milestones.md`](docs/milestones.md). Deferred scope: [`docs/roadmap.md`](docs/roadmap.md).
+
+## PayPal flows
+
+- **Pay now.** Accepting a quote creates an order with intent `CAPTURE` and returns the approval link; after the buyer approves, our server captures the order (`apps/backend/src/workflows/accept-quote.ts`, `apps/backend/src/workflows/capture.ts`).
+- **Mandate funding.** "Authorize with PayPal" creates an order with intent `AUTHORIZE` for the funding amount; after approval we authorize it and the mandate becomes active, "Backed by PayPal authorization" (`apps/backend/src/workflows/mandate-funding.ts`).
+- **Agent pays within the mandate.** The policy module checks the limits and reserves the spend under a row lock, then we capture part of the authorization with `final_capture: false`; when a check fails the agent gets an approval link instead (`apps/backend/src/modules/policies/evaluate.ts`, `apps/backend/src/modules/policies/reserve.ts`, `apps/backend/src/workflows/accept-quote.ts`).
+- **Webhooks.** Every event is signature-verified, inserted once by `paypal_event_id`, and applied idempotently; a capture confirmed by webhook before the browser returns ends in the same state (`apps/backend/src/workflows/webhooks.ts`, `apps/backend/src/api/routes/webhooks.ts`).
+- **Idempotency keys.** Each payment has a unique key (`pay:<quoteId>:<version>` or `mandate:<quoteId>:<version>`) that is also the `PayPal-Request-Id` of every creating call, so a retry or a double click never creates a second payment (`apps/backend/src/modules/payments/payments.ts`).
+- **Gateway.** One interface with a mock for local work and a sandbox implementation for the hosted demo; money leaves our code only as integer cents (`apps/backend/src/integrations/paypal/`).
+
+## Evals and tests
+
+`pnpm test` runs 71 test files and 289 tests on an in-memory PostgreSQL (PGlite) with the mock PayPal gateway and the mock model; no credentials needed. The five scenarios in [`tests/scenarios/`](tests/scenarios/) drive the real HTTP API, pricing engine, policies and payment state machine with fixed agent outputs:
+
+1. `01-already-included`: a request covered by a contract clause or a paid additional is included at US$0.00 and creates no payment.
+2. `02-needs-info`: missing information produces a question and nothing is published.
+3. `03-mcp-then-web`: a quote requested over MCP is the same quote id and version on the web.
+4. `04-payment-pending`: a pending payment leaves the quote unpaid and the scope unchanged.
+5. `05-duplicates`: a duplicate accept, capture or webhook yields one payment and one additional.
+
+`pnpm eval:live` calls a real model (Anthropic or OpenAI, same prompts) on the five demo requests and grades structure and classification. It needs an API key and is not part of CI.
+
+## Known limits
+
+- Sandbox only. Live PayPal does not exist in this codebase.
+- MCP authentication is a per-agent bearer token, revocable from the portal. OAuth is the production path.
+- In live PayPal an authorization lasts 29 days with a 3-day honor period; sandbox authorizations do not expire. When the funding headroom falls below the per-purchase limit the mandate panel offers "Re-authorize". Vault is the production path for standing mandates.
+- Sessions are demo logins (signed cookies), not real authentication.
+- One business. The data model carries `business_id` everywhere; the UI manages one provider.
 
 ## Development
 
 ```bash
 pnpm install
-pnpm dev        # backend with tsx watch
+pnpm dev        # backend with tsx watch, web with Vite
 pnpm test       # vitest, all workspaces
 pnpm lint       # biome
 pnpm typecheck  # tsc --noEmit in every package
+pnpm build      # every package to dist/
+pnpm --filter @dealingwith/backend seed   # seed the demo data into DATABASE_URL
 ```
 
-Everything runs locally without credentials: `PAYPAL_MODE=mock`, `LLM_PROVIDER=mock` and an embedded PostgreSQL (PGlite). Copy `.env.example` to `.env` to change defaults.
+Everything runs locally without credentials: `PAYPAL_MODE=mock`, `LLM_PROVIDER=mock` and an embedded PostgreSQL (PGlite). Copy `.env.example` to `.env` to change defaults. Conventions for coding agents: [`AGENTS.md`](AGENTS.md). Decisions: [`docs/decisions/`](docs/decisions/).
 
 ## License
 
