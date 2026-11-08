@@ -25,6 +25,12 @@ describe('evaluate', () => {
       { funding: { fundingAmountCents: 200000, fundingCapturedCents: 195000 } },
     ],
     ['mandate_inactive', { status: 'pending' as const }],
+    ['mandate_inactive', { status: 'expired' as const }],
+    ['mandate_inactive', { status: 'revoked' as const }],
+    [
+      'funding_exhausted',
+      { funding: { ...mandate().funding, fundingExpiresAt: '2026-11-06T00:00:00Z' } },
+    ],
     ['over_total', { status: 'exhausted' as const, spentCents: 30000 }],
     ['mandate_expired', { expiresAt: '2026-11-06T00:00:00Z' }],
   ])('reports %s', (reason, patch) => {
@@ -35,7 +41,7 @@ describe('evaluate', () => {
         latestPublishedVersion: 1,
         now,
       }),
-    ).toMatchObject({ reason });
+    ).toMatchObject({ reason, outcome: 'needs_approval' });
   });
   test.each([2, null])('denies stale versions when latest is %s', (latestPublishedVersion) => {
     expect(

@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import type { ClientAgent, LineItemIntent } from '@dealingwith/contracts';
-import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { DEMO } from '../db/demo-data.js';
 import { payments } from '../db/schema.js';
+import { PaypalError } from '../integrations/paypal/gateway.js';
 import { getMandate, updateMandate } from '../modules/mandates/mandates.js';
 import { getProject } from '../modules/projects/projects.js';
 import { createQuoteVersion, getQuote, updateQuoteStatus } from '../modules/quotes/quotes.js';
@@ -119,15 +120,17 @@ describe('acceptQuote', () => {
     });
     expect((await getMandate(h.deps.db, DEMO.mandate.id)).spentCents).toBe(0);
   });
-  test('denies a pending mandate and offers human approval without a mandate', async () => {
+  test('offers human approval for a pending mandate and without a mandate', async () => {
     const q = await publishedQuote(h.deps, { intents: [intent()] });
     const input = { quoteId: q.id, version: 1, actor: { kind: 'agent' as const, agent: agent() } };
     expect(await acceptQuote(h.deps, input)).toMatchObject({
       reason: 'mandate_inactive',
-      status: 'denied',
+      status: 'approval_required',
+      approvalUrl: expect.any(String),
     });
     await updateMandate(h.deps.db, DEMO.mandate.id, { status: 'revoked' });
-    expect(await acceptQuote(h.deps, input)).toMatchObject({
+    const other = await publishedQuote(h.deps, { intents: [intent()] });
+    expect(await acceptQuote(h.deps, { ...input, quoteId: other.id })).toMatchObject({
       reason: 'no_mandate',
       status: 'approval_required',
     });
@@ -142,7 +145,11 @@ describe('acceptQuote', () => {
         version: 1,
         actor: { kind: 'agent', agent: agent() },
       }),
-    ).toMatchObject({ reason: 'funding_exhausted', status: 'denied' });
+    ).toMatchObject({
+      reason: 'funding_exhausted',
+      status: 'approval_required',
+      approvalUrl: expect.any(String),
+    });
     expect((await getMandate(h.deps.db, DEMO.mandate.id)).spentCents).toBe(0);
   });
   test('marks an included quote paid without creating a payment', async () => {
@@ -161,4 +168,35 @@ describe('acceptQuote', () => {
     });
     expect(await h.deps.db.select().from(payments)).toHaveLength(0);
   });
+  test.each(['INSTRUMENT_DECLINED', 'PAYPAL_UNAVAILABLE'])(
+    'falls back to one human order after %s, releasing the reservation once',
+    async (code) => {
+      await activateMandate(h.deps);
+      const q = await publishedQuote(h.deps, { intents: [intent('S2.alert')] });
+      vi.spyOn(h.paypal, 'captureAuthorization').mockRejectedValue(new PaypalError(code, 502));
+      const input = {
+        quoteId: q.id,
+        version: 1,
+        actor: { kind: 'agent' as const, agent: agent() },
+      };
+      const result = await acceptQuote(h.deps, input);
+      expect(result).toMatchObject({
+        status: 'approval_required',
+        reason: 'funding_exhausted',
+        approvalUrl: expect.any(String),
+        payment: { mode: 'pay_now' },
+      });
+      expect((await acceptQuote(h.deps, input)).payment?.id).toBe(result.payment?.id);
+      expect(await getMandate(h.deps.db, DEMO.mandate.id)).toMatchObject({
+        spentCents: 0,
+        funding: { fundingCapturedCents: 0 },
+      });
+      expect(
+        (await h.deps.db.select().from(payments)).map((p) => [p.mode, p.status]).sort(),
+      ).toEqual([
+        ['mandate', 'denied'],
+        ['pay_now', 'created'],
+      ]);
+    },
+  );
 });
