@@ -13,6 +13,7 @@ export function toPayment(row: typeof payments.$inferSelect): Payment {
   return PaymentSchema.parse(
     compact({
       ...row,
+      mandateId: row.mode === 'mandate' ? row.raw.mandateId : undefined,
       paypalOrderId: row.paypalOrderId ?? undefined,
       paypalAuthorizationId: row.paypalAuthorizationId ?? undefined,
       paypalCaptureId: row.paypalCaptureId ?? undefined,
