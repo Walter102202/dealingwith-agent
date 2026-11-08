@@ -2,6 +2,9 @@ import type { ReactNode } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { Layout } from './components/Layout.js';
 import { LoginPage } from './pages/LoginPage.js';
+import { MandateFundedPage } from './pages/MandateFundedPage.js';
+import { PayCancelPage } from './pages/PayCancelPage.js';
+import { PayReturnPage } from './pages/PayReturnPage.js';
 import { ProjectPage } from './pages/ProjectPage.js';
 import { StorefrontPage } from './pages/StorefrontPage.js';
 import { type Role, SessionProvider, useSession } from './session.js';
@@ -49,12 +52,12 @@ export function App() {
             path="/portal/mandates/:id/funded"
             element={
               <RequireSession as="client">
-                <Placeholder name="Mandate funded" />
+                <MandateFundedPage />
               </RequireSession>
             }
           />
-          <Route path="/pay/return" element={<Placeholder name="Payment" />} />
-          <Route path="/pay/cancel" element={<Placeholder name="Payment cancelled" />} />
+          <Route path="/pay/return" element={<PayReturnPage />} />
+          <Route path="/pay/cancel" element={<PayCancelPage />} />
           <Route
             path="/dashboard"
             element={

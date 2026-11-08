@@ -89,6 +89,22 @@ export function PayWithPayPal({ quoteId, version, amountCents, onPaid }: PayWith
 
   const sandbox = config.data.paypalMode === 'sandbox' && config.data.paypalClientId;
 
+  if (amountCents === 0) {
+    return (
+      <div className={styles.wrap}>
+        <Button variant="primary" busy={busy} onClick={() => void approveInMock()}>
+          Accept at no cost
+        </Button>
+        <p className="muted small">Nothing to pay: this is already covered by your scope.</p>
+        {error ? (
+          <p className="error" role="alert">
+            {error}
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <div className={styles.wrap}>
       {sandbox ? (
@@ -107,11 +123,7 @@ export function PayWithPayPal({ quoteId, version, amountCents, onPaid }: PayWith
           Approve in mock PayPal
         </Button>
       )}
-      <p className="muted small">
-        {amountCents === 0
-          ? 'Nothing to pay.'
-          : 'You approve the payment in PayPal; we capture it.'}
-      </p>
+      <p className="muted small">You approve the payment in PayPal; we capture it.</p>
       {error ? (
         <p className="error" role="alert">
           {error}
