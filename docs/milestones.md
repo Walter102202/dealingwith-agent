@@ -4,7 +4,7 @@ A working guide for the MVP build. Milestones are outcomes, not dates. Each stag
 
 Legend: `[ ]` not started · `[~]` in progress · `[x]` done
 
-**Current position:** M0 done, Phase 1 tracks may start.
+**Current position:** M0 done; Track A (A0-A8) merged into `main` on 2026-11-08; A9, B, C, D and E in progress on their branches.
 
 ---
 
