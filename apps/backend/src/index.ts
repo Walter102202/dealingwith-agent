@@ -3,8 +3,8 @@ import { resolve } from 'node:path';
 import { serve } from '@hono/node-server';
 import { createAgentPort } from './agent/port.js';
 import { createApp } from './api/app.js';
+import { migrateWhenReady } from './db/boot.js';
 import { closeDb, createDb } from './db/client.js';
-import { runMigrations } from './db/migrate.js';
 import { seedDemo } from './db/seed.js';
 import { loadEnv } from './env.js';
 import { createPaypalGateway } from './integrations/paypal/index.js';
@@ -18,10 +18,10 @@ import { processWebhook } from './workflows/webhooks.js';
 const envFile = ['.env', '../.env', '../../.env'].map((p) => resolve(p)).find(existsSync);
 if (envFile) process.loadEnvFile(envFile);
 const env = loadEnv();
-const db = await createDb(env.DATABASE_URL);
-await runMigrations(db);
-if (env.DEMO_MODE) await seedDemo(db);
 const logger = createLogger();
+const db = await createDb(env.DATABASE_URL);
+await migrateWhenReady(db, logger);
+if (env.DEMO_MODE) await seedDemo(db);
 const paypal = createPaypalGateway(env, {
   logger,
   deliverWebhook: async (event, headers) => {
