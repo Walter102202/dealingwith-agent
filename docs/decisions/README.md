@@ -33,3 +33,4 @@ Rules: one decision per file; never edit a past decision, write a new one that s
 - [2026-11-07 AG Studio from day one, trial mode without a key](2026-11-07-ag-studio-trial-first.md)
 - [2026-11-07 formatUsd lives in @dealingwith/contracts](2026-11-07-format-usd-in-contracts.md)
 - [2026-11-07 Payment.mandateId and scopeRef on rule intents](2026-11-07-payment-mandate-id-and-rule-scope-ref.md)
+- [2026-11-08 MCP endpoint: stateless Streamable HTTP, one server per request](2026-11-08-mcp-stateless-per-request.md) — every request authenticates the agent token and builds a fresh server and transport; no sessions.
