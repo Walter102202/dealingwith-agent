@@ -122,4 +122,4 @@ jobs:
           grep " gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz$" "gitleaks_${GITLEAKS_VERSION}_checksums.txt" | sha256sum --check --strict
           tar -xzf "gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" gitleaks
           cd "$GITHUB_WORKSPACE"
-          "$RUNNER_TEMP/gitleaks/gitleaks" git --redact --no-banner --exit-code 1 .
+          "$RUNNER_TEMP/gitleaks/gitleaks" git --redact --verbose --no-banner --exit-code 1 .
