@@ -170,7 +170,23 @@ Phase 3                                    S1 README final → S2 video → S3 D
 
 Each parallel track works in its own git worktree on a branch named `track/<letter>`; the integrator merges into `main` with merge commits in the order A, B, C, D, E (web after the API it depends on). Tracks only create files under their own folders (listed per task) plus their tests, so merges are trivial. Shared files (`packages/contracts`, `apps/backend/src/db`) are owned by Phase 0 and changed only by the integrator.
 
-Suggested calendar (America/Santiago): Sat 2026-11-08 Phase 0 morning, tracks A/B/D start afternoon; Sun 11-09 tracks continue, C starts, AG Studio pivot decision at 20:00; Mon 11-10 tracks finish, I1–I3; Tue 11-11 I4–I5, README, video draft; Wed 11-12 video final, Devpost by 15:00.
+Calendar (America/Santiago), revised 2026-11-07 evening after the independent critique. Track A finished A0–A8 on Fri 11-07; the real services move two days earlier.
+
+- Sat 11-08 morning: Walter's E1 (sandbox US business + US personal judge account, REST app, Render account, AG Studio trial key, Anthropic and OpenAI keys). A9 (Codex), B3, D1–D2. Spikes 1 and 4 as soon as the credentials exist.
+- Sat 11-08 evening: A on `main`; C1 starts from `main`; spike 3 (Render skeleton with MCP) and spike 2 (webhook signature through a tunnel); I1 starts on `track/i`.
+- Sun 11-09: B3 merged, C1–C2, D3–D6; I1 unit tests, I2 through the tunnel; spike 5 (live model, both providers); AG Studio decision by 12:00 (only if spike 4 failed).
+- Mon 11-10: merge C, D, E; I3 on both providers; I4 deploy `main`, register the webhook, fund the demo mandate; MCP from Claude Desktop against the hosted URL.
+- Tue 11-11: I5, README final, demo-script dry run from a reset state, video recorded.
+- Wed 11-12: video edited and uploaded by 11:00; Devpost submitted by 13:00; two-hour buffer; nothing after 15:00.
+- Mon 11-30: Walter re-authorizes the demo mandate's funding (judging 12-01 to 12-15; everything stays alive until 12-21).
+
+Spikes (throwaway scripts outside the tracks, results written to `docs/paypal-notes.md` or the decision log), each with what it must prove:
+
+1. **PayPal sandbox smoke** (needs the REST app): a `CAPTURE` order → approve with the judge account → capture; an `AUTHORIZE` order → authorize → read `expiration_time` → two partial captures with `final_capture: false`; the approve link `rel` and the return-URL query shape (`token`, `PayerID`); replaying `PayPal-Request-Id` returns the same order; leave one approved order to capture on Sunday to measure order expiry.
+2. **Webhook verification** (needs spike 1 and a tunnel such as `cloudflared`): one real `PAYMENT.CAPTURE.COMPLETED` verifies `SUCCESS` through `verify-webhook-signature`; "Resend" yields the same event id; headers arrive lowercase (I1 reads `paypal-transmission-id` and friends in lowercase); simulator events cannot be verified, only real ones.
+3. **Render skeleton** (needs the Render account): Hono + `@hono/mcp` hello on Starter with a Postgres instance; proves the build command (`corepack enable && pnpm install --frozen-lockfile && pnpm build`, Node 22), `/healthz`, migrations against Render Postgres (internal URL, no SSL; the external URL needs `sslmode=require`), and Claude Desktop plus Claude Code listing tools via `/mcp/<token>`. Current Render Postgres plan names are `basic-256mb` and up, not `starter`.
+4. **AG Studio without a key**: done 2026-11-07 at package level (`ag-studio@3.1.0` ships trial and watermark handling, so keyless rendering is expected); D6 confirms on screen at its first render and records the license entry point.
+5. **Live model** (needs both keys): requests 1 and 5 through `generateText` + `Output.object(AgentOutputSchema)` on Anthropic and OpenAI; both accept the schema (`strictObject`, a `.default(1)` and an optional record are the risky parts for OpenAI strict mode); latency measured; the default model chosen from the numbers.
 
 ### Phase briefs
 
@@ -857,6 +873,8 @@ Revised 2026-11-07 by the integrator (fool-proof revision, anchored to the contr
 ## Phase 2 — Integration (sequential, needs credentials)
 
 ### Task I1: Sandbox gateway (`integrations/paypal/sandbox.ts`)
+
+Note (critique 2026-11-07): webhook headers reach Hono lowercase (`paypal-transmission-id`, `paypal-transmission-time`, `paypal-transmission-sig`, `paypal-cert-url`, `paypal-auth-algo`); map `captureAuthorization`'s `invoiceId` to PayPal's `invoice_id`; `PAYPAL_WEBHOOK_ID` is optional (A9) so the smoke script runs before I2; events from PayPal's webhook simulator cannot be signature-verified, only real ones can.
 
 **Files:**
 - Create: `apps/backend/src/integrations/paypal/sandbox.ts`, `apps/backend/src/integrations/paypal/auth.ts`, `apps/backend/scripts/paypal-smoke.ts`
