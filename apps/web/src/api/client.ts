@@ -16,7 +16,7 @@ async function request<T>(
   schema: ZodType<T>,
 ): Promise<T> {
   if (FIXTURES_MODE) {
-    const { dispatch } = await import('./fixtures/handlers.js');
+    const { dispatch } = await import('./fixtures/dispatch.js');
     return schema.parse(await dispatch(method, path, body));
   }
   const init: RequestInit = {

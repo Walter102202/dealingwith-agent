@@ -165,7 +165,27 @@ const freshState = (): FixtureState => ({
   counters: { request: 0, quote: 0, payment: 0, order: 0, agent: 0 },
 });
 
-export let state: FixtureState = freshState();
+const STORAGE_KEY = 'dealingwith.fixtures.v1';
+
+function load(): FixtureState | null {
+  try {
+    const raw = globalThis.sessionStorage?.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as FixtureState) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Keeps the demo alive across the full-page redirects of the payment flow. */
+export function persist(): void {
+  try {
+    globalThis.sessionStorage?.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // Private windows and tests without storage simply stay in memory.
+  }
+}
+
+export let state: FixtureState = load() ?? freshState();
 
 /** Back to the seed. Funding and agents survive, like the backend's reset. */
 export function resetState(): void {
@@ -177,11 +197,13 @@ export function resetState(): void {
     state.mandate.funding = previous.mandate.funding;
     if (previous.mandate.status === 'active') state.mandate.status = 'active';
   }
+  persist();
 }
 
 /** Full reset, for tests: forgets the session, the agents and the funding too. */
 export function hardResetState(): void {
   state = freshState();
+  persist();
 }
 
 export const nowIso = () => new Date().toISOString();

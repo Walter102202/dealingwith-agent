@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { Layout } from './components/Layout.js';
 import { LoginPage } from './pages/LoginPage.js';
+import { StorefrontPage } from './pages/StorefrontPage.js';
 import { type Role, SessionProvider, useSession } from './session.js';
 
 /** Redirects to `/login` without a session; `as` narrows to one side of the demo. */
@@ -33,7 +34,7 @@ export function App() {
     <BrowserRouter>
       <SessionProvider>
         <Routes>
-          <Route path="/" element={<Placeholder name="Storefront" />} />
+          <Route path="/" element={<StorefrontPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route
             path="/portal/projects/:id"
