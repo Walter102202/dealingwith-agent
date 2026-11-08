@@ -96,3 +96,12 @@ The same code runs against PayPal sandbox, a real model and Render.
 - [ ] YouTube channel ready.
 - [ ] Devpost project draft opened.
 - [ ] Execution mode chosen (subagents, hybrid with Codex, or native).
+
+## W — Web polish after Track D
+
+The thirteen minors Track D's final review deferred, closed without changing the demo (`docs/plans/2026-11-08-web-polish-after-track-d.md`).
+
+- [ ] **Visible fixes** (W1). Done when: the dashboard title comes from the session, dead mandates offer no Authorize, the storefront receipt links back to the storefront, every money string is `formatUsd`, charts use the product palette.
+- [ ] **Correctness fixes** (W2). Done when: the other role is redirected to its own home, contract drift shows one readable sentence, quote line keys never collide, an already captured order in sandbox is reported as paid.
+- [ ] **Code health** (W3). Done when: `/api/config` is fetched once through a context and the fixtures handlers are split by domain with the same tests green.
+
