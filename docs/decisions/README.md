@@ -24,3 +24,4 @@ Rules: one decision per file; never edit a past decision, write a new one that s
 - [2026-11-07 formatUsd lives in @dealingwith/contracts](2026-11-07-format-usd-in-contracts.md)
 - [2026-11-07 Fixtures mode answers through the same contracts schemas as HTTP](2026-11-07-fixtures-pass-through-contracts.md)
 - [2026-11-07 Payment.mandateId and scopeRef on rule intents](2026-11-07-payment-mandate-id-and-rule-scope-ref.md)
+- [2026-11-07 AG Studio: saved dashboard definition, theme and license entry points](2026-11-07-ag-studio-definition-loading.md)
