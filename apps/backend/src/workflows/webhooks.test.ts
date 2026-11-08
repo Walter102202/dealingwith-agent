@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { issueAgentToken } from '../access/agent-tokens.js';
+import { createApp } from '../api/app.js';
 import { DEMO } from '../db/demo-data.js';
 import { payments, webhookEvents } from '../db/schema.js';
+import { loadEnv } from '../env.js';
+import { createPaypalGateway } from '../integrations/paypal/index.js';
 import { getMandate } from '../modules/mandates/mandates.js';
 import { getQuote } from '../modules/quotes/quotes.js';
 import { activateMandate, createHarness, publishedQuote } from '../test/workflow-harness.js';
@@ -18,6 +21,29 @@ afterEach(async () => {
 const body = (id: string, resource: object, event_type = 'PAYMENT.CAPTURE.COMPLETED') =>
   JSON.stringify({ id, event_type, resource });
 describe('processWebhook', () => {
+  test('rejects sandbox webhooks without a registered id and warns once at gateway startup', async () => {
+    const env = {
+      ...loadEnv({}),
+      PAYPAL_MODE: 'sandbox' as const,
+      PAYPAL_CLIENT_ID: 'test-client',
+      PAYPAL_CLIENT_SECRET: 'test-secret',
+    };
+    const warn = vi.fn();
+    h.deps.env = env;
+    h.deps.paypal = createPaypalGateway(env, { logger: { warn } });
+    const app = createApp(h.deps);
+    for (let i = 0; i < 2; i++) {
+      const response = await app.request('/api/webhooks/paypal', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: '{}',
+      });
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({ result: 'invalid_signature' });
+    }
+    expect(warn).toHaveBeenCalledExactlyOnceWith('paypal.webhook_id_missing');
+    expect(await h.deps.db.select().from(webhookEvents)).toHaveLength(0);
+  });
   test('reconciles an interrupted mandate capture using only its invoice id', async () => {
     await activateMandate(h.deps);
     const { agent } = await issueAgentToken(h.deps.db, {
