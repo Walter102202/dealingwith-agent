@@ -8,7 +8,8 @@ export const quotesHandlers = {
     return quoteFromText(body.text, projectId);
   },
 
-  async createRequest(body: { text: string }): Promise<Quote> {
+  /** `serviceId` is accepted as the API does; the fixture prices `Buy <service>` from the text. */
+  async createRequest(body: { text: string; serviceId?: string }): Promise<Quote> {
     return quoteFromText(body.text, undefined);
   },
 

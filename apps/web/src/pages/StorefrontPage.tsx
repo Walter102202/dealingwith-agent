@@ -25,8 +25,12 @@ export function StorefrontPage() {
 
   const isClient = session?.role === 'client';
 
-  const createRequest = async (text: string) => {
-    const result = await api.post(routes.requests.create, { text }, QuoteSchema);
+  const createRequest = async (text: string, serviceId?: string) => {
+    const result = await api.post(
+      routes.requests.create,
+      { text, ...(serviceId ? { serviceId } : {}) },
+      QuoteSchema,
+    );
     setQuote(result);
   };
 
@@ -43,7 +47,7 @@ export function StorefrontPage() {
     setBuying(service.id);
     setError(null);
     try {
-      await createRequest(`Buy ${service.name}`);
+      await createRequest(`Buy ${service.name}`, service.id);
     } catch (e) {
       setError(errorMessage(e));
     } finally {

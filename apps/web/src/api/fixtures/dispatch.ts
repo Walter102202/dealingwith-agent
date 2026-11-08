@@ -37,7 +37,7 @@ const TABLE: Route[] = [
   {
     method: 'POST',
     pattern: /^\/api\/requests$/,
-    run: (_m, b) => handlers.createRequest(b as { text: string }),
+    run: (_m, b) => handlers.createRequest(b as { text: string; serviceId?: string }),
   },
   {
     method: 'GET',

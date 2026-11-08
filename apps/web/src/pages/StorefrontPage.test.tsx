@@ -32,6 +32,28 @@ describe('StorefrontPage', () => {
     vi.clearAllMocks();
   });
 
+  it('Buy sends the service id so the backend prices the fixed service without the agent', async () => {
+    const services = handlers.services();
+    const s1 = services.find((s) => s.id === DEMO_IDS.S1);
+    if (!s1) throw new Error('S1 missing in fixtures');
+    const quote = await handlers.createRequest({ text: `Buy ${s1.name}`, serviceId: s1.id });
+    apiMock.get.mockImplementation(async (path: string) => {
+      if (path === routes.config) return config;
+      if (path === routes.services) return services;
+      throw new Error(`unexpected GET ${path}`);
+    });
+    apiMock.post.mockResolvedValue(quote);
+    renderWithProviders(<StorefrontPage />);
+    fireEvent.click((await screen.findAllByRole('button', { name: 'Buy' }))[0] as HTMLElement);
+    await waitFor(() => {
+      expect(apiMock.post).toHaveBeenCalledWith(
+        routes.requests.create,
+        { text: `Buy ${s1.name}`, serviceId: s1.id },
+        expect.anything(),
+      );
+    });
+  });
+
   it('after a zero-cost accept, refetches the quote and shows it as paid', async () => {
     const first = await handlers.createProjectRequest(DEMO_IDS.project, {
       text: 'I need a per-branch view and a summary email every Monday.',
