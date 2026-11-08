@@ -51,7 +51,7 @@ The DealingWith Agent interprets requests against the project's scope and produc
 An external agent, with a token issued in the portal, requests quotes and pays within its mandate.
 
 - [x] **MCP server** (C1). Done when: the eight tools and the `quote://` resource work over Streamable HTTP with the bearer header and the capability URL; unknown or revoked tokens get 401; scopes limit tools to the client's projects.
-- [ ] **Connection guide** (C2). Done when: `docs/mcp.md` documents auth and tools, and the snippets are verified against Claude Code locally.
+- [x] **Connection guide** (C2). Done when: `docs/mcp.md` documents auth and tools, and the snippets are verified against Claude Code locally.
 
 ---
 
