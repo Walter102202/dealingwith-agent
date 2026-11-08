@@ -23,10 +23,10 @@ The demo business is Andes Data Studio, a data consultancy. Its client Lukas Ret
 
 Sign in as Mara. The project page has a request box labelled "Describe what you need". Type the five requests below, in order, from a reset state (the provider dashboard has a "Reset demo data" button).
 
-1. "I need a per-branch view and a summary email every Monday." The quote marks the per-branch view as included at US$0.00 (clause C1) and prices the Monday summary at US$80.00 (rule `S2.report.v1`), delivery 1 day. "Accept and pay with PayPal", pay with the judge account, and the project gains clause C4 "Weekly Monday summary email". Total paid: US$80.00.
-2. "Add our Amazon sales as a second source, no rush." Sent by Mara's agent over MCP, the quote comes to US$190.00 (US$150.00 base plus US$40.00 for one source). That is over the mandate's US$100.00 per-purchase limit, so the agent gets `approval_required` and an approval link for a human to pay. On the web the same quote shows "Accept and pay with PayPal".
+1. "I need a per-branch view and a summary email every Monday." The quote marks the per-branch view as included at US$0.00 (clause C1) and prices the Monday summary at US$80.00 (rule `S2.report.v1`), delivery 1 day. Click "Pay with PayPal", approve on PayPal's page with the judge account, and PayPal brings you back to a receipt; the project gains clause C4 "Weekly Monday summary email". Total paid: US$80.00.
+2. "Add our Amazon sales as a second source, no rush." Sent by Mara's agent over MCP, the quote comes to US$190.00 (US$150.00 base plus US$40.00 for one source). That is over the mandate's US$100.00 per-purchase limit, so the agent gets `approval_required` and an approval link for a human to pay. On the web the same quote shows "Pay with PayPal" and a human pays it.
 3. "Alert me by email when any branch's daily sales drop more than 20%." Sent by the agent, the US$60.00 alert (rule `S2.alert.v1`) is within the mandate: the agent's `accept_quote` returns `paid`, PayPal captures US$60.00 against the authorization, clause C5 is appended, and the project page updates live without a reload.
-4. "Send the Monday summary to our regional managers too." Already covered by the clause paid in request 1: included at US$0.00, nothing to pay. The engine respects paid additionals.
+4. "Send the Monday summary to our regional managers too." Already covered by the clause paid in request 1: included at US$0.00, the button reads "Accept at no cost". The engine respects paid additionals.
 5. "Make the dashboard load faster." One question back: is the slowness caused by data volume or by the dashboard design? Nothing is priced or published until it is answered.
 
 Requests 2 and 3 can also be typed on the web; the mandate only applies when the agent pays. To run them as the agent, see the next section.
@@ -76,7 +76,7 @@ Design: [`docs/design/2026-11-07-dealingwith-agent-mvp-design.md`](docs/design/2
 
 ## PayPal flows
 
-- **Pay now.** Accepting a quote creates an order with intent `CAPTURE` and returns the approval link; after the buyer approves, our server captures the order (`apps/backend/src/workflows/accept-quote.ts`, `apps/backend/src/workflows/capture.ts`).
+- **Pay now.** Accepting a quote creates an order with intent `CAPTURE` and returns the approval link; the browser goes to PayPal's approval page (the mock approve page in mock mode), PayPal returns to `/pay/return`, and our server captures the order and shows the receipt. The same single path serves the web and the link the MCP tool hands to a human (`apps/backend/src/workflows/accept-quote.ts`, `apps/backend/src/workflows/capture.ts`).
 - **Mandate funding.** "Authorize with PayPal" creates an order with intent `AUTHORIZE` for the funding amount; after approval we authorize it and the mandate becomes active, "Backed by PayPal authorization" (`apps/backend/src/workflows/mandate-funding.ts`).
 - **Agent pays within the mandate.** The policy module checks the limits and reserves the spend under a row lock, then we capture part of the authorization with `final_capture: false`; when a check fails the agent gets an approval link instead (`apps/backend/src/modules/policies/evaluate.ts`, `apps/backend/src/modules/policies/reserve.ts`, `apps/backend/src/workflows/accept-quote.ts`).
 - **Webhooks.** Every event is signature-verified, inserted once by `paypal_event_id`, and applied idempotently; a capture confirmed by webhook before the browser returns ends in the same state (`apps/backend/src/workflows/webhooks.ts`, `apps/backend/src/api/routes/webhooks.ts`).

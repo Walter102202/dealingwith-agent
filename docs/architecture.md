@@ -25,7 +25,7 @@ Eleven tables. A `request` (web or MCP, with its channel and agent) produces `qu
 
 ## Two payment flows
 
-**Pay now.** Accept creates a `pay_now` payment and a PayPal order with intent `CAPTURE` under `PayPal-Request-Id = pay:<quoteId>:<version>`; the buyer approves in PayPal; our server captures the order; the payment is `captured`, the quote `paid`, the extra lines become clauses. The webhook `PAYMENT.CAPTURE.COMPLETED` reaches the same state idempotently, whichever arrives first.
+**Pay now.** Accept creates a `pay_now` payment and a PayPal order with intent `CAPTURE` under `PayPal-Request-Id = pay:<quoteId>:<version>`; the browser follows the approval link to PayPal (the mock approve page in mock mode); PayPal returns to `/pay/return?token=<orderId>`, which calls our capture route; the payment is `captured`, the quote `paid`, the extra lines become clauses. The webhook `PAYMENT.CAPTURE.COMPLETED` reaches the same state idempotently, whichever arrives first.
 
 **Mandate.** The client sets limits (mandate `pending`), then funds it: an order with intent `AUTHORIZE` is approved once and authorized, and the mandate becomes `active`. When an agent accepts a quote, `policies.reserve` checks, inside one transaction with a row lock on the mandate, that it is active and unexpired, same project and currency, that the version is the latest published, and that per-purchase, total and funding headroom all hold; then the server captures part of the authorization with `final_capture: false`. Any failed check returns `approval_required` with the reason and a pay-now approval link; a PayPal failure releases the reservation.
 
