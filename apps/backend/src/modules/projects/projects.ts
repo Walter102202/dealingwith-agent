@@ -14,6 +14,11 @@ export async function getProject(db: Db, projectId: string): Promise<Project> {
 export async function listProjectsForClient(db: Db, clientId: string): Promise<Project[]> {
   return (await db.select().from(projects).where(eq(projects.clientId, clientId))).map(toProject);
 }
+export async function listProjectsForBusiness(db: Db, businessId: string): Promise<Project[]> {
+  return (await db.select().from(projects).where(eq(projects.businessId, businessId))).map(
+    toProject,
+  );
+}
 export async function appendPaidClauses(
   db: Db,
   projectId: string,

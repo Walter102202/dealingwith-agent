@@ -4,10 +4,20 @@ import { listAgents } from '../../access/agent-tokens.js';
 import { getService } from '../../modules/catalog/catalog.js';
 import { findMandateForProject } from '../../modules/mandates/mandates.js';
 import { listPaymentsForProject } from '../../modules/payments/payments.js';
+import { listProjectsForBusiness, listProjectsForClient } from '../../modules/projects/projects.js';
 import { listQuotesForProject } from '../../modules/quotes/quotes.js';
 import { type ApiEnv, requireClientOwnsProject, requireSession } from '../auth.js';
 export function projectRoutes() {
   const app = new Hono<ApiEnv>();
+  app.get('/api/projects', requireSession(), async (c) => {
+    const db = c.get('deps').db;
+    const session = c.get('session');
+    return c.json(
+      session.role === 'client'
+        ? await listProjectsForClient(db, session.clientId)
+        : await listProjectsForBusiness(db, session.businessId),
+    );
+  });
   app.get('/api/projects/:id', requireSession(), async (c) => {
     const db = c.get('deps').db;
     const project = await requireClientOwnsProject(

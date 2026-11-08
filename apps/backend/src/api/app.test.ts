@@ -1,6 +1,14 @@
-import { AcceptQuoteResultSchema, ProjectViewSchema, QuoteSchema } from '@dealingwith/contracts';
+import { randomUUID } from 'node:crypto';
+import {
+  AcceptQuoteResultSchema,
+  ProjectSchema,
+  ProjectViewSchema,
+  QuoteSchema,
+} from '@dealingwith/contracts';
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
+import { signSession } from '../access/session.js';
 import { DEMO } from '../db/demo-data.js';
+import { businesses, clients, projects, services } from '../db/schema.js';
 import { createHarness } from '../test/workflow-harness.js';
 import { makeEvent } from '../workflows/events.js';
 import { fakeAgentPort } from '../workflows/fake-agent.js';
@@ -119,5 +127,64 @@ describe('createApp', () => {
     );
     expect(data.project.scopeClauses).toHaveLength(3);
     expect((await app.request('/api/missing')).status).toBe(404);
+  });
+  test('lists only the client projects or the provider business projects and requires a session', async () => {
+    const secondClientId = randomUUID();
+    const secondProjectId = randomUUID();
+    const foreignBusinessId = randomUUID();
+    const foreignClientId = randomUUID();
+    const foreignServiceId = randomUUID();
+    const foreignProjectId = randomUUID();
+    await h.deps.db
+      .insert(businesses)
+      .values({ id: foreignBusinessId, name: 'Other business', country: 'US' });
+    await h.deps.db.insert(clients).values([
+      {
+        id: secondClientId,
+        businessId: DEMO.business.id,
+        name: 'Second client',
+        email: 'second@example.test',
+      },
+      {
+        id: foreignClientId,
+        businessId: foreignBusinessId,
+        name: 'Other client',
+        email: 'other@example.test',
+      },
+    ]);
+    await h.deps.db
+      .insert(services)
+      .values({ id: foreignServiceId, businessId: foreignBusinessId, name: 'Other service' });
+    await h.deps.db.insert(projects).values([
+      {
+        id: secondProjectId,
+        businessId: DEMO.business.id,
+        clientId: secondClientId,
+        serviceId: DEMO.services.S1.id,
+        title: 'Second project',
+      },
+      {
+        id: foreignProjectId,
+        businessId: foreignBusinessId,
+        clientId: foreignClientId,
+        serviceId: foreignServiceId,
+        title: 'Other business project',
+      },
+    ]);
+    const anonymous = await app.request('/api/projects');
+    expect(anonymous.status).toBe(401);
+    expect(await anonymous.json()).toMatchObject({ error: { code: 'unauthenticated' } });
+    const list = async (sessionCookie: string) => {
+      const response = await app.request('/api/projects', { headers: { cookie: sessionCookie } });
+      expect(response.status).toBe(200);
+      return ProjectSchema.array()
+        .parse(await response.json())
+        .map((p) => p.id)
+        .sort();
+    };
+    expect(await list(cookie)).toEqual([DEMO.project.id]);
+    expect(await list(provider)).toEqual([DEMO.project.id, secondProjectId].sort());
+    const emptyCookie = `dw_session=${signSession({ role: 'client', clientId: randomUUID(), businessId: DEMO.business.id, name: 'No projects' }, h.deps.env.SESSION_SECRET, { now: h.deps.now() })}`;
+    expect(await list(emptyCookie)).toEqual([]);
   });
 });
