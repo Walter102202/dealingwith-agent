@@ -72,6 +72,18 @@ describe('submitRequest', () => {
     });
     expect(await h.deps.db.select().from(requests)).toHaveLength(0);
   });
+  test('uses the agent when the selected service has other pricing rules besides its fixed one', async () => {
+    const run = vi.spyOn(h.deps.agent, 'runAgent');
+    const q = await submitRequest(h.deps, {
+      clientId: DEMO.client.id,
+      projectId: DEMO.project.id,
+      channel: 'mcp',
+      serviceId: DEMO.services.S3.id,
+      text: 'Add our Amazon sales as a second source.',
+    });
+    expect(q.totalCents).toBe(19000);
+    expect(run).toHaveBeenCalledTimes(1);
+  });
   test('uses the agent when the selected service has multiple fixed rules', async () => {
     const run = vi.spyOn(h.deps.agent, 'runAgent');
     const q = await submitRequest(h.deps, {

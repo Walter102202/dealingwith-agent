@@ -89,8 +89,10 @@ export async function submitRequest(deps: Deps, input: SubmitInput): Promise<Quo
       : undefined;
   if (service && service.businessId !== (await getClient(deps.db, input.clientId)).businessId)
     throw new AppError('forbidden', 'Service belongs to another business', { status: 403 });
-  const fixedRules = service?.pricingRules.filter((rule) => rule.type === 'fixed') ?? [];
-  const fixed = fixedRules.length === 1 ? fixedRules[0] : undefined;
+  // Only a service priced by one fixed rule is bought without the agent; a service with
+  // per-unit or multiplier rules too (S3) needs the agent to count units and conditions.
+  const onlyRule = service?.pricingRules.length === 1 ? service.pricingRules[0] : undefined;
+  const fixed = onlyRule?.type === 'fixed' ? onlyRule : undefined;
   const request = previous
     ? await getRequest(deps.db, previous.requestId)
     : await createRequest(deps.db, input as Extract<SubmitInput, { text: string }>);
