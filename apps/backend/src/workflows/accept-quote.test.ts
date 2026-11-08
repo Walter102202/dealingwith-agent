@@ -9,6 +9,7 @@ import { getProject } from '../modules/projects/projects.js';
 import { createQuoteVersion, getQuote, updateQuoteStatus } from '../modules/quotes/quotes.js';
 import { activateMandate, createHarness, publishedQuote } from '../test/workflow-harness.js';
 import { acceptQuote } from './accept-quote.js';
+import { captureApprovedOrder } from './capture.js';
 
 let h: Awaited<ReturnType<typeof createHarness>>;
 beforeEach(async () => {
@@ -53,6 +54,49 @@ describe('acceptQuote', () => {
     expect(await h.deps.db.select().from(payments)).toMatchObject([{ raw: { orderAttempts: 2 } }]);
     await h.paypal.approve(renewed.payment?.paypalOrderId ?? '');
     expect((await getQuote(h.deps.db, q.id)).status).toBe('paid');
+  });
+  test('reconciles an order PayPal already captured instead of renewing it', async () => {
+    const q = await publishedQuote(h.deps, { intents: [intent()] });
+    const input = {
+      quoteId: q.id,
+      version: 1,
+      actor: { kind: 'web' as const, clientId: DEMO.client.id },
+    };
+    const first = await acceptQuote(h.deps, input);
+    const orderId = first.payment?.paypalOrderId ?? '';
+    const live = await h.paypal.getOrder(orderId);
+    vi.spyOn(h.paypal, 'getOrder').mockResolvedValue({
+      ...live,
+      status: 'COMPLETED',
+      captureId: 'MOCK-CAP-EXTERNAL',
+    });
+    const create = vi.spyOn(h.paypal, 'createOrder');
+    const again = await acceptQuote(h.deps, input);
+    expect(again.status).toBe('paid');
+    expect(again.payment).toMatchObject({
+      id: first.payment?.id,
+      status: 'captured',
+      paypalCaptureId: 'MOCK-CAP-EXTERNAL',
+    });
+    expect(create).not.toHaveBeenCalled();
+    expect(await h.deps.db.select().from(payments)).toHaveLength(1);
+    expect((await getQuote(h.deps.db, q.id)).status).toBe('paid');
+  });
+  test('refuses to capture an order whose quote was already paid another way', async () => {
+    const q = await publishedQuote(h.deps, { intents: [intent()] });
+    const first = await acceptQuote(h.deps, {
+      quoteId: q.id,
+      version: 1,
+      actor: { kind: 'web' as const, clientId: DEMO.client.id },
+    });
+    const orderId = first.payment?.paypalOrderId ?? '';
+    await updateQuoteStatus(h.deps.db, { quoteId: q.id, version: 1, status: 'paid' });
+    const capture = vi.spyOn(h.paypal, 'captureOrder');
+    await expect(captureApprovedOrder(h.deps, { orderId })).rejects.toMatchObject({
+      code: 'quote_already_paid',
+      status: 409,
+    });
+    expect(capture).not.toHaveBeenCalled();
   });
   test.each(['ORDER_EXPIRED', 'RESOURCE_NOT_FOUND'])(
     'renews when getOrder returns %s',
@@ -206,12 +250,12 @@ describe('acceptQuote', () => {
     });
     expect(await h.deps.db.select().from(payments)).toHaveLength(0);
   });
-  test.each(['INSTRUMENT_DECLINED', 'PAYPAL_UNAVAILABLE'])(
-    'falls back to one human order after %s, releasing the reservation once',
+  test.each(['INSTRUMENT_DECLINED', 'AUTHORIZATION_AMOUNT_EXCEEDED'])(
+    'falls back to one human order after the definitive decline %s, releasing the reservation once',
     async (code) => {
       await activateMandate(h.deps);
       const q = await publishedQuote(h.deps, { intents: [intent('S2.alert')] });
-      vi.spyOn(h.paypal, 'captureAuthorization').mockRejectedValue(new PaypalError(code, 502));
+      vi.spyOn(h.paypal, 'captureAuthorization').mockRejectedValue(new PaypalError(code, 422));
       const input = {
         quoteId: q.id,
         version: 1,
@@ -237,4 +281,43 @@ describe('acceptQuote', () => {
       ]);
     },
   );
+  test.each([
+    ['PAYPAL_UNAVAILABLE', 502],
+    ['INTERNAL_SERVICE_ERROR', 500],
+  ])(
+    'keeps the mandate payment and its reservation after the ambiguous PayPal error %s',
+    async (code, status) => {
+      await activateMandate(h.deps);
+      const q = await publishedQuote(h.deps, { intents: [intent('S2.alert')] });
+      vi.spyOn(h.paypal, 'captureAuthorization').mockRejectedValue(new PaypalError(code, status));
+      const input = {
+        quoteId: q.id,
+        version: 1,
+        actor: { kind: 'agent' as const, agent: agent() },
+      };
+      await expect(acceptQuote(h.deps, input)).rejects.toMatchObject({ code, status });
+      expect(await getMandate(h.deps.db, DEMO.mandate.id)).toMatchObject({ spentCents: 6000 });
+      expect((await h.deps.db.select().from(payments)).map((p) => [p.mode, p.status])).toEqual([
+        ['mandate', 'created'],
+      ]);
+    },
+  );
+  test('a pending authorization capture is ambiguous: nothing is released or denied', async () => {
+    await activateMandate(h.deps);
+    const q = await publishedQuote(h.deps, { intents: [intent('S2.alert')] });
+    const live = h.paypal.captureAuthorization.bind(h.paypal);
+    vi.spyOn(h.paypal, 'captureAuthorization').mockImplementation(async (id, i) => ({
+      ...(await live(id, i)),
+      status: 'PENDING',
+    }));
+    await expect(
+      acceptQuote(h.deps, { quoteId: q.id, version: 1, actor: { kind: 'agent', agent: agent() } }),
+    ).rejects.toMatchObject({ code: 'CAPTURE_NOT_COMPLETED', status: 502 });
+    // The reservation stays and no human order is opened. The mock's completed-capture webhook
+    // may already have reconciled the mandate payment by invoice id, which is the real-world path.
+    expect(await getMandate(h.deps.db, DEMO.mandate.id)).toMatchObject({ spentCents: 6000 });
+    const rows = await h.deps.db.select().from(payments);
+    expect(rows.map((p) => p.mode)).toEqual(['mandate']);
+    expect(['created', 'captured']).toContain(rows[0]?.status);
+  });
 });

@@ -1,7 +1,8 @@
 import type { AcceptQuoteReason, AcceptQuoteResult, Quote } from '@dealingwith/contracts';
 import { PaypalError } from '../integrations/paypal/gateway.js';
+import { AppError } from '../lib/errors.js';
 import { getPayment, paymentRow, updatePayment } from '../modules/payments/payments.js';
-import { rawRecord } from './capture.js';
+import { markPaid, rawRecord } from './capture.js';
 import type { Deps } from './deps.js';
 import { makeEvent } from './events.js';
 
@@ -19,7 +20,23 @@ export async function requestApproval(
   if (row.paypalOrderId) {
     try {
       const order = await deps.paypal.getOrder(row.paypalOrderId);
-      renew ||= !['CREATED', 'APPROVED'].includes(order.status);
+      if (order.status === 'COMPLETED') {
+        // PayPal already took the money (a crash between capture and markPaid, or a webhook
+        // rejected before the webhook id existed). Reconcile; never open a second order.
+        if (!order.captureId || order.amountCents !== quote.totalCents)
+          throw new AppError('payment_mismatch', 'PayPal capture could not be verified', {
+            status: 409,
+          });
+        const paid = await markPaid(deps, {
+          quoteId: quote.id,
+          version: quote.version,
+          paymentId: row.id,
+          captureId: order.captureId,
+          raw: order.raw,
+        });
+        return { status: 'paid', ...(paid.payment ? { payment: paid.payment } : {}) };
+      }
+      renew ||= order.status === 'EXPIRED' || order.status === 'VOIDED';
     } catch (error) {
       if (
         !(error instanceof PaypalError) ||

@@ -165,7 +165,8 @@ export async function acceptQuote(
             invoiceId: `mandate:${quote.id}:${quote.version}`,
           },
         );
-        if (capture.status !== 'COMPLETED') throw new PaypalError('CAPTURE_NOT_COMPLETED');
+        // PENDING may still complete at PayPal: ambiguous, so treated like a 5xx below.
+        if (capture.status !== 'COMPLETED') throw new PaypalError('CAPTURE_NOT_COMPLETED', 502);
         if (capture.amountCents !== quote.totalCents)
           throw new AppError('payment_mismatch', 'Captured amount differs from the quote', {
             status: 409,
@@ -179,7 +180,11 @@ export async function acceptQuote(
         });
         return { status: 'paid', ...(paid.payment ? { payment: paid.payment } : {}) };
       } catch (error) {
-        if (!(error instanceof PaypalError)) throw error;
+        // Only a definitive decline (4xx: amount exceeded, instrument declined, authorization
+        // gone) releases the reservation and offers a human order. A 5xx, a timeout or a pending
+        // capture may still have taken the money: keep the payment and the spend as they are and
+        // let the caller retry with the same idempotency key (the webhook reconciles by invoice).
+        if (!(error instanceof PaypalError) || error.status >= 500) throw error;
         await deps.db.transaction(async (tx) => {
           const [locked] = await tx
             .select()

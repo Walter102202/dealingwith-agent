@@ -12,7 +12,7 @@ import {
   updatePayment,
 } from '../modules/payments/payments.js';
 import { appendPaidClauses, getProject } from '../modules/projects/projects.js';
-import { toQuote, updateQuoteStatus } from '../modules/quotes/quotes.js';
+import { getQuote, toQuote, updateQuoteStatus } from '../modules/quotes/quotes.js';
 import type { Deps } from './deps.js';
 import { makeEvent } from './events.js';
 export const rawRecord = (raw: unknown): Record<string, unknown> =>
@@ -106,6 +106,14 @@ export async function captureApprovedOrder(
   const payment = await findPaymentByOrderId(deps.db, input.orderId);
   if (!payment) throw notFound('payment', input.orderId);
   if (payment.status === 'captured') return payment;
+  if ((await getQuote(deps.db, payment.quoteId, payment.quoteVersion)).status === 'paid')
+    throw new AppError(
+      'quote_already_paid',
+      'This quote was already paid through another payment',
+      {
+        status: 409,
+      },
+    );
   const row = await paymentRow(deps.db, payment.id);
   try {
     const capture = await deps.paypal.captureOrder(input.orderId, row.idempotencyKey);
