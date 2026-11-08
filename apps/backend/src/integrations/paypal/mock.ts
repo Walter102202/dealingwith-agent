@@ -89,6 +89,7 @@ export class MockPaypalGateway implements PaypalGateway {
   }
   async approve(orderId: string, payerId = 'MOCKPAYER01'): Promise<void> {
     const order = this.order(orderId);
+    if (order.status === 'EXPIRED') throw new PaypalError('ORDER_EXPIRED');
     if (order.status !== 'CREATED') return;
     order.status = 'APPROVED';
     await this.emitWebhook('CHECKOUT.ORDER.APPROVED', {
@@ -97,6 +98,7 @@ export class MockPaypalGateway implements PaypalGateway {
     });
   }
   private ready(order: Order, intent: OrderInput['intent']): void {
+    if (order.status === 'EXPIRED') throw new PaypalError('ORDER_EXPIRED');
     if (order.intent !== intent) throw new PaypalError('ORDER_INTENT_MISMATCH');
     if (order.status === 'COMPLETED') throw new PaypalError('ORDER_ALREADY_CAPTURED');
     if (order.status !== 'APPROVED') throw new PaypalError('ORDER_NOT_APPROVED');
@@ -216,6 +218,9 @@ export class MockPaypalGateway implements PaypalGateway {
   }
   events(): MockWebhookEvent[] {
     return structuredClone(this.emitted);
+  }
+  expireOrder(orderId: string): void {
+    this.order(orderId).status = 'EXPIRED';
   }
   private validateAmount(cents: number): void {
     if (!Number.isSafeInteger(cents) || cents < 0) throw new PaypalError('INVALID_AMOUNT');

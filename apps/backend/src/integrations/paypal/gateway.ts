@@ -1,6 +1,6 @@
 import { AppError } from '../../lib/errors.js';
 export type OrderIntent = 'CAPTURE' | 'AUTHORIZE';
-export type OrderStatus = 'CREATED' | 'APPROVED' | 'COMPLETED' | 'VOIDED';
+export type OrderStatus = 'CREATED' | 'APPROVED' | 'COMPLETED' | 'VOIDED' | 'EXPIRED';
 export type CaptureResult = {
   captureId: string;
   status: 'COMPLETED' | 'PENDING' | 'DECLINED';

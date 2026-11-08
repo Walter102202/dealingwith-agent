@@ -32,6 +32,44 @@ const agent = (): ClientAgent => ({
   createdAt: new Date(0).toISOString(),
 });
 describe('acceptQuote', () => {
+  test('renews an expired order once and the new approval URL pays the quote', async () => {
+    const q = await publishedQuote(h.deps, { intents: [intent()] });
+    const input = {
+      quoteId: q.id,
+      version: 1,
+      actor: { kind: 'web' as const, clientId: DEMO.client.id },
+    };
+    const first = await acceptQuote(h.deps, input);
+    const oldId = first.payment?.paypalOrderId ?? '';
+    h.paypal.expireOrder(oldId);
+    const [renewed, repeated] = await Promise.all([
+      acceptQuote(h.deps, input),
+      acceptQuote(h.deps, input),
+    ]);
+    expect(renewed.payment?.id).toBe(first.payment?.id);
+    expect(renewed.payment?.paypalOrderId).not.toBe(oldId);
+    expect(repeated.approvalUrl).toBe(renewed.approvalUrl);
+    expect(renewed.approvalUrl).toContain(renewed.payment?.paypalOrderId);
+    expect(await h.deps.db.select().from(payments)).toMatchObject([{ raw: { orderAttempts: 2 } }]);
+    await h.paypal.approve(renewed.payment?.paypalOrderId ?? '');
+    expect((await getQuote(h.deps.db, q.id)).status).toBe('paid');
+  });
+  test.each(['ORDER_EXPIRED', 'RESOURCE_NOT_FOUND'])(
+    'renews when getOrder returns %s',
+    async (code) => {
+      const q = await publishedQuote(h.deps, { intents: [intent()] });
+      const input = {
+        quoteId: q.id,
+        version: 1,
+        actor: { kind: 'web' as const, clientId: DEMO.client.id },
+      };
+      const first = await acceptQuote(h.deps, input);
+      vi.spyOn(h.paypal, 'getOrder').mockRejectedValueOnce(new PaypalError(code, 404));
+      const next = await acceptQuote(h.deps, input);
+      expect(next.payment?.paypalOrderId).not.toBe(first.payment?.paypalOrderId);
+      expect(next.status).toBe('approval_required');
+    },
+  );
   test('web acceptance and concurrent repeats reuse one payment and approval URL', async () => {
     const q = await publishedQuote(h.deps, { intents: [intent()] });
     const input = {

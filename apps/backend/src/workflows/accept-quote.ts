@@ -13,7 +13,6 @@ import { findMandateForProject, getMandate } from '../modules/mandates/mandates.
 import {
   createPayment,
   findPaymentForQuoteVersion,
-  getPayment,
   paymentRow,
   updatePayment,
 } from '../modules/payments/payments.js';
@@ -25,9 +24,9 @@ import {
   updateQuoteStatus,
 } from '../modules/quotes/quotes.js';
 import { getRequest } from '../modules/requests/requests.js';
-import { markPaid, rawRecord } from './capture.js';
+import { markPaid } from './capture.js';
 import type { Deps } from './deps.js';
-import { makeEvent } from './events.js';
+import { requestApproval } from './pay-now.js';
 
 type Actor = { kind: 'web'; clientId: string } | { kind: 'agent'; agent: ClientAgent };
 type Prepared =
@@ -212,37 +211,5 @@ export async function acceptQuote(
     });
     row = await paymentRow(deps.db, payment.id);
   }
-  let approvalUrl = typeof row.raw.approveUrl === 'string' ? row.raw.approveUrl : undefined;
-  if (!row.paypalOrderId || !approvalUrl) {
-    const order = await deps.paypal.createOrder({
-      intent: 'CAPTURE',
-      amountCents: quote.totalCents,
-      customId: `quote:${quote.id}:${quote.version}`,
-      requestId: row.idempotencyKey,
-      returnUrl: `${deps.env.APP_URL}/pay/return`,
-      cancelUrl: `${deps.env.APP_URL}/pay/cancel`,
-    });
-    approvalUrl = order.approveUrl;
-    await updatePayment(deps.db, payment.id, {
-      paypalOrderId: order.orderId,
-      raw: { ...row.raw, ...rawRecord(order.raw), approveUrl: approvalUrl },
-    });
-  }
-  const reason = prepared.reason ?? (row.raw.reason as AcceptQuoteReason | undefined);
-  const message = prepared.message ?? (row.raw.message as string | undefined);
-  const result = {
-    status: 'approval_required' as const,
-    approvalUrl,
-    payment: await getPayment(deps.db, payment.id),
-    ...(reason ? { reason } : {}),
-    ...(message ? { message } : {}),
-  };
-  deps.events.publish(
-    makeEvent(deps, {
-      type: 'payment.approval_required',
-      projectId: quote.projectId ?? null,
-      ...result,
-    }),
-  );
-  return result;
+  return requestApproval(deps, quote, payment.id, prepared);
 }
