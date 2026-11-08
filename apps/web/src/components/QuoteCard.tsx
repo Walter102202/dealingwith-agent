@@ -158,9 +158,7 @@ export function QuoteCard({ quote, onAccept, onAdjust, onAnswers }: QuoteCardPro
           {payable ? (
             <div className={styles.footer}>
               <div className={styles.pay}>
-                <span className={styles.payLabel}>
-                  {quote.totalCents === 0 ? 'Accept' : 'Accept and pay with PayPal'}
-                </span>
+                <span className={styles.payLabel}>Accept quote v{quote.version}</span>
                 <PayWithPayPal
                   quoteId={quote.id}
                   version={quote.version}

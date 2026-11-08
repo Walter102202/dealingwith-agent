@@ -111,8 +111,8 @@ Added 2026-11-08 when David joined. Policy: `CONSTITUTION.md`; runbook: `docs/ci
 - [x] Apply the `main` ruleset (active since 2026-11-08, id 26787773): `gh api -X POST repos/Walter102202/dealingwith-agent/rulesets --input infra/github/main-ruleset.json` (G3).
 - [ ] Give David write access to the repository (G5).
 - [ ] AG Studio trial license key requested.
-- [ ] PayPal sandbox: US business account, US personal (judge) account, REST app linked to the US business account; credentials only in the local `.env`.
+- [x] PayPal sandbox: US business account, US personal (judge) account, REST app linked to the US business account; credentials only in the local `.env` (done 2026-11-08; I1 and I2 verified against them).
 - [ ] Render account ready with the sponsor credits.
 - [ ] YouTube channel ready.
 - [ ] Devpost project draft opened.
-- [ ] Execution mode chosen (subagents, hybrid with Codex, or native).
+- [x] Execution mode chosen: hybrid, Codex and Claude Code sessions per track with an integrator session (2026-11-07).

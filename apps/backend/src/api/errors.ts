@@ -4,7 +4,6 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { z } from 'zod';
 import { PaypalError } from '../integrations/paypal/gateway.js';
 import { AppError } from '../lib/errors.js';
-import { PricingError } from '../modules/quotes/errors.js';
 import type { ApiEnv } from './auth.js';
 export const onError: ErrorHandler<ApiEnv> = (error, c) => {
   if (error instanceof HTTPException && error.status === 400) {
@@ -23,17 +22,6 @@ export const onError: ErrorHandler<ApiEnv> = (error, c) => {
         },
       },
       400,
-    );
-  if (error instanceof PricingError)
-    return c.json(
-      {
-        error: {
-          code: 'invalid_agent_output',
-          message: 'The agent output could not be priced',
-          details: error.message,
-        },
-      },
-      422,
     );
   if (error instanceof PaypalError)
     return c.json(
