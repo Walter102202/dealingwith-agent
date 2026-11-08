@@ -21,7 +21,12 @@ export const CASES: readonly EvalCase[] = [
   {
     id: '02-agent-amazon-source',
     text: 'Add our Amazon sales as a second source, no rush.',
-    expected: { included: [], rules: ['S3.base', 'S3.per_source'], needsInfo: false },
+    expected: {
+      included: [],
+      rules: ['S3.base', 'S3.per_source'],
+      needsInfo: false,
+      quantities: { 'S3.base': 1, 'S3.per_source': 1 },
+    },
     afterFirstPayment: true,
   },
   {

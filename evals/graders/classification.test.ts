@@ -33,7 +33,7 @@ describe('gradeClassification', () => {
       rules: ['S2.alert'],
       needsInfo: false,
     });
-    expect(result).toEqual({ pass: false, missing: ['C4'], extra: [] });
+    expect(result).toEqual({ pass: false, missing: ['included:C4'], extra: [] });
   });
 
   test('fixture 5 passes when a question is expected and no lines are', () => {
@@ -63,7 +63,7 @@ describe('gradeClassification', () => {
     expect(result).toEqual({ pass: false, missing: ['needs_info'], extra: [] });
   });
 
-  test('the same rule cited twice counts once', () => {
+  test('the same rule cited twice is a double charge and fails with the duplicate as extra', () => {
     const output = fixture('03-agent-sales-drop-alert.json');
     const twice: AgentOutput = { ...output, lineItems: [...output.lineItems, ...output.lineItems] };
     const result = gradeClassification(twice, {
@@ -71,6 +71,46 @@ describe('gradeClassification', () => {
       rules: ['S2.alert'],
       needsInfo: false,
     });
-    expect(result).toEqual({ pass: true, missing: [], extra: [] });
+    expect(result).toEqual({ pass: false, missing: [], extra: ['S2.alert'] });
+  });
+
+  test('an included line cannot satisfy an expected rule of the same id', () => {
+    const output = fixture('03-agent-sales-drop-alert.json');
+    const line = output.lineItems[0];
+    if (line?.kind !== 'rule') throw new Error('fixture 3 has one rule line');
+    const asIncluded: AgentOutput = {
+      ...output,
+      lineItems: [
+        { kind: 'included', scopeRef: 'S2.alert', label: line.label, rationale: line.rationale },
+      ],
+    };
+    const result = gradeClassification(asIncluded, {
+      included: [],
+      rules: ['S2.alert'],
+      needsInfo: false,
+    });
+    expect(result).toEqual({ pass: false, missing: ['S2.alert'], extra: ['included:S2.alert'] });
+  });
+
+  test('a wrong quantity on a per-unit rule fails and names both quantities', () => {
+    const output = fixture('02-agent-amazon-source.json');
+    const doubled: AgentOutput = {
+      ...output,
+      lineItems: output.lineItems.map((l) =>
+        l.kind === 'rule' && l.ref.id === 'S3.per_source' ? { ...l, quantity: 2 } : l,
+      ),
+    };
+    const expected = {
+      included: [],
+      rules: ['S3.base', 'S3.per_source'],
+      needsInfo: false,
+      quantities: { 'S3.per_source': 1 },
+    };
+    expect(gradeClassification(output, expected)).toEqual({ pass: true, missing: [], extra: [] });
+    expect(gradeClassification(doubled, expected)).toEqual({
+      pass: false,
+      missing: ['S3.per_source x1'],
+      extra: ['S3.per_source x2'],
+    });
   });
 });
