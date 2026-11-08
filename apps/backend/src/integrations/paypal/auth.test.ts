@@ -1,5 +1,48 @@
 import { expect, it, vi } from 'vitest';
-import { createTokenSource } from './auth.js';
+import { createTokenSource, paypalJson } from './auth.js';
+
+it.each([401, 403, 408, 429])(
+  'treats HTTP %i as a temporary failure without changing the issue',
+  async (status) => {
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValue(Response.json({ details: [{ issue: 'REMOTE_ISSUE' }] }, { status }));
+    await expect(paypalJson('/test', {}, fetch)).rejects.toMatchObject({
+      code: 'REMOTE_ISSUE',
+      status: 503,
+    });
+  },
+);
+it.each([400, 404, 409, 422, 503])('preserves HTTP %i', async (status) => {
+  const fetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockResolvedValue(Response.json({ name: 'REMOTE_ERROR' }, { status }));
+  await expect(paypalJson('/test', {}, fetch)).rejects.toMatchObject({
+    code: 'REMOTE_ERROR',
+    status,
+  });
+});
+it.each([new TypeError('network failure'), new DOMException('aborted', 'AbortError')])(
+  'maps fetch rejection to an unreachable gateway',
+  async (error) => {
+    const fetch = vi.fn<typeof globalThis.fetch>().mockRejectedValue(error);
+    await expect(paypalJson('/test', {}, fetch)).rejects.toMatchObject({
+      code: 'PAYPAL_UNREACHABLE',
+      status: 502,
+    });
+  },
+);
+it('bounds each fetch with a fifteen-second abort signal', async () => {
+  const timeout = vi.spyOn(AbortSignal, 'timeout');
+  const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(Response.json({}));
+  try {
+    await paypalJson('/test', {}, fetch);
+    expect(timeout).toHaveBeenCalledWith(15_000);
+    expect(fetch.mock.calls[0]?.[1]?.signal).toBeInstanceOf(AbortSignal);
+  } finally {
+    timeout.mockRestore();
+  }
+});
 
 it('caches tokens until sixty seconds before expiry and refreshes after expiry', async () => {
   let now = 0;

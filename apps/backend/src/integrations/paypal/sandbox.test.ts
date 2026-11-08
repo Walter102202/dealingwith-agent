@@ -124,7 +124,9 @@ it('authorizes an order and preserves expiration_time', async () => {
     purchase_units: [
       {
         payments: {
-          authorizations: [{ id: 'auth-1', amount, expiration_time: '2026-12-07T00:00:00Z' }],
+          authorizations: [
+            { id: 'auth-1', status: 'CREATED', amount, expiration_time: '2026-12-07T00:00:00Z' },
+          ],
         },
       },
     ],
@@ -217,4 +219,90 @@ it('rejects missing signature or webhook id without fetching', async () => {
   const absent = setup({}, 200, '');
   expect(await absent.gateway.verifyWebhookSignature(headers, '{}')).toBe(false);
   expect(absent.fetch).not.toHaveBeenCalled();
+});
+
+it.each(['DENIED', 'PENDING'])(
+  'rejects an HTTP 201 authorization with status %s',
+  async (status) => {
+    const { gateway } = setup(
+      { purchase_units: [{ payments: { authorizations: [{ id: 'auth', amount, status }] } }] },
+      201,
+    );
+    await expect(gateway.authorizeOrder('o', 'key')).rejects.toMatchObject({
+      code: status,
+      status: 502,
+    });
+  },
+);
+it.each([false, true])(
+  'only returns a completed capture id (completed present: %s)',
+  async (completed) => {
+    const { gateway } = setup({
+      id: 'o',
+      intent: 'CAPTURE',
+      status: 'COMPLETED',
+      purchase_units: [
+        {
+          amount,
+          custom_id: 'q',
+          payments: {
+            captures: [
+              { ...capture, id: 'pending', status: 'PENDING' },
+              ...(completed ? [capture] : []),
+            ],
+          },
+        },
+      ],
+    });
+    const result = await gateway.getOrder('o');
+    if (completed) expect(result.captureId).toBe('capture-1');
+    else expect(result).not.toHaveProperty('captureId');
+  },
+);
+it.each([false, true])(
+  'refreshes a rejected token once and preserves idempotency (second rejection: %s)',
+  async (rejectAgain) => {
+    let tokens = 0;
+    let calls = 0;
+    const fetch = vi.fn<typeof globalThis.fetch>().mockImplementation(async (url) => {
+      if (String(url).endsWith('/v1/oauth2/token'))
+        return Response.json({ access_token: `token-${++tokens}`, expires_in: 3600 });
+      calls++;
+      return calls === 1 || rejectAgain
+        ? Response.json({ name: 'AUTHENTICATION_FAILURE' }, { status: 401 })
+        : Response.json({ purchase_units: [{ payments: { captures: [capture] } }] });
+    });
+    const gateway = new SandboxPaypalGateway({ clientId: 'client', clientSecret: 'secret', fetch });
+    const result = gateway.captureOrder('o', 'same-key');
+    if (rejectAgain)
+      await expect(result).rejects.toMatchObject({ code: 'AUTHENTICATION_FAILURE', status: 503 });
+    else expect(await result).toMatchObject({ captureId: 'capture-1', status: 'COMPLETED' });
+    expect(tokens).toBe(2);
+    const requests = fetch.mock.calls.filter(([url]) => !String(url).endsWith('/v1/oauth2/token'));
+    expect(requests).toHaveLength(2);
+    for (const [index, request] of requests.entries()) {
+      expect(request[1]).toMatchObject({
+        headers: expect.objectContaining({
+          Authorization: `Bearer token-${index + 1}`,
+          'PayPal-Request-Id': 'same-key',
+        }),
+        body: '{}',
+      });
+    }
+    if (!rejectAgain) {
+      await gateway.captureOrder('o', 'another-key');
+      expect(tokens).toBe(2);
+    }
+  },
+);
+it('does not retry a rejected token endpoint', async () => {
+  const fetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockResolvedValue(Response.json({ name: 'invalid_client' }, { status: 401 }));
+  const gateway = new SandboxPaypalGateway({ clientId: 'client', clientSecret: 'secret', fetch });
+  await expect(gateway.captureOrder('o', 'key')).rejects.toMatchObject({
+    code: 'invalid_client',
+    status: 503,
+  });
+  expect(fetch).toHaveBeenCalledTimes(1);
 });

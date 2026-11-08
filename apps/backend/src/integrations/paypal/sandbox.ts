@@ -1,6 +1,6 @@
 import { formatPaypalAmount, parsePaypalAmount } from '@dealingwith/contracts';
 import { z } from 'zod';
-import { createTokenSource, paypalJson } from './auth.js';
+import { createTokenSource, PaypalHttpError, paypalJson } from './auth.js';
 import { type CaptureResult, PaypalError, type PaypalGateway } from './gateway.js';
 
 const Amount = z.object({
@@ -14,6 +14,7 @@ const Capture = z.object({
 });
 const Authorization = z.object({
   id: z.string().min(1),
+  status: z.string().min(1),
   amount: Amount,
   expiration_time: z.string().optional(),
 });
@@ -50,21 +51,35 @@ export class SandboxPaypalGateway implements PaypalGateway {
     this.fetch = options.fetch ?? globalThis.fetch;
     this.tokenSource = createTokenSource(options);
   }
-  private async request(path: string, body?: unknown, requestId?: string): Promise<unknown> {
-    return paypalJson(
-      path,
-      {
-        method: body === undefined ? 'GET' : 'POST',
-        headers: {
-          Authorization: `Bearer ${await this.tokenSource.getAccessToken()}`,
-          'Content-Type': 'application/json',
-          Prefer: 'return=representation',
-          ...(requestId ? { 'PayPal-Request-Id': requestId } : {}),
+  private async request(
+    path: string,
+    body?: unknown,
+    requestId?: string,
+    retry = true,
+  ): Promise<unknown> {
+    const token = await this.tokenSource.getAccessToken();
+    try {
+      return await paypalJson(
+        path,
+        {
+          method: body === undefined ? 'GET' : 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            Prefer: 'return=representation',
+            ...(requestId ? { 'PayPal-Request-Id': requestId } : {}),
+          },
+          ...(body === undefined ? {} : { body: JSON.stringify(body) }),
         },
-        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-      },
-      this.fetch,
-    );
+        this.fetch,
+      );
+    } catch (error) {
+      if (error instanceof PaypalHttpError && error.httpStatus === 401) {
+        this.tokenSource.invalidate(token);
+        if (retry) return this.request(path, body, requestId, false);
+      }
+      throw error;
+    }
   }
   async createOrder(
     input: Parameters<PaypalGateway['createOrder']>[0],
@@ -130,7 +145,7 @@ export class SandboxPaypalGateway implements PaypalGateway {
               custom_id: z.string(),
               payments: z
                 .object({
-                  captures: z.array(z.object({ id: z.string() })).optional(),
+                  captures: z.array(z.object({ id: z.string(), status: z.string() })).optional(),
                   authorizations: z.array(z.object({ id: z.string() })).optional(),
                 })
                 .optional(),
@@ -142,7 +157,9 @@ export class SandboxPaypalGateway implements PaypalGateway {
     );
     const unit = order.purchase_units[0];
     if (!unit) throw new PaypalError('INVALID_PAYPAL_RESPONSE', 502);
-    const captureId = unit.payments?.captures?.[0]?.id;
+    const captureId = unit.payments?.captures?.find(
+      (capture) => capture.status === 'COMPLETED',
+    )?.id;
     const authorizationId = unit.payments?.authorizations?.[0]?.id;
     return {
       orderId: order.id,
@@ -192,6 +209,7 @@ export class SandboxPaypalGateway implements PaypalGateway {
     );
     const auth = order.purchase_units[0]?.payments.authorizations[0];
     if (!auth) throw new PaypalError('INVALID_PAYPAL_RESPONSE', 502);
+    if (auth.status !== 'CREATED') throw new PaypalError(auth.status, 502);
     return {
       authorizationId: auth.id,
       amountCents: cents(auth.amount),

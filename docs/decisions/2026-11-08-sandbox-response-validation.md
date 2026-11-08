@@ -1,5 +1,7 @@
 # Validate sandbox responses at the gateway boundary
 
+HTTP-status preservation is superseded by [Keep uncertain PayPal outcomes retryable](2026-11-08-paypal-temporary-failures.md).
+
 ## Context
 
 The gateway converts external PayPal responses into trusted payment results. An unknown status, missing capture, or non-USD amount cannot safely become a successful payment.
