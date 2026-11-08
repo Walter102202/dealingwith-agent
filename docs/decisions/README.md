@@ -28,3 +28,7 @@ Rules: one decision per file; never edit a past decision, write a new one that s
 - [2026-11-07 Seed creates, reset restores](2026-11-07-seed-creates-reset-restores.md)
 - [2026-11-07 Reset keeps connected client agents](2026-11-07-reset-keeps-client-agents.md)
 - [2026-11-07 API shapes live in contracts](2026-11-07-api-shapes-live-in-contracts.md)
+- [2026-11-07 The agent module lives under src/agent](2026-11-07-agent-under-src.md)
+- [2026-11-07 Web styling: plain CSS with design tokens and CSS Modules](2026-11-07-web-plain-css.md)
+- [2026-11-07 AG Studio from day one, trial mode without a key](2026-11-07-ag-studio-trial-first.md)
+- [2026-11-07 formatUsd lives in @dealingwith/contracts](2026-11-07-format-usd-in-contracts.md)

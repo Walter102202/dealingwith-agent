@@ -41,3 +41,11 @@ export function applyPercent(cents: number, percent: number): number {
   }
   return Math.round((cents * percent) / 100);
 }
+
+const USD = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/** `8000` → `"US$80.00"`, `123450` → `"US$1,234.50"`. The one money string the UI shows. */
+export function formatUsd(cents: number): string {
+  assertCents(cents);
+  return `US$${USD.format(cents / 100)}`;
+}
