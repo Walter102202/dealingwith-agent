@@ -4,7 +4,7 @@ A working guide for the MVP build. Milestones are outcomes, not dates. Each stag
 
 Legend: `[ ]` not started · `[~]` in progress · `[x]` done
 
-**Current position:** M0, M2, M3, the web (D1-D6), W, A9, E (E2) and I1 done; Tracks A, B, C, D, W, E and I1 merged into `main` on 2026-11-08; I2 (webhooks) in progress on `track/i`; I3 waits for the model API keys; I4 (Render) not started.
+**Current position:** M0, M2, M3, the web (D1-D6), W, A9, E (E2), I1 and I2 done and merged into `main` on 2026-11-08; G1-G3 done the same day; I3 waits for the model API keys; I4 has its Blueprint (`render.yaml`, `infra/README.md`) on `main` and waits for the Render account.
 
 ---
 
@@ -75,7 +75,7 @@ The same code runs against PayPal sandbox, a real model and Render.
 - [x] **Sandbox gateway** (I1). Done when: orders, captures, authorizations and partial captures succeed in the sandbox; the smoke script records the authorization expiry and the Vault probe result.
 - [x] **Webhooks verified** (I2). Done when: a sandbox capture produces a verified, processed webhook and a resend is recorded as duplicate.
 - [ ] **Live model passes** (I3). Done when: the live eval passes five of five with Anthropic and with OpenAI using the same prompts.
-- [ ] **Deployed on Render** (I4). Done when: the hosted URL serves the app, the webhook points at it, the demo mandate is funded once, and MCP works from Claude Desktop and Claude Code against the hosted URL.
+- [~] **Deployed on Render** (I4; Blueprint and `infra/README.md` on `main` since 2026-11-08, the deploy waits for the Render account). Done when: the hosted URL serves the app, the webhook points at it, the demo mandate is funded once, and MCP works from Claude Desktop and Claude Code against the hosted URL.
 - [ ] **Pre-submission checks** (I5). Done when: a fresh browser completes the five demo requests on the hosted URL, CI is green, nothing private is in the repo, both Render services are on Starter.
 
 ---

@@ -69,7 +69,7 @@ Merge method: merge commit or squash. Rebase-merging is disabled because it rewr
 
 ## Delivery
 
-Render builds and deploys `main` from the Blueprint `render.yaml` at the repository root. The Blueprint and `infra/README.md` arrive with Task I4 of the plan; until then there is no hosted deploy and nothing to roll back. The service sets `autoDeployTrigger: checksPass`: a commit on `main` deploys only when its CI run is green. Nothing deploys from a branch or from a laptop.
+Render builds and deploys `main` from the Blueprint `render.yaml` at the repository root; `infra/README.md` lists the variables and the first-deploy steps. Until the Blueprint is applied in a Render account there is no hosted deploy and nothing to roll back. The service sets `autoDeployTrigger: checksPass`: a commit on `main` deploys only when its CI run is green. Nothing deploys from a branch or from a laptop.
 
 - Build: `corepack enable && pnpm install --frozen-lockfile && pnpm build`. Start: `pnpm --filter @dealingwith/backend start`. Health check: `/healthz`.
 - Migrations run at boot, so a migration must be additive and compatible with the version still running while the new one starts.
