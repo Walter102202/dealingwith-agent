@@ -88,15 +88,6 @@ The same code runs against PayPal sandbox, a real model and Render.
 
 ---
 
-## Walter's actions (outside the code)
-
-- [ ] AG Studio trial license key requested.
-- [ ] PayPal sandbox: US business account, US personal (judge) account, REST app linked to the US business account; credentials only in the local `.env`.
-- [ ] Render account ready with the sponsor credits.
-- [ ] YouTube channel ready.
-- [ ] Devpost project draft opened.
-- [ ] Execution mode chosen (subagents, hybrid with Codex, or native).
-
 ## W — Web polish after Track D
 
 The thirteen minors Track D's final review deferred, closed without changing the demo (`docs/plans/2026-11-08-web-polish-after-track-d.md`).
@@ -105,3 +96,11 @@ The thirteen minors Track D's final review deferred, closed without changing the
 - [ ] **Correctness fixes** (W2). Done when: the other role is redirected to its own home, contract drift shows one readable sentence, quote line keys never collide, an already captured order in sandbox is reported as paid.
 - [ ] **Code health** (W3). Done when: `/api/config` is fetched once through a context and the fixtures handlers are split by domain with the same tests green.
 
+## Walter's actions (outside the code)
+
+- [ ] AG Studio trial license key requested.
+- [ ] PayPal sandbox: US business account, US personal (judge) account, REST app linked to the US business account; credentials only in the local `.env`.
+- [ ] Render account ready with the sponsor credits.
+- [ ] YouTube channel ready.
+- [ ] Devpost project draft opened.
+- [ ] Execution mode chosen (subagents, hybrid with Codex, or native).
