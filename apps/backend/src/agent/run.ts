@@ -110,9 +110,14 @@ type Attempt =
  * then answer in prose). OpenAI: the schema has optional keys and a union, which
  * its strict mode rejects, so validation stays on our side (Zod, every run).
  */
+/** Medium reasoning on both providers (Walter, 2026-11-08): adaptive thinking with medium effort on Anthropic, reasoningEffort medium on OpenAI. */
 const PROVIDER_OPTIONS = {
-  anthropic: { structuredOutputMode: 'outputFormat' },
-  openai: { strictJsonSchema: false },
+  anthropic: {
+    structuredOutputMode: 'outputFormat',
+    thinking: { type: 'adaptive' },
+    effort: 'medium',
+  },
+  openai: { strictJsonSchema: false, reasoningEffort: 'medium' },
 } as const;
 
 async function generateOnce(

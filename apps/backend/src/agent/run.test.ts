@@ -238,7 +238,7 @@ describe('runAgent with a scripted model', () => {
     expect(call?.responseFormat?.type).toBe('json');
   });
 
-  test('the call asks Anthropic for native structured output and OpenAI for non-strict JSON schema', async () => {
+  test('the call asks Anthropic for native structured output and OpenAI for non-strict JSON schema, both with medium reasoning', async () => {
     const model = textModel([VALID_OUTPUT]);
     const text = "Alert me by email when any branch's daily sales drop more than 20%.";
     const requestId = await newRequest(text);
@@ -247,8 +247,12 @@ describe('runAgent with a scripted model', () => {
       { pack, text, skill: 'analyze-additional', requestId },
     );
     expect(model.doGenerateCalls[0]?.providerOptions).toEqual({
-      anthropic: { structuredOutputMode: 'outputFormat' },
-      openai: { strictJsonSchema: false },
+      anthropic: {
+        structuredOutputMode: 'outputFormat',
+        thinking: { type: 'adaptive' },
+        effort: 'medium',
+      },
+      openai: { strictJsonSchema: false, reasoningEffort: 'medium' },
     });
   });
 
