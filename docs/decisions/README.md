@@ -11,6 +11,8 @@ Rules: one decision per file; never edit a past decision, write a new one that s
 
 ## Index
 
+- [2026-11-08 Mandate capture invoice identity](2026-11-08-mandate-capture-invoice-identity.md)
+
 - [2026-11-08 Approved webhook capture boundary](2026-11-08-approved-webhook-capture-boundary.md)
 
 - [2026-11-07 Scenario workspace Node types](2026-11-07-scenario-workspace-node-types.md)

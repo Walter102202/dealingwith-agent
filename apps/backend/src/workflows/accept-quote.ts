@@ -162,6 +162,7 @@ export async function acceptQuote(
             amountCents: payment.amountCents,
             finalCapture: false,
             requestId: row.idempotencyKey,
+            invoiceId: `mandate:${quote.id}:${quote.version}`,
           },
         );
         if (capture.status !== 'COMPLETED') throw new PaypalError('CAPTURE_NOT_COMPLETED');

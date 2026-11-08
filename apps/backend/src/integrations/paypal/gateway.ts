@@ -38,7 +38,7 @@ export interface PaypalGateway {
   }>;
   captureAuthorization(
     authorizationId: string,
-    i: { amountCents: number; finalCapture: boolean; requestId: string },
+    i: { amountCents: number; finalCapture: boolean; requestId: string; invoiceId: string },
   ): Promise<CaptureResult>;
   verifyWebhookSignature(headers: Record<string, string>, rawBody: string): Promise<boolean>;
 }

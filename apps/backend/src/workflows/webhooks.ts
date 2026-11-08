@@ -42,6 +42,15 @@ async function resolvePayment(
         version: Number(match[2]),
       });
   }
+  if (!payment && typeof resource.invoice_id === 'string') {
+    const match = /^mandate:([0-9a-f-]{36}):(\d+)$/.exec(resource.invoice_id);
+    if (match?.[1] && match[2])
+      payment = await findPaymentForQuoteVersion(deps.db, {
+        quoteId: match[1],
+        version: Number(match[2]),
+        mode: 'mandate',
+      });
+  }
   return payment;
 }
 async function dispatch(

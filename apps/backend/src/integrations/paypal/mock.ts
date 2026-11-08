@@ -173,6 +173,7 @@ export class MockPaypalGateway implements PaypalGateway {
     if (auth.closed || input.amountCents > auth.order.amountCents - auth.captured)
       throw new PaypalError('AUTHORIZATION_AMOUNT_EXCEEDED');
     const result = this.capture(auth.order, input.amountCents, authorizationId);
+    result.raw = { ...(result.raw as Record<string, unknown>), invoice_id: input.invoiceId };
     auth.captured += input.amountCents;
     auth.closed = input.finalCapture;
     this.results.set(key, result);

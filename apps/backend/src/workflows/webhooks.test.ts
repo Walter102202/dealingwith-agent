@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { issueAgentToken } from '../access/agent-tokens.js';
 import { DEMO } from '../db/demo-data.js';
 import { payments, webhookEvents } from '../db/schema.js';
 import { getMandate } from '../modules/mandates/mandates.js';
@@ -17,6 +18,50 @@ afterEach(async () => {
 const body = (id: string, resource: object, event_type = 'PAYMENT.CAPTURE.COMPLETED') =>
   JSON.stringify({ id, event_type, resource });
 describe('processWebhook', () => {
+  test('reconciles an interrupted mandate capture using only its invoice id', async () => {
+    await activateMandate(h.deps);
+    const { agent } = await issueAgentToken(h.deps.db, {
+      clientId: DEMO.client.id,
+      label: 'Recovery',
+      mandateId: DEMO.mandate.id,
+    });
+    const q = await publishedQuote(h.deps, {
+      intents: [
+        {
+          kind: 'rule',
+          ref: { id: 'S2.alert', version: 1 },
+          quantity: 1,
+          label: 'Alert',
+          rationale: 'S2.alert',
+        },
+      ],
+    });
+    const capture = vi
+      .spyOn(h.paypal, 'captureAuthorization')
+      .mockRejectedValue(new Error('Process interrupted after remote capture'));
+    await expect(
+      acceptQuote(h.deps, { quoteId: q.id, version: q.version, actor: { kind: 'agent', agent } }),
+    ).rejects.toThrow('Process interrupted');
+    const input = {
+      headers: { 'x-mock-signature': h.deps.env.MOCK_WEBHOOK_SECRET },
+      rawBody: body('WH-recovery', {
+        id: 'CAP-recovery',
+        invoice_id: `mandate:${q.id}:${q.version}`,
+        amount: { currency_code: 'USD', value: '60.00' },
+      }),
+    };
+    expect(await processWebhook(h.deps, input)).toEqual({ result: 'processed' });
+    expect(await getQuote(h.deps.db, q.id)).toMatchObject({ status: 'paid' });
+    expect(await h.deps.db.select().from(payments)).toMatchObject([
+      { mode: 'mandate', status: 'captured', paypalCaptureId: 'CAP-recovery' },
+    ]);
+    expect(await processWebhook(h.deps, input)).toEqual({ result: 'duplicate' });
+    expect(h.events.filter((event) => event.type === 'quote.paid')).toHaveLength(1);
+    expect(capture).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ invoiceId: `mandate:${q.id}:${q.version}` }),
+    );
+  });
   test('rejects a capture whose amount or currency differs and rolls back its event', async () => {
     const q = await publishedQuote(h.deps, {
       intents: [
