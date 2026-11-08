@@ -12,13 +12,15 @@ These are in the design as P2. They are the first things we pick up if time rema
 
 ## Hardening after the hackathon
 
+The first two are committed as the first work after the submission (decision `docs/decisions/2026-11-08-hosted-at-dealingwith-si-demo-mode-until-submission.md`): the hosted service runs in demo mode until they ship.
+
+- **Real authentication and onboarding:** provider signup, client invitations, email login; today sessions are demo-only and `DEMO_MODE` stays on until this exists.
+- **Live mode** with a PayPal Chile business account, including the 29-day authorization lifetime and the re-authorization path.
 - **OAuth for the MCP server** (authorization code with PKCE) instead of per-agent bearer tokens, so clients connect without copying secrets.
-- **Real authentication and onboarding:** provider signup, client invitations, email login; today sessions are demo-only.
 - **Multi-tenant UI:** the data model already carries `business_id` everywhere; what is missing is the UI to create and manage more than one business.
 - **Rate limiting and abuse controls** on the MCP endpoint and the request box.
 - **Durable workflows:** persisted state and retries for accept → pay → update, so an interrupted process resumes instead of relying on the webhook to reconcile.
 - **Observability:** today `agent_runs` and structured logs; next, request → run → quote → payment traces, cost per valid contract, and time from request to paid work.
-- **Live mode** with a PayPal Chile business account, including the 29-day authorization lifetime and the re-authorization path.
 
 ## Product
 
@@ -43,4 +45,4 @@ These are in the design as P2. They are the first things we pick up if time rema
 - **Codex and other MCP clients** in the connection snippets once their remote MCP syntax is verified.
 - **`packages/ui`** populated with the quote card and mandate components shared between the web and MCP Apps.
 - **Webhook replay and admin tools** for reconciling payments without touching the database.
-- **Custom domain** `dealingwith.si` (configuration only; the MVP may ship on the Render URL).
+- **Custom domain** `dealingwith.si`, attached after the first deploy on the Render URL (`infra/README.md`, last section).
