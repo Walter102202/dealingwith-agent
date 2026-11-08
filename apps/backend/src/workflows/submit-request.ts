@@ -31,6 +31,12 @@ export async function submitRequest(deps: Deps, input: SubmitInput): Promise<Quo
     const request = await getRequest(deps.db, previous.requestId);
     if (request.clientId !== input.clientId)
       throw new AppError('forbidden', 'Quote belongs to another client', { status: 403 });
+    if (previous.status !== 'needs_info')
+      throw new AppError(
+        'quote_not_awaiting_answers',
+        'Only a quote that needs information accepts answers',
+        { status: 409 },
+      );
   } else if (
     input.projectId &&
     (await getProject(deps.db, input.projectId)).clientId !== input.clientId
