@@ -1,0 +1,63 @@
+# Render Blueprint: one web service (API, MCP, webhooks and the built web in one Node process) and
+# one Postgres instance. Field names and plan ids follow Render's Blueprint spec as read on
+# 2026-11-08. Operations guide: infra/README.md. Deploy policy: CONSTITUTION.md Article VIII.
+services:
+  - type: web
+    name: dealingwith-agent
+    runtime: node
+    plan: 0.5c-512mb
+    region: oregon
+    branch: main
+    # A commit on main deploys only after its CI run passes (the three required checks).
+    autoDeployTrigger: checksPass
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
+    startCommand: pnpm --filter @dealingwith/backend start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # corepack must not wait for a confirmation when it downloads the pinned pnpm.
+      - key: COREPACK_ENABLE_DOWNLOAD_PROMPT
+        value: "0"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: dealingwith-db
+          property: connectionString
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: PAYPAL_MODE
+        value: sandbox
+      # Secrets: typed into the Render dashboard, never into this file.
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      # Registered once the service has its URL (infra/README.md, step 3).
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false
+      - key: LLM_PROVIDER
+        value: anthropic
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      # Dashboard-owned: the Render URL after the first deploy, https://dealingwith.si once the
+      # domain is attached (infra/README.md, step 2 and the last section). No trailing slash.
+      - key: APP_URL
+        sync: false
+      # Demo logins, demo seed and "Reset demo data" until real authentication ships after the
+      # submission (docs/decisions/2026-11-08-hosted-at-dealingwith-si-demo-mode-until-submission.md).
+      - key: DEMO_MODE
+        value: "true"
+      # Read by Vite at build time: the web calls the API on the same origin.
+      - key: VITE_API_MODE
+        value: http
+      # Build-time too. Empty renders the dashboard in trial mode with a watermark.
+      - key: VITE_AG_STUDIO_LICENSE
+        sync: false
+
+databases:
+  - name: dealingwith-db
+    plan: 0.1c-256mb
+    region: oregon
+    postgresMajorVersion: "17"
