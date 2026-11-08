@@ -70,7 +70,7 @@ describe('QuoteCard', () => {
     expect(screen.getByText('1 day')).toBeInTheDocument();
     expect(screen.getByTestId('quote-total')).toHaveTextContent('US$80.00');
     expect(screen.getByRole('button', { name: 'Ask for an adjustment' })).toBeInTheDocument();
-    expect(screen.getByText('Accept and pay with PayPal')).toBeInTheDocument();
+    expect(screen.getByText('Accept quote v1')).toBeInTheDocument();
   });
 
   it('expands a line to show the rule it cites', () => {
@@ -93,7 +93,7 @@ describe('QuoteCard', () => {
       screen.getByLabelText('Is the slowness caused by data volume or by the dashboard design?'),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Send answers' })).toBeInTheDocument();
-    expect(screen.queryByText('Accept and pay with PayPal')).toBeNull();
+    expect(screen.queryByText(/^Accept quote v/)).toBeNull();
   });
 
   it('posts the adjustment text through onAdjust', async () => {
