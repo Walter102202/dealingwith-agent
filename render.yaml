@@ -41,9 +41,12 @@ services:
         sync: false
       - key: OPENAI_API_KEY
         sync: false
-      # Replace with the real service URL after the first deploy (no trailing slash).
+      # The custom domain is attached before the first deploy (infra/README.md, step 2), so PayPal
+      # return URLs and the webhook never change. No trailing slash.
       - key: APP_URL
-        value: https://dealingwith-agent.onrender.com
+        value: https://dealingwith.si
+      # Demo logins, demo seed and "Reset demo data" until real authentication ships after the
+      # submission (docs/decisions/2026-11-08-hosted-at-dealingwith-si-demo-mode-until-submission.md).
       - key: DEMO_MODE
         value: "true"
       # Read by Vite at build time: the web calls the API on the same origin.
