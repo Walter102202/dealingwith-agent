@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module';
-import type { ClientAgent } from '@dealingwith/contracts';
+import { type ClientAgent, IdSchema } from '@dealingwith/contracts';
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { AppError } from '../lib/errors.js';
 import type { Deps } from '../workflows/deps.js';
 import { formatQuoteMarkdown } from './format.js';
 import { assertAgentOwnsQuote } from './scope.js';
@@ -22,8 +23,11 @@ export function createMcpServer(deps: Deps, agent: ClientAgent): McpServer {
     },
     async (uri, variables) => {
       const raw = variables.quoteId ?? '';
-      const quoteId = Array.isArray(raw) ? (raw[0] ?? '') : raw;
-      const quote = await assertAgentOwnsQuote(deps.db, quoteId, agent);
+      const parsed = IdSchema.safeParse(Array.isArray(raw) ? (raw[0] ?? '') : raw);
+      // Tool inputs are validated by the SDK; resource variables are not, and a bad id must never reach the database.
+      if (!parsed.success)
+        throw new AppError('invalid_quote_id', 'quote id must be a UUID', { status: 400 });
+      const quote = await assertAgentOwnsQuote(deps.db, parsed.data, agent);
       return {
         contents: [{ uri: uri.href, mimeType: 'text/markdown', text: formatQuoteMarkdown(quote) }],
       };

@@ -7,7 +7,15 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { issueAgentToken, revokeAgentToken } from '../access/agent-tokens.js';
 import { createApp } from '../api/app.js';
 import { DEMO } from '../db/demo-data.js';
-import { businesses, clients, projects, quotes, services } from '../db/schema.js';
+import {
+  businesses,
+  clients,
+  payments,
+  projects,
+  quotes,
+  requests,
+  services,
+} from '../db/schema.js';
 import { activateMandate, createHarness } from '../test/workflow-harness.js';
 import { fakeAgentPort } from '../workflows/fake-agent.js';
 
@@ -146,6 +154,66 @@ describe('MCP server', () => {
     expect(result.content[0]?.text).toBe('project not accessible');
     const own = await call(client, 'get_project', { projectId: DEMO.project.id });
     expect(structured<{ project: { id: string } }>(own).project.id).toBe(DEMO.project.id);
+    await client.close();
+  });
+  test('(l) quotes, payments and answers of another client are not accessible by any tool or the resource', async () => {
+    const businessId = randomUUID();
+    const clientId = randomUUID();
+    const requestId = randomUUID();
+    const quoteId = randomUUID();
+    const paymentId = randomUUID();
+    await h.deps.db
+      .insert(businesses)
+      .values({ id: businessId, name: 'Other business', country: 'US' });
+    await h.deps.db
+      .insert(clients)
+      .values({ id: clientId, businessId, name: 'Other client', email: 'other@example.test' });
+    await h.deps.db
+      .insert(requests)
+      .values({ id: requestId, clientId, channel: 'web', text: 'Other storefront request' });
+    await h.deps.db.insert(quotes).values({
+      quoteId,
+      version: 1,
+      requestId,
+      status: 'published',
+      explanation: 'Other tenant',
+    });
+    await h.deps.db.insert(payments).values({
+      id: paymentId,
+      quoteId,
+      quoteVersion: 1,
+      mode: 'pay_now',
+      amountCents: 100,
+      idempotencyKey: `test:${paymentId}`,
+    });
+    const client = await connect('http://mcp.test/mcp', token);
+    const quote = await call(client, 'get_quote', { quoteId });
+    expect(quote.isError).toBe(true);
+    expect(quote.content[0]?.text).toBe('quote not accessible');
+    const payment = await call(client, 'get_payment', { paymentId });
+    expect(payment.isError).toBe(true);
+    expect(payment.content[0]?.text).toBe('payment not accessible');
+    const accepted = await call(client, 'accept_quote', { quoteId, version: 1 });
+    expect(accepted.isError).toBe(true);
+    expect(accepted.content[0]?.text).toBe('You cannot accept this quote');
+    const answered = await call(client, 'answer_questions', { quoteId, answers: { q: 'a' } });
+    expect(answered.isError).toBe(true);
+    expect(answered.content[0]?.text).toBe('Quote belongs to another client');
+    await expect(client.readResource({ uri: `quote://${quoteId}` })).rejects.toThrow(
+      /quote not accessible/,
+    );
+    const rows = await h.deps.db.select().from(quotes).where(eq(quotes.quoteId, quoteId));
+    expect(rows).toHaveLength(1);
+    await client.close();
+  });
+  test('(m) the quote resource rejects a malformed id without leaking the query', async () => {
+    const client = await connect('http://mcp.test/mcp', token);
+    const failure = await client.readResource({ uri: 'quote://not-a-uuid' }).then(
+      () => null,
+      (e: unknown) => (e instanceof Error ? e.message : String(e)),
+    );
+    expect(failure).toMatch(/quote id must be a UUID/);
+    expect(failure).not.toMatch(/select|Failed query/i);
     await client.close();
   });
   test('(h) an unknown token gets 401 before any MCP parsing', async () => {
