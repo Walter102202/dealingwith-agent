@@ -2,6 +2,9 @@ import { z } from 'zod';
 import { AppError } from './lib/errors.js';
 
 const DEFAULT_SESSION_SECRET = 'dev-session-secret-change-me';
+const DEFAULT_APP_URL = 'http://localhost:3000';
+const publicUrl = z.url().refine((url) => !url.endsWith('/'), 'Must not end with a slash');
+
 export const EnvSchema = z
   .object({
     DATABASE_URL: z.string().default('pglite://.data/dev'),
@@ -14,10 +17,20 @@ export const EnvSchema = z
     LLM_MODEL: z.string().optional(),
     ANTHROPIC_API_KEY: z.string().optional(),
     OPENAI_API_KEY: z.string().optional(),
-    APP_URL: z
+    /**
+     * Public origin of the service, used for PayPal return URLs and the session
+     * cookie's Secure flag. Unset, it falls back to Render's RENDER_EXTERNAL_URL
+     * (the service's own https URL) and only then to the local default.
+     */
+    APP_URL: publicUrl.optional(),
+    /**
+     * Injected by Render on every web service; absent elsewhere. Not ours to
+     * shape, so a trailing slash is normalised instead of refused.
+     */
+    RENDER_EXTERNAL_URL: z
       .url()
-      .refine((url) => !url.endsWith('/'), 'Must not end with a slash')
-      .default('http://localhost:3000'),
+      .transform((url) => url.replace(/\/$/, ''))
+      .optional(),
     PORT: z.coerce.number().int().min(1).max(65535).default(3000),
     SESSION_SECRET: z.string().min(1).default(DEFAULT_SESSION_SECRET),
     DEMO_MODE: z
@@ -26,6 +39,11 @@ export const EnvSchema = z
       .transform((value) => value === 'true'),
     WEB_DIST_DIR: z.string().optional(),
   })
+  .transform(({ APP_URL, RENDER_EXTERNAL_URL, ...rest }) => ({
+    ...rest,
+    APP_URL: APP_URL ?? RENDER_EXTERNAL_URL ?? DEFAULT_APP_URL,
+    ...(RENDER_EXTERNAL_URL ? { RENDER_EXTERNAL_URL } : {}),
+  }))
   .superRefine((env, ctx) => {
     if (env.PAYPAL_MODE === 'sandbox') {
       for (const key of ['PAYPAL_CLIENT_ID', 'PAYPAL_CLIENT_SECRET'] as const) {
@@ -40,10 +58,19 @@ export const EnvSchema = z
         message: 'Use a custom session secret for HTTPS',
       });
     }
+    // A hosted service never runs behind a plain-http origin: that would mark the
+    // session cookie insecure and send PayPal back to the wrong place.
+    if (env.RENDER_EXTERNAL_URL && !env.APP_URL.startsWith('https:')) {
+      ctx.addIssue({ code: 'custom', path: ['APP_URL'], message: 'Must be https on Render' });
+    }
   });
 export type Env = z.infer<typeof EnvSchema>;
 export function loadEnv(source: Record<string, string | undefined> = process.env): Env {
-  const result = EnvSchema.safeParse(source);
+  // An empty value (APP_URL= in a .env, a blank field in a dashboard) means "unset".
+  const defined = Object.fromEntries(
+    Object.entries(source).filter(([, value]) => value !== undefined && value !== ''),
+  );
+  const result = EnvSchema.safeParse(defined);
   if (!result.success) {
     const variables = [...new Set(result.error.issues.map((issue) => issue.path.join('.')))];
     throw new AppError('invalid_env', `Invalid environment variables: ${variables.join(', ')}`, {
