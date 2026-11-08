@@ -29,6 +29,8 @@ export const GetProjectOutputSchema = z.object({ project: ProjectSchema });
 export const RequestQuoteInputSchema = z.strictObject({
   projectId: IdSchema.optional(),
   text: z.string().min(1, 'text is required').max(2000),
+  /** Storefront purchase of one service: a single `fixed` rule is priced without the agent (A9). */
+  serviceId: IdSchema.optional(),
 });
 export const RequestQuoteOutputSchema = z.object({ quote: QuoteSchema });
 

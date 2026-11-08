@@ -36,3 +36,17 @@ describe('MCP tool inputs', () => {
     ).toBe(2);
   });
 });
+
+describe('RequestQuoteInputSchema', () => {
+  test('accepts a serviceId for a fixed-price storefront purchase', () => {
+    const parsed = RequestQuoteInputSchema.parse({
+      text: 'Buy Analytics dashboard build',
+      serviceId: 'a0000000-0000-4000-8000-000000000011',
+    });
+    expect(parsed.serviceId).toBe('a0000000-0000-4000-8000-000000000011');
+  });
+
+  test('text alone is still enough', () => {
+    expect(RequestQuoteInputSchema.parse({ text: 'Make it faster' }).serviceId).toBeUndefined();
+  });
+});

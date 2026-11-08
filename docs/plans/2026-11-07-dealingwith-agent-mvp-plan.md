@@ -159,7 +159,7 @@ If your context grows large: finish the current task, commit, push, update the r
 ```
 Phase 0 (one implementer, sequential)      T1 scaffold → T2 contracts → T3 db → T4 seed
                                                       │
-Phase 1 (parallel after T4)                           ├── Track A commerce core: A0 → A1 → A2 → A3 → A4 → A5 → A6 → A7 → A8
+Phase 1 (parallel after T4)                           ├── Track A commerce core: A0 → … → A8 → A9 hardening
                                                       ├── Track B agent:         B1 → B2 → B3        (needs T4 only)
                                                       ├── Track D web:           D1 → D2 → D3 → D4 → D5 → D6  (needs T2; fixtures mode until A7 lands)
                                                       └── Track E docs/manual:   E1 (Walter), E2 README/AGENTS skeleton
@@ -358,8 +358,8 @@ Revised 2026-11-07 by the integrator against the Phase 0 code on `main` (commits
 
   | # | Condition | Outcome |
   |---|---|---|
-  | 1 | `mandate.status` in `pending`, `expired`, `revoked` (`active` and `exhausted` pass) | `deny mandate_inactive` |
-  | 2 | `new Date(mandate.expiresAt) < now` | `deny mandate_expired` |
+  | 1 | `mandate.status` in `pending`, `expired`, `revoked` (`active` and `exhausted` pass) | `needs_approval mandate_inactive` (was `deny` until A9) |
+  | 2 | `new Date(mandate.expiresAt) < now`, or `funding.fundingExpiresAt` defined and `< now` | `needs_approval mandate_expired` / `needs_approval funding_exhausted` (A9) |
   | 3 | `quote.projectId !== mandate.projectId` (including no project) | `deny wrong_project` |
   | 4 | `quote.currency !== mandate.currency` | `deny currency_mismatch` |
   | 5 | `latestPublishedVersion === null` or `quote.version !== latestPublishedVersion` | `deny stale_version` |
@@ -575,6 +575,34 @@ The five scenarios of spec section 7.8 as readable end-to-end tests that a judge
 - [ ] **Step 1: Write the five tests** (they fail until `helpers.ts` exists). **Step 2: Run** `pnpm vitest run tests` → FAIL. **Step 3: Implement** `helpers.ts`, workspace and config changes; `pnpm install`. **Step 4: Run** `pnpm test` from the root → every project green, including `tests`; `pnpm typecheck` includes `@dealingwith/scenarios`.
 - [ ] **Step 5: Commit** `test(scenarios): the five spec scenarios end to end against the API`, push, tick A8. Report the track as done with the full `pnpm lint && pnpm typecheck && pnpm test` output tail.
 
+### Task A9: Payment hardening after the independent critique (2026-11-07)
+
+Two independent reviewers (a "top 1% bar" critic and a "CTO for delivery" critic) read the spec, the plan and the Track A code; the integrator verified every claim below against `track/a` at `4716150`. Each item names the file and the behaviour that was read. Work on `track/a` in the existing worktree after `git merge main` (brings `Payment.mandateId`, `scopeRef` on rule intents and `serviceId` on `RequestQuoteInputSchema`). Same rules as A0–A8: failing test first, one commit per item (`fix(scope): ...` or `feat(scope): ...`), push each, scenarios stay green, report appended to `dealingwith-reports/track-a.md` and the file ends again with `STATUS: DONE`.
+
+**Files:**
+- Modify: `apps/backend/src/modules/policies/evaluate.ts`, `apps/backend/src/workflows/accept-quote.ts`, `apps/backend/src/workflows/capture.ts`, `apps/backend/src/workflows/webhooks.ts`, `apps/backend/src/workflows/submit-request.ts`, `apps/backend/src/workflows/fake-agent.ts`, `apps/backend/src/api/routes/payments.ts`, `apps/backend/src/api/routes/requests.ts`, `apps/backend/src/integrations/paypal/{gateway,mock}.ts`, `apps/backend/src/modules/payments/*.ts` (mapper), `apps/backend/src/env.ts`
+- Test: the suites beside each file plus `tests/scenarios/` (unchanged expectations except where an item says so)
+
+**Items, in order:**
+
+1. **Approval instead of denial** (`evaluate.ts:15-16`, `accept-quote.ts:198-204`). Today a `pending`, `expired` or `revoked` mandate and a passed expiry return `deny`, and a PayPal-side capture failure other than `AUTHORIZATION_AMOUNT_EXCEEDED` is rethrown (a 502 to the caller), while spec 7.4 Flow B and the policy messages themselves ("Approve this payment in PayPal.") promise an approval link. Change: `mandate_inactive` and `mandate_expired` become `needs_approval`; add a check `funding.fundingExpiresAt` defined and `< now` → `needs_approval` with reason `funding_exhausted`; only `wrong_project`, `currency_mismatch` and `stale_version` stay `deny`. In `accept-quote.ts`, every `PaypalError` from `captureAuthorization` releases the spend and marks the payment `denied` (as now), then falls through to the pay-now branch and returns `approval_required` with reason `funding_exhausted`, the policy message and an `approvalUrl`; only non-`PaypalError` errors propagate. Update the A3 table in this plan and the policy tests; scenario 2 (over per-purchase) is unchanged.
+
+2. **Capture without a browser cookie** (`api/routes/payments.ts:19`, `workflows/webhooks.ts:69-81`, `access/session.ts:12` TTL 86400). A judge who opens the agent's approval link in another browser or after the cookie expires approves at PayPal, lands on `/pay/return`, and the capture route answers 401; `CHECKOUT.ORDER.APPROVED` only marks the payment `approved`, so nothing ever captures. Change: on `CHECKOUT.ORDER.APPROVED` for a `pay_now` payment in `created` or `approved`, call `captureApprovedOrder` (already idempotent through the idempotency key and `markPaid`); and let `POST /api/paypal/orders/:orderId/capture` run without a session when the payment is `pay_now` and not yet captured (the order id is the capability), keeping the ownership check when a session is present. Tests: webhook approved → payment `captured`, quote `paid`, one `quote.paid` event; capture route without cookie → 200 with the captured payment; a second call → the same payment, no second capture.
+
+3. **Expired orders** (`accept-quote.ts:~205` reuses `row.paypalOrderId` and the stored `approveUrl` forever; the mock never expires). PayPal approve links die after about three hours unapproved and an approved order must be captured within about three days. Change: when a payment already has an order, call `deps.paypal.getOrder`; if the status is not `CREATED` or `APPROVED`, or the gateway throws `ORDER_EXPIRED` / `RESOURCE_NOT_FOUND`, create a new order with idempotency key `pay:${quoteId}:${version}:${attempt}` (`attempt` = number of orders so far, stored in `raw.orderAttempts`) and store the new order id and approve url. Add `EXPIRED` to `OrderStatus`, `expireOrder(orderId)` to the mock (test hook) and a test: accept, expire, accept again → a new `MOCK-ORDER-*` id and a working approve url.
+
+4. **Deterministic fixed-price purchase** (`fake-agent.ts:55-59` throws `no_fixture_for_request` 422 for any text outside the five demo keys, so the storefront `Buy Analytics dashboard build` fails in mock mode). Change: `POST /api/requests` and `POST /api/projects/:id/requests` accept the optional `serviceId` now in `RequestQuoteInputSchema`; when present and the service has exactly one `fixed` rule, `submitRequest` builds the quote without calling the agent: one line `{ kind: 'rule', ref: { id, version }, quantity: 1, label: service.name, rationale: 'Fixed-price service bought from the storefront.' }`, `deliveryDays: service.deliveryDays`, `explanation: 'Fixed price for ${service.name}.'`, no `agent_runs` row, status `published`. A service with zero or several fixed rules falls back to the agent. Test: S1 by `serviceId` → `published`, `totalCents 120000`, one line citing `S1.price v1`.
+
+5. **No 422 for a human request** (`submit-request.ts:75-78` rethrows `PricingError`; `fake-agent.ts:55-59`). With a real model one bad citation becomes "could not be priced" in front of a judge. Change: on `PricingError`, run the agent once more with the text `${text}\n\nThe previous attempt could not be priced: ${error.message}. Cite only clause and rule ids that appear in the context.` (same `requestId`, a second `agent_runs` row); if it fails again, publish a `needs_info` version with one question `We could not match part of your request to the contracted scope (${error.message}). Could you describe what you need in other words?` and `whyItChangesPrice: 'The price depends on which service or clause applies.'`, set the request to `needs_info`, emit `quote.needs_info`. `PricingError` never leaves `submitRequest`. The fake agent stops throwing for unmatched text and returns a `needs_info` output with the question `This demo understands five scripted requests; which one do you mean?` and the same `whyItChangesPrice`. Tests: a fixture that cites `C9` is retried and ends `needs_info`; unmatched text in mock mode → `needs_info`, never 422.
+
+6. **Mandate on the payment** (`modules/payments` mapper; `accept-quote.ts:112` stores `raw.mandateId`). Map `mandateId` from `raw.mandateId` into the contracts `Payment` for `mode: 'mandate'` payments; test on the scenario 3 payment.
+
+7. **Reconcilable mandate captures** (`webhooks.ts:24-46` resolves by capture id, by order id for `pay_now`, or by `custom_id` `quote:…`; a mandate capture is found only after `markPaid` stored the capture id, so a crash between capture and `markPaid` leaves money captured and a quote unpaid). Change: `captureAuthorization` input gains `invoiceId: string`; `accept-quote.ts` passes `mandate:${quoteId}:${version}`; the mock writes it as `invoice_id` on the capture resource; `resolvePayment` also matches `invoice_id` against `/^mandate:([0-9a-f-]{36}):(\d+)$/` via `findPaymentForQuoteVersion`. Test: a `PAYMENT.CAPTURE.COMPLETED` webhook carrying only `invoice_id` resolves and marks the quote paid. (I1 maps `invoiceId` to PayPal's `invoice_id`.)
+
+8. **Deploy before the webhook exists** (`env.ts:30-38` requires `PAYPAL_WEBHOOK_ID` in sandbox, but the webhook can only be registered once the Render URL exists). Change: `PAYPAL_WEBHOOK_ID` optional in sandbox; when absent, `verifyWebhookSignature` returns `false` (every webhook is rejected with 400 `invalid_signature`) and the logger warns once at boot `paypal.webhook_id_missing`. Test on `loadEnv` and on the webhook route.
+
+- [ ] For each item: failing test → run → implement → run → commit → push. After item 8: `pnpm lint && pnpm typecheck && pnpm test` green from the worktree root, CI green, A3/A5/A7 rows of this plan updated where behaviour changed, `docs/milestones.md` A9 ticked, report appended and ending with `STATUS: DONE`.
+
 ---
 
 ## Phase 1 — Track B: agent
@@ -732,7 +760,7 @@ Revised 2026-11-07 by the integrator (fool-proof revision, anchored to the contr
 - Test: `apps/web/src/components/Money.test.tsx`, `apps/web/src/api/client.test.ts`, `apps/web/src/api/fixtures/fixtures.test.ts`
 
 **Interfaces:**
-- Produces: `api.get<T>(path, schema: ZodType<T>)`, `api.post<T>(path, body, schema)`, `api.patch`, `api.del`, `ApiRequestError`; `routes` with one typed entry per A7 row (`routes.projects.get(id)`, `routes.quotes.accept(id)`…); `useSession()` → `{ session: Session | null, status: 'loading' | 'ready', loginAs(role), logout() }`; `<Money cents={8000} />` → `US$80.00`; `useApi<T>(fetcher)` → `{ data, error, loading, refetch }`.
+- Produces: `api.get<T>(path, schema: ZodType<T>)`, `api.post<T>(path, body, schema)`, `api.patch`, `api.del`, `ApiRequestError`; `routes` with one typed entry per A7 row (`routes.projects.get(id)`, `routes.quotes.accept(id)`…); `useSession()` → `{ session: Session | null, status: 'loading' | 'ready', loginAs(role), logout() }`; `<Money cents={8000} />` → `US$80.00`; `useApi<T>(fetcher)` → `{ data, error, loading, refetch }`. `<Layout>` shows `Reset demo data` in the header whenever the session is `provider` and `AppConfig.demoMode` is true (confirm dialog `This restores the demo to its starting state. Continue?` → `POST /api/demo/reset` → reload), so judges can reset from any page, not only the dashboard (critique 2026-11-07).
 
 - [ ] **Step 1: Write failing tests.** `Money.test.tsx`: `cents 8000` → text `US$80.00`; `cents 0` → `US$0.00`; `cents 123450` → `US$1,234.50`. `client.test.ts` (mock `fetch`): a 2xx body that fails the schema throws a `ZodError`; a `404 { error: { code: 'not_found', message: 'Quote not found' } }` throws `ApiRequestError` with `status 404`, `code 'not_found'`, `message 'Quote not found'`. `fixtures.test.ts`: every fixture quote parses with `QuoteSchema`; the initial project view parses with `ProjectViewSchema`; `AppConfig`, `Session` (both roles), `Mandate`, `IssuedAgent` (token matches `AGENT_TOKEN_PATTERN`) and `DashboardData` fixtures parse; after `accept` + `capture` of request 1 the project has 4 clauses and the fourth has `source.kind 'quote'`.
 - [ ] **Step 2: Run** `pnpm --filter @dealingwith/web test` → FAIL (first because the package does not exist; then for the right reasons). **Step 3: Scaffold and implement** (`pnpm create vite` React + TS template is allowed as a starting point; delete what you do not use). **Step 4: Run** → PASS; `pnpm lint && pnpm typecheck` green from the root; `VITE_API_MODE=fixtures pnpm --filter @dealingwith/web dev` shows the login page at `http://localhost:5173/login`, and `Enter as client (Mara)` lands on `/portal/projects/a0000000-0000-4000-8000-000000000031`.
@@ -857,6 +885,8 @@ Revised 2026-11-07 by the integrator (fool-proof revision, anchored to the contr
 
 ### Task I4: Render deployment
 
+Note (critique 2026-11-07): the sandbox webhook can only be registered once the public URL exists, so deploy first with `PAYPAL_WEBHOOK_ID` empty (A9 makes it optional; every webhook is rejected until it is set), register the webhook for `https://<service>.onrender.com/api/webhooks/paypal`, then set the id and redeploy. Render must run the root `pnpm build` (contracts before backend before web); a package-level backend build fails without `packages/contracts/dist`.
+
 **Files:**
 - Create: `render.yaml` (root), `infra/README.md`, `apps/backend/scripts/start.sh` (`node dist/db/migrate-cli.js && node dist/index.js`)
 
@@ -869,6 +899,8 @@ Revised 2026-11-07 by the integrator (fool-proof revision, anchored to the contr
 - [ ] **Step 7: Commit** `infra: Render blueprint and start script` and push.
 
 ### Task I5: Pre-submission checks
+
+Note (critique 2026-11-07): judging runs 2026-12-01 14:00 PST to 2026-12-15 08:00 PST. A PayPal authorization lives 29 days (3-day honor period), so the demo mandate's funding authorized on 2026-11-11 would die around 2026-12-10. Re-authorize the US$2,000 funding on 2026-11-30 (Walter, from the client portal), and write that date in the README and in `docs/milestones.md`.
 
 - [ ] `pnpm lint && pnpm typecheck && pnpm test` green on `main`; CI green.
 - [ ] Fresh browser, no cookies: `/login` → client → the five requests behave as spec section 6 on the hosted URL; dashboard shows the numbers; reset works.
@@ -895,6 +927,8 @@ Revised 2026-11-07 by the integrator (fool-proof revision, anchored to the contr
 ---
 
 ## Self-review notes (2026-11-07)
+
+- **Independent critique (2026-11-07 evening).** Two reviewers (top 1% bar, CTO for delivery) read spec, plan and the Track A/B code; the integrator verified each finding at file and line before acting. Verified and scheduled: Task A9 (approval instead of denial, capture without a cookie, expired orders, deterministic fixed-price purchase, no 422 for a human request, mandate on the payment, reconcilable mandate captures, optional webhook id); contracts gained `Payment.mandateId`, `scopeRef` on rule intents and `serviceId` on quote requests; D1 shows reset in the provider header; I4 deploys before the webhook; I5 re-authorizes funding before judging. Pending Walter: a single approve-link payment path for the web (no PayPal JS buttons in the MVP) and the weekend calendar for the sandbox spike. Not adopted yet: a "Why was this paid?" trace endpoint and drawer (good idea, after the tracks are green).
 
 - **Fool-proof revision (2026-11-07, after Track A started).** The plan, not the chat brief, carries the preflight (expected results per step, ports per track), the bugs rule, the report file with `STATUS: DONE`, the stack traps, and per track the files it may touch, the decisions already taken and the track's definition of done. A brief to a session can then be three lines: the track, the plan, the decision rule. Tracks B and D are revised this way; Track C gets the same treatment before it starts. Track D additions verified on npm 2026-11-07: `ag-studio-react@3.1.0` exists and its README says the trial key removes watermarks (so keyless mode renders), `@vitejs/plugin-react@6.2.1` needs `vite ^8`, `vitest@5.1.0` accepts `vite ^8`. Untested: AG Studio's saved-definition and license entry points (D6 records what it finds). Verified: the AI SDK 7 names in the Track B introduction were read from the published tarballs (`ai@7.0.165`, `@ai-sdk/anthropic@4.0.99`, `@ai-sdk/openai@4.0.111`), not run. Untested: `MockLanguageModelV4` with `Output.object` end to end; the first green `run.test.ts` is the proof.
 
