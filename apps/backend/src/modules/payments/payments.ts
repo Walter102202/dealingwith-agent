@@ -13,6 +13,7 @@ export function toPayment(row: typeof payments.$inferSelect): Payment {
   return PaymentSchema.parse(
     compact({
       ...row,
+      mandateId: row.mode === 'mandate' ? row.raw.mandateId : undefined,
       paypalOrderId: row.paypalOrderId ?? undefined,
       paypalAuthorizationId: row.paypalAuthorizationId ?? undefined,
       paypalCaptureId: row.paypalCaptureId ?? undefined,
@@ -59,12 +60,18 @@ export async function findPaymentByCaptureId(db: Db, id: string): Promise<Paymen
 }
 export async function findPaymentForQuoteVersion(
   db: Db,
-  input: { quoteId: string; version: number },
+  input: { quoteId: string; version: number; mode?: PaymentMode },
 ): Promise<Payment | null> {
   const [row] = await db
     .select()
     .from(payments)
-    .where(and(eq(payments.quoteId, input.quoteId), eq(payments.quoteVersion, input.version)))
+    .where(
+      and(
+        eq(payments.quoteId, input.quoteId),
+        eq(payments.quoteVersion, input.version),
+        input.mode ? eq(payments.mode, input.mode) : undefined,
+      ),
+    )
     .orderBy(desc(payments.createdAt))
     .limit(1);
   return row ? toPayment(row) : null;

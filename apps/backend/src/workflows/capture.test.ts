@@ -1,4 +1,7 @@
+import { randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { signSession } from '../access/session.js';
+import { createApp } from '../api/app.js';
 import { DEMO } from '../db/demo-data.js';
 import { payments } from '../db/schema.js';
 import { PaypalError } from '../integrations/paypal/gateway.js';
@@ -15,6 +18,41 @@ afterEach(async () => {
   await h.close();
 });
 describe('captureApprovedOrder', () => {
+  test('captures by order capability without a cookie, reuses capture, and still checks a present session', async () => {
+    const q = await publishedQuote(h.deps, {
+      intents: [
+        {
+          kind: 'rule',
+          ref: { id: 'S2.report', version: 1 },
+          quantity: 1,
+          label: 'Summary',
+          rationale: 'S2.report',
+        },
+      ],
+    });
+    const accepted = await acceptQuote(h.deps, {
+      quoteId: q.id,
+      version: 1,
+      actor: { kind: 'web', clientId: DEMO.client.id },
+    });
+    const orderId = accepted.payment?.paypalOrderId ?? '';
+    const delivery = vi.spyOn(h.paypal, 'emitWebhook').mockResolvedValueOnce();
+    await h.paypal.approve(orderId);
+    delivery.mockRestore();
+    const capture = vi.spyOn(h.paypal, 'captureOrder');
+    const app = createApp(h.deps);
+    const path = `/api/paypal/orders/${orderId}/capture`;
+    const cookie = `dw_session=${signSession({ role: 'client', clientId: randomUUID(), businessId: DEMO.business.id, name: 'Other' }, h.deps.env.SESSION_SECRET, { now: h.deps.now() })}`;
+    expect((await app.request(path, { method: 'POST', headers: { cookie } })).status).toBe(403);
+    const first = await app.request(path, { method: 'POST' });
+    expect(first.status).toBe(200);
+    const payment = await first.json();
+    expect(payment).toMatchObject({ status: 'captured' });
+    const repeat = await app.request(path, { method: 'POST' });
+    expect(repeat.status).toBe(200);
+    expect(await repeat.json()).toEqual(payment);
+    expect(capture).toHaveBeenCalledTimes(1);
+  });
   test('rejects unapproved orders and captures once despite concurrent calls and webhook delivery', async () => {
     const q = await publishedQuote(h.deps, {
       intents: [

@@ -1,6 +1,10 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { issueAgentToken } from '../access/agent-tokens.js';
+import { createApp } from '../api/app.js';
 import { DEMO } from '../db/demo-data.js';
 import { payments, webhookEvents } from '../db/schema.js';
+import { loadEnv } from '../env.js';
+import { createPaypalGateway } from '../integrations/paypal/index.js';
 import { getMandate } from '../modules/mandates/mandates.js';
 import { getQuote } from '../modules/quotes/quotes.js';
 import { activateMandate, createHarness, publishedQuote } from '../test/workflow-harness.js';
@@ -17,6 +21,73 @@ afterEach(async () => {
 const body = (id: string, resource: object, event_type = 'PAYMENT.CAPTURE.COMPLETED') =>
   JSON.stringify({ id, event_type, resource });
 describe('processWebhook', () => {
+  test('rejects sandbox webhooks without a registered id and warns once at gateway startup', async () => {
+    const env = {
+      ...loadEnv({}),
+      PAYPAL_MODE: 'sandbox' as const,
+      PAYPAL_CLIENT_ID: 'test-client',
+      PAYPAL_CLIENT_SECRET: 'test-secret',
+    };
+    const warn = vi.fn();
+    h.deps.env = env;
+    h.deps.paypal = createPaypalGateway(env, { logger: { warn } });
+    const app = createApp(h.deps);
+    for (let i = 0; i < 2; i++) {
+      const response = await app.request('/api/webhooks/paypal', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: '{}',
+      });
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({ result: 'invalid_signature' });
+    }
+    expect(warn).toHaveBeenCalledExactlyOnceWith('paypal.webhook_id_missing');
+    expect(await h.deps.db.select().from(webhookEvents)).toHaveLength(0);
+  });
+  test('reconciles an interrupted mandate capture using only its invoice id', async () => {
+    await activateMandate(h.deps);
+    const { agent } = await issueAgentToken(h.deps.db, {
+      clientId: DEMO.client.id,
+      label: 'Recovery',
+      mandateId: DEMO.mandate.id,
+    });
+    const q = await publishedQuote(h.deps, {
+      intents: [
+        {
+          kind: 'rule',
+          ref: { id: 'S2.alert', version: 1 },
+          quantity: 1,
+          label: 'Alert',
+          rationale: 'S2.alert',
+        },
+      ],
+    });
+    const capture = vi
+      .spyOn(h.paypal, 'captureAuthorization')
+      .mockRejectedValue(new Error('Process interrupted after remote capture'));
+    await expect(
+      acceptQuote(h.deps, { quoteId: q.id, version: q.version, actor: { kind: 'agent', agent } }),
+    ).rejects.toThrow('Process interrupted');
+    const input = {
+      headers: { 'x-mock-signature': h.deps.env.MOCK_WEBHOOK_SECRET },
+      rawBody: body('WH-recovery', {
+        id: 'CAP-recovery',
+        invoice_id: `mandate:${q.id}:${q.version}`,
+        amount: { currency_code: 'USD', value: '60.00' },
+      }),
+    };
+    expect(await processWebhook(h.deps, input)).toEqual({ result: 'processed' });
+    expect(await getQuote(h.deps.db, q.id)).toMatchObject({ status: 'paid' });
+    expect(await h.deps.db.select().from(payments)).toMatchObject([
+      { mode: 'mandate', status: 'captured', paypalCaptureId: 'CAP-recovery' },
+    ]);
+    expect(await processWebhook(h.deps, input)).toEqual({ result: 'duplicate' });
+    expect(h.events.filter((event) => event.type === 'quote.paid')).toHaveLength(1);
+    expect(capture).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ invoiceId: `mandate:${q.id}:${q.version}` }),
+    );
+  });
   test('rejects a capture whose amount or currency differs and rolls back its event', async () => {
     const q = await publishedQuote(h.deps, {
       intents: [
@@ -88,7 +159,9 @@ describe('processWebhook', () => {
       actor: { kind: 'web', clientId: DEMO.client.id },
     });
     await h.paypal.approve(a.payment?.paypalOrderId ?? '');
-    expect(await h.deps.db.select().from(payments)).toMatchObject([{ status: 'approved' }]);
+    expect(await h.deps.db.select().from(payments)).toMatchObject([{ status: 'captured' }]);
+    expect(await getQuote(h.deps.db, q.id)).toMatchObject({ status: 'paid' });
+    expect(h.events.filter((e) => e.type === 'quote.paid')).toHaveLength(1);
     const rawBody = body('WH-complete', {
       id: 'CAP-1',
       amount: { currency_code: 'USD', value: '80.00' },

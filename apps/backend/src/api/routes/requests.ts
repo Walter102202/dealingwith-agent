@@ -4,11 +4,12 @@ import { submitRequest } from '../../workflows/submit-request.js';
 import { type ApiEnv, clientId, requireClientOwnsProject, requireSession } from '../auth.js';
 import { jsonBody } from '../validate.js';
 
-const body = RequestQuoteInputSchema.pick({ text: true });
+const body = RequestQuoteInputSchema.pick({ text: true, serviceId: true });
 export function requestRoutes() {
   const app = new Hono<ApiEnv>();
   app.post('/api/projects/:id/requests', requireSession('client'), jsonBody(body), async (c) => {
     const deps = c.get('deps');
+    const { text, serviceId } = c.req.valid('json');
     const project = await requireClientOwnsProject(
       deps.db,
       IdSchema.parse(c.req.param('id')),
@@ -19,18 +20,21 @@ export function requestRoutes() {
         clientId: clientId(c),
         projectId: project.id,
         channel: 'web',
-        text: c.req.valid('json').text,
+        text,
+        ...(serviceId ? { serviceId } : {}),
       }),
     );
   });
-  app.post('/api/requests', requireSession('client'), jsonBody(body), async (c) =>
-    c.json(
+  app.post('/api/requests', requireSession('client'), jsonBody(body), async (c) => {
+    const { text, serviceId } = c.req.valid('json');
+    return c.json(
       await submitRequest(c.get('deps'), {
         clientId: clientId(c),
         channel: 'web',
-        text: c.req.valid('json').text,
+        text,
+        ...(serviceId ? { serviceId } : {}),
       }),
-    ),
-  );
+    );
+  });
   return app;
 }

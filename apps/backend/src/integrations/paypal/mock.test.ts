@@ -49,12 +49,14 @@ describe('MockPaypalGateway', () => {
         amountCents: 6000,
         finalCapture: false,
         requestId,
+        invoiceId: `mandate:quote:${requestId}`,
       });
     await expect(
       paypal.captureAuthorization(auth.authorizationId, {
         amountCents: 190000,
         finalCapture: false,
         requestId: 'three',
+        invoiceId: 'mandate:quote:three',
       }),
     ).rejects.toMatchObject({ code: 'AUTHORIZATION_AMOUNT_EXCEEDED' });
     expect(
@@ -62,11 +64,13 @@ describe('MockPaypalGateway', () => {
     ).toMatchObject([
       {
         resource: {
+          invoice_id: 'mandate:quote:one',
           supplementary_data: { related_ids: { authorization_id: auth.authorizationId } },
         },
       },
       {
         resource: {
+          invoice_id: 'mandate:quote:two',
           supplementary_data: { related_ids: { authorization_id: auth.authorizationId } },
         },
       },

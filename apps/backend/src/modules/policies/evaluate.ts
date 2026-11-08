@@ -12,8 +12,11 @@ export function evaluate(input: {
     reason,
     message: policyMessage(reason, { ...input, amountCents: q.totalCents }),
   });
-  if (['pending', 'expired', 'revoked'].includes(m.status)) return fail('deny', 'mandate_inactive');
-  if (new Date(m.expiresAt) < now) return fail('deny', 'mandate_expired');
+  if (['pending', 'expired', 'revoked'].includes(m.status))
+    return fail('needs_approval', 'mandate_inactive');
+  if (new Date(m.expiresAt) < now) return fail('needs_approval', 'mandate_expired');
+  if (m.funding.fundingExpiresAt && new Date(m.funding.fundingExpiresAt) < now)
+    return fail('needs_approval', 'funding_exhausted');
   if (q.projectId !== m.projectId) return fail('deny', 'wrong_project');
   if (q.currency !== m.currency) return fail('deny', 'currency_mismatch');
   if (latestPublishedVersion === null || q.version !== latestPublishedVersion)

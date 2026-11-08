@@ -19,6 +19,7 @@ await runMigrations(db);
 if (env.DEMO_MODE) await seedDemo(db);
 const logger = createLogger();
 const paypal = createPaypalGateway(env, {
+  logger,
   deliverWebhook: async (event, headers) => {
     await processWebhook(deps, { headers, rawBody: JSON.stringify(event) });
   },

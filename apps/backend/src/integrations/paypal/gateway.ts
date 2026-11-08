@@ -1,6 +1,6 @@
 import { AppError } from '../../lib/errors.js';
 export type OrderIntent = 'CAPTURE' | 'AUTHORIZE';
-export type OrderStatus = 'CREATED' | 'APPROVED' | 'COMPLETED' | 'VOIDED';
+export type OrderStatus = 'CREATED' | 'APPROVED' | 'COMPLETED' | 'VOIDED' | 'EXPIRED';
 export type CaptureResult = {
   captureId: string;
   status: 'COMPLETED' | 'PENDING' | 'DECLINED';
@@ -38,7 +38,7 @@ export interface PaypalGateway {
   }>;
   captureAuthorization(
     authorizationId: string,
-    i: { amountCents: number; finalCapture: boolean; requestId: string },
+    i: { amountCents: number; finalCapture: boolean; requestId: string; invoiceId: string },
   ): Promise<CaptureResult>;
   verifyWebhookSignature(headers: Record<string, string>, rawBody: string): Promise<boolean>;
 }

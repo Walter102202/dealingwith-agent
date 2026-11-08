@@ -12,9 +12,9 @@ import { getQuote } from '../modules/quotes/quotes.js';
 import { getRequest } from '../modules/requests/requests.js';
 import type { Deps } from '../workflows/deps.js';
 export type ApiEnv = { Variables: { deps: Deps; session: Session } };
-export function readSession(c: Context, env: Env): Session | null {
+export function readSession(c: Context, env: Env, now = new Date()): Session | null {
   const token = getCookie(c, SESSION_COOKIE);
-  return token ? verifySession(token, env.SESSION_SECRET, new Date()) : null;
+  return token ? verifySession(token, env.SESSION_SECRET, now) : null;
 }
 export function requireSession(role?: 'client' | 'provider'): MiddlewareHandler<ApiEnv> {
   return async (c, next) => {

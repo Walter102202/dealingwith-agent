@@ -28,11 +28,7 @@ export const EnvSchema = z
   })
   .superRefine((env, ctx) => {
     if (env.PAYPAL_MODE === 'sandbox') {
-      for (const key of [
-        'PAYPAL_CLIENT_ID',
-        'PAYPAL_CLIENT_SECRET',
-        'PAYPAL_WEBHOOK_ID',
-      ] as const) {
+      for (const key of ['PAYPAL_CLIENT_ID', 'PAYPAL_CLIENT_SECRET'] as const) {
         if (!env[key]?.trim())
           ctx.addIssue({ code: 'custom', path: [key], message: 'Required in sandbox mode' });
       }

@@ -13,7 +13,6 @@ import { findMandateForProject, getMandate } from '../modules/mandates/mandates.
 import {
   createPayment,
   findPaymentForQuoteVersion,
-  getPayment,
   paymentRow,
   updatePayment,
 } from '../modules/payments/payments.js';
@@ -25,9 +24,9 @@ import {
   updateQuoteStatus,
 } from '../modules/quotes/quotes.js';
 import { getRequest } from '../modules/requests/requests.js';
-import { markPaid, rawRecord } from './capture.js';
+import { markPaid } from './capture.js';
 import type { Deps } from './deps.js';
-import { makeEvent } from './events.js';
+import { requestApproval } from './pay-now.js';
 
 type Actor = { kind: 'web'; clientId: string } | { kind: 'agent'; agent: ClientAgent };
 type Prepared =
@@ -143,7 +142,8 @@ export async function acceptQuote(
     return { quote, payment, ...(reason ? { reason } : {}), ...(message ? { message } : {}) };
   });
   if ('result' in prepared) return prepared.result;
-  const { quote, payment } = prepared;
+  const { quote } = prepared;
+  let payment = prepared.payment;
   if (!payment) {
     await markPaid(deps, { quoteId: quote.id, version: quote.version });
     return {
@@ -151,90 +151,66 @@ export async function acceptQuote(
       message: 'Nothing to pay: everything requested is already included in the project scope.',
     };
   }
-  const row = await paymentRow(deps.db, payment.id);
+  let row = await paymentRow(deps.db, payment.id);
   if (payment.mode === 'mandate') {
-    if (row.status === 'denied')
-      return {
-        status: 'denied',
-        reason: 'funding_exhausted',
-        message: 'This mandate payment was declined. Request a new quote before retrying.',
-      };
-    try {
-      const capture = await deps.paypal.captureAuthorization(payment.paypalAuthorizationId ?? '', {
-        amountCents: payment.amountCents,
-        finalCapture: false,
-        requestId: row.idempotencyKey,
-      });
-      if (capture.status !== 'COMPLETED') throw new PaypalError('CAPTURE_NOT_COMPLETED');
-      if (capture.amountCents !== quote.totalCents)
-        throw new AppError('payment_mismatch', 'Captured amount differs from the quote', {
-          status: 409,
-        });
-      const paid = await markPaid(deps, {
-        quoteId: quote.id,
-        version: quote.version,
-        paymentId: payment.id,
-        captureId: capture.captureId,
-        raw: capture.raw,
-      });
-      return { status: 'paid', ...(paid.payment ? { payment: paid.payment } : {}) };
-    } catch (error) {
-      if (!(error instanceof PaypalError)) throw error;
-      await deps.db.transaction(async (tx) => {
-        const [locked] = await tx
-          .select()
-          .from(payments)
-          .where(eq(payments.id, payment.id))
-          .for('update');
-        if (locked && locked.status !== 'denied' && locked.status !== 'captured') {
-          await releaseSpend(tx, {
-            mandateId: String(row.raw.mandateId),
+    const mandatePayment = payment;
+    if (row.status !== 'denied')
+      try {
+        const capture = await deps.paypal.captureAuthorization(
+          payment.paypalAuthorizationId ?? '',
+          {
             amountCents: payment.amountCents,
-            now: deps.now(),
+            finalCapture: false,
+            requestId: row.idempotencyKey,
+            invoiceId: `mandate:${quote.id}:${quote.version}`,
+          },
+        );
+        if (capture.status !== 'COMPLETED') throw new PaypalError('CAPTURE_NOT_COMPLETED');
+        if (capture.amountCents !== quote.totalCents)
+          throw new AppError('payment_mismatch', 'Captured amount differs from the quote', {
+            status: 409,
           });
-          await updatePayment(tx, payment.id, { status: 'denied' });
-        }
-      });
-      if (error.code !== 'AUTHORIZATION_AMOUNT_EXCEEDED') throw error;
-      const mandate = await getMandate(deps.db, String(row.raw.mandateId));
-      return {
-        status: 'denied',
-        reason: 'funding_exhausted',
-        message: policyMessage('funding_exhausted', { amountCents: quote.totalCents, mandate }),
-      };
-    }
-  }
-  let approvalUrl = typeof row.raw.approveUrl === 'string' ? row.raw.approveUrl : undefined;
-  if (!row.paypalOrderId || !approvalUrl) {
-    const order = await deps.paypal.createOrder({
-      intent: 'CAPTURE',
+        const paid = await markPaid(deps, {
+          quoteId: quote.id,
+          version: quote.version,
+          paymentId: payment.id,
+          captureId: capture.captureId,
+          raw: capture.raw,
+        });
+        return { status: 'paid', ...(paid.payment ? { payment: paid.payment } : {}) };
+      } catch (error) {
+        if (!(error instanceof PaypalError)) throw error;
+        await deps.db.transaction(async (tx) => {
+          const [locked] = await tx
+            .select()
+            .from(payments)
+            .where(eq(payments.id, mandatePayment.id))
+            .for('update');
+          if (locked && locked.status !== 'denied' && locked.status !== 'captured') {
+            await releaseSpend(tx, {
+              mandateId: String(row.raw.mandateId),
+              amountCents: mandatePayment.amountCents,
+              now: deps.now(),
+            });
+            await updatePayment(tx, mandatePayment.id, { status: 'denied' });
+          }
+        });
+      }
+    const mandate = await getMandate(deps.db, String(row.raw.mandateId));
+    prepared.reason = 'funding_exhausted';
+    prepared.message = policyMessage('funding_exhausted', {
       amountCents: quote.totalCents,
-      customId: `quote:${quote.id}:${quote.version}`,
-      requestId: row.idempotencyKey,
-      returnUrl: `${deps.env.APP_URL}/pay/return`,
-      cancelUrl: `${deps.env.APP_URL}/pay/cancel`,
+      mandate,
     });
-    approvalUrl = order.approveUrl;
-    await updatePayment(deps.db, payment.id, {
-      paypalOrderId: order.orderId,
-      raw: { ...row.raw, ...rawRecord(order.raw), approveUrl: approvalUrl },
+    payment = await createPayment(deps.db, {
+      quoteId: quote.id,
+      quoteVersion: quote.version,
+      mode: 'pay_now',
+      amountCents: quote.totalCents,
+      idempotencyKey: `pay:${quote.id}:${quote.version}`,
+      raw: { reason: prepared.reason, message: prepared.message },
     });
+    row = await paymentRow(deps.db, payment.id);
   }
-  const reason = prepared.reason ?? (row.raw.reason as AcceptQuoteReason | undefined);
-  const message = prepared.message ?? (row.raw.message as string | undefined);
-  const result = {
-    status: 'approval_required' as const,
-    approvalUrl,
-    payment: await getPayment(deps.db, payment.id),
-    ...(reason ? { reason } : {}),
-    ...(message ? { message } : {}),
-  };
-  deps.events.publish(
-    makeEvent(deps, {
-      type: 'payment.approval_required',
-      projectId: quote.projectId ?? null,
-      ...result,
-    }),
-  );
-  return result;
+  return requestApproval(deps, quote, payment.id, prepared);
 }

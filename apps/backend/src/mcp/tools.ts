@@ -122,13 +122,14 @@ export function registerTools(server: McpServer, deps: Deps, agent: ClientAgent)
       inputSchema: MCP_TOOLS.request_quote.input,
       outputSchema: MCP_TOOLS.request_quote.output,
     },
-    async ({ projectId, text: body }) => {
+    async ({ projectId, text: body, serviceId }) => {
       const quote = await submitRequest(deps, {
         clientId: agent.clientId,
         ...(projectId ? { projectId } : {}),
         channel: 'mcp',
         agentId: agent.id,
         text: body,
+        ...(serviceId ? { serviceId } : {}),
       });
       return text(formatQuoteMarkdown(quote), { quote });
     },

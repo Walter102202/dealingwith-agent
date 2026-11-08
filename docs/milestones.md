@@ -32,7 +32,7 @@ A quote can be priced, accepted and paid end to end against the mock PayPal gate
 - [x] **Access** (A6). Done when: demo sessions are signed cookies and agent tokens are hashed, revocable and come with connection snippets.
 - [x] **HTTP API** (A7). Done when: the routes of the plan answer with validated bodies, SSE events stream per project, the built web is served statically and `/healthz` responds.
 - [x] **Scenario tests** (A8). Done when: `tests/scenarios/01…05` pass from the repo root and prove the five expectations of spec section 7.8 through the HTTP API.
-- [ ] **Payment hardening** (A9). Done when: inactive, expired or unfunded mandates and PayPal-side capture failures return an approval link instead of a denial or a 502; an approved order is captured by webhook without a browser session; expired orders are recreated; a fixed-price purchase needs no agent; a pricing failure ends in `needs_info`, never a 422; mandate payments name their mandate and their captures reconcile by invoice id; the webhook id is optional until registered.
+- [x] **Payment hardening** (A9). Done when: inactive, expired or unfunded mandates and PayPal-side capture failures return an approval link instead of a denial or a 502; an approved order is captured by webhook without a browser session; expired orders are recreated; a fixed-price purchase needs no agent; a pricing failure ends in `needs_info`, never a 422; mandate payments name their mandate and their captures reconcile by invoice id; the webhook id is optional until registered.
 
 ---
 

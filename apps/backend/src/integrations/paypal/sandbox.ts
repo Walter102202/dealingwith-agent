@@ -1,6 +1,7 @@
 import { PaypalError, type PaypalGateway } from './gateway.js';
 /** Replaced by the real sandbox integration in task I1. */
 export class SandboxPaypalGateway implements PaypalGateway {
+  constructor(private readonly webhookId?: string) {}
   async createOrder(
     _input: Parameters<PaypalGateway['createOrder']>[0],
   ): ReturnType<PaypalGateway['createOrder']> {
@@ -28,6 +29,7 @@ export class SandboxPaypalGateway implements PaypalGateway {
     _headers: Record<string, string>,
     _rawBody: string,
   ): Promise<boolean> {
+    if (!this.webhookId?.trim()) return false;
     throw new PaypalError('SANDBOX_NOT_IMPLEMENTED', 501);
   }
 }

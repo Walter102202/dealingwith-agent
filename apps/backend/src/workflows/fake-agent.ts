@@ -53,11 +53,22 @@ export function fakeAgentPort(
         input.answers ? Object.values(input.answers).join(' ') : input.text
       ).toLowerCase();
       const match = Object.entries(outputs).find(([key]) => text.includes(key.toLowerCase()));
-      if (!match)
-        throw new AppError('no_fixture_for_request', 'No demo fixture matches this request', {
-          status: 422,
-        });
-      const output = AgentOutputSchema.parse(structuredClone(match[1]));
+      const output = AgentOutputSchema.parse(
+        match
+          ? structuredClone(match[1])
+          : {
+              lineItems: [],
+              needsInfo: [
+                {
+                  question: 'This demo understands five scripted requests; which one do you mean?',
+                  whyItChangesPrice: 'The price depends on which service or clause applies.',
+                },
+              ],
+              explanation: 'Choose a scripted request or clarify the work you need.',
+              deliveryDays: 0,
+              confidence: 0,
+            },
+      );
       const [run] = await deps.db
         .insert(agentRuns)
         .values({

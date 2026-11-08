@@ -2,6 +2,15 @@ import { describe, expect, test } from 'vitest';
 import { loadEnv } from './env.js';
 
 describe('loadEnv', () => {
+  test('allows initial sandbox deployment before a webhook id is registered', () => {
+    expect(
+      loadEnv({
+        PAYPAL_MODE: 'sandbox',
+        PAYPAL_CLIENT_ID: 'test-client',
+        PAYPAL_CLIENT_SECRET: 'test-secret',
+      }),
+    ).toMatchObject({ PAYPAL_MODE: 'sandbox' });
+  });
   test('loads the documented local defaults', () => {
     expect(loadEnv({})).toEqual({
       DATABASE_URL: 'pglite://.data/dev',

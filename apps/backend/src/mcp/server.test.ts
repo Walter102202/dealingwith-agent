@@ -66,6 +66,22 @@ afterAll(async () => {
 });
 
 describe('MCP server', () => {
+  test('forwards a fixed-price service selection to the shared workflow', async () => {
+    const client = await connect('http://mcp.test/mcp', token);
+    try {
+      const result = await call(client, 'request_quote', {
+        text: 'Buy Analytics dashboard build',
+        serviceId: DEMO.services.S1.id,
+      });
+      expect(result.isError).toBeFalsy();
+      expect(structured<{ quote: QuoteView }>(result).quote).toMatchObject({
+        status: 'published',
+        totalCents: 120000,
+      });
+    } finally {
+      await client.close();
+    }
+  });
   test('(a) lists exactly the eight tools of the contracts', async () => {
     const client = await connect('http://mcp.test/mcp', token);
     const { tools } = await client.listTools();
