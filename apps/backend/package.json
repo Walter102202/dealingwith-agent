@@ -12,7 +12,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --conditions=development src/db/migrate-cli.ts",
     "seed": "tsx --conditions=development src/db/seed-cli.ts",
-    "mcp:smoke": "node scripts/mcp-smoke.mjs"
+    "mcp:smoke": "node scripts/mcp-smoke.mjs",
+    "paypal:smoke": "tsx --conditions=development scripts/paypal-smoke.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "4.0.99",

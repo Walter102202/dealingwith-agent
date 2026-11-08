@@ -17,5 +17,9 @@ export function createPaypalGateway(
         webhookSecret: env.MOCK_WEBHOOK_SECRET,
         ...options,
       })
-    : new SandboxPaypalGateway(env.PAYPAL_WEBHOOK_ID);
+    : new SandboxPaypalGateway({
+        clientId: env.PAYPAL_CLIENT_ID ?? '',
+        clientSecret: env.PAYPAL_CLIENT_SECRET ?? '',
+        ...(env.PAYPAL_WEBHOOK_ID ? { webhookId: env.PAYPAL_WEBHOOK_ID } : {}),
+      });
 }
