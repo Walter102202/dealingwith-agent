@@ -88,7 +88,9 @@ describe('processWebhook', () => {
       actor: { kind: 'web', clientId: DEMO.client.id },
     });
     await h.paypal.approve(a.payment?.paypalOrderId ?? '');
-    expect(await h.deps.db.select().from(payments)).toMatchObject([{ status: 'approved' }]);
+    expect(await h.deps.db.select().from(payments)).toMatchObject([{ status: 'captured' }]);
+    expect(await getQuote(h.deps.db, q.id)).toMatchObject({ status: 'paid' });
+    expect(h.events.filter((e) => e.type === 'quote.paid')).toHaveLength(1);
     const rawBody = body('WH-complete', {
       id: 'CAP-1',
       amount: { currency_code: 'USD', value: '80.00' },

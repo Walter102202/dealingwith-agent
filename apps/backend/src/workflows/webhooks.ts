@@ -12,7 +12,7 @@ import {
   updatePayment,
 } from '../modules/payments/payments.js';
 import { releaseSpend } from '../modules/policies/reserve.js';
-import { markPaid, rawRecord } from './capture.js';
+import { captureApprovedOrder, markPaid, rawRecord } from './capture.js';
 import type { Deps } from './deps.js';
 import { makeEvent } from './events.js';
 
@@ -69,15 +69,9 @@ async function dispatch(
   if (type === 'CHECKOUT.ORDER.APPROVED') {
     const payment =
       typeof resource.id === 'string' ? await findPaymentByOrderId(deps.db, resource.id) : null;
-    if (!payment) return 'ignored';
-    const [row] = await deps.db
-      .select()
-      .from(payments)
-      .where(eq(payments.id, payment.id))
-      .for('update');
-    if (row?.status !== 'created') return 'ignored';
-    await updatePayment(deps.db, payment.id, { status: 'approved' });
-    return 'processed';
+    return payment?.mode === 'pay_now' && ['approved', 'captured'].includes(payment.status)
+      ? 'processed'
+      : 'ignored';
   }
   if (
     !['PAYMENT.CAPTURE.COMPLETED', 'PAYMENT.CAPTURE.DENIED', 'PAYMENT.CAPTURE.REFUNDED'].includes(
@@ -137,6 +131,17 @@ export async function processWebhook(
   if (!validation.success)
     throw new AppError('invalid_webhook', 'Webhook id, type and resource are required');
   const event = validation.data;
+  if (event.event_type === 'CHECKOUT.ORDER.APPROVED' && typeof event.resource.id === 'string') {
+    const [seen] = await deps.db
+      .select({ id: webhookEvents.id })
+      .from(webhookEvents)
+      .where(eq(webhookEvents.paypalEventId, event.id));
+    if (seen) return { result: 'duplicate' };
+    const payment = await findPaymentByOrderId(deps.db, event.resource.id);
+    // No open transaction during the gateway call: its capture webhook may arrive synchronously.
+    if (payment?.mode === 'pay_now' && ['created', 'approved'].includes(payment.status))
+      await captureApprovedOrder(deps, { orderId: event.resource.id });
+  }
   const pending: DomainEvent[] = [];
   const result = await deps.db.transaction(async (tx) => {
     const [inserted] = await tx
