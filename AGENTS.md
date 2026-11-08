@@ -10,15 +10,14 @@ DealingWith Agent turns service requests into paid work. A service business publ
 
 ## Repo map
 
-- `apps/backend/` — one Node process (Hono): JSON API, MCP endpoint, PayPal webhooks, static web. Contains `src/db` (Drizzle schema, client, seed), `modules/` (quotes, policies, payments), `integrations/paypal`, `agent/`, `mcp/`.
-- `apps/web/` — React + Vite client: storefront, portal, project page, provider dashboard (created in Phase 1).
+- `apps/backend/` — one Node process (Hono): JSON API, MCP endpoint, PayPal webhooks, static web. Everything is under `src/`: `api/` (routes, session and ownership guards, validation, static server), `mcp/` (server, the nine tools, scopes), `workflows/` (the only place where side effects cross modules: submit request, accept, pay now, capture, mandate funding, webhooks, event bus), `modules/` (catalog, clients, dashboard, mandates, payments, policies, projects, quotes, requests), `integrations/paypal/` (gateway interface, mock, sandbox), `agent/` (prompts, context pack, provider switch, run), `access/` (demo sessions, agent tokens), `db/` (Drizzle schema, client, migrations runner, seed and reset), `lib/`, `observability/`, `test/` (harnesses). Migrations are SQL in `apps/backend/drizzle/`; manual smoke scripts in `scripts/`. `CLAUDE.md` explains how the layers call each other.
+- `apps/web/` — React + Vite client: storefront, demo login, project page with quote card and mandate panel, PayPal return pages, provider dashboard (AG Studio). `src/api/fixtures/` is the in-browser fake API used by tests and offline demos.
 - `packages/contracts/` — `@dealingwith/contracts`: Zod schemas and money helpers shared by backend, web and MCP. Consumed from source in development, built to `dist/` for production.
-- `packages/ui/` — shared UI components (only if the MCP Apps stretch is built).
-- `tests/` — the five scenario tests (`tests/scenarios/`).
-- `evals/` — live model eval (`pnpm eval:live`), not part of CI.
-- `docs/` — design, plan, milestones, roadmap, decisions, MCP guide, demo script. `docs/hackathon/` is local analysis and is git-ignored.
-- `infra/` — deployment notes (`infra/README.md`, created in Phase 2, Task I4; the Render Blueprint `render.yaml` lives at the repo root) and `infra/github/main-ruleset.json`, which declares the protection of `main`.
-- `.github/workflows/` — CI: three parallel gates (`checks`, `build`, `hygiene`) on every push and pull request, each under four minutes. Runbook: `docs/ci-cd.md`.
+- `tests/` — the five scenario tests (`tests/scenarios/`), driving the real HTTP app with fixed agent outputs.
+- `evals/` — live model eval (`pnpm eval:live`), not part of CI; its grader tests are.
+- `docs/` — `architecture.md`, `ci-cd.md`, `mcp.md`, `paypal-notes.md`, `demo-script.md`, `milestones.md`, `roadmap.md`, and the folders `design/`, `plans/`, `decisions/`. `docs/hackathon/` is local analysis and is git-ignored.
+- `infra/` — `infra/github/main-ruleset.json` declares the protection of `main` and is applied with `gh api` (`docs/ci-cd.md`). Deployment notes (`infra/README.md`) and the Render Blueprint (`render.yaml` at the repo root) arrive with Task I4.
+- `.github/` — `workflows/ci.yml`: three parallel gates (`checks`, `build`, `hygiene`) on every push and pull request, each under four minutes; `pull_request_template.md`. Runbook: `docs/ci-cd.md`.
 
 ## Commands
 
