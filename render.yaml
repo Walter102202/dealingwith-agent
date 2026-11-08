@@ -32,7 +32,7 @@ services:
         sync: false
       - key: PAYPAL_CLIENT_SECRET
         sync: false
-      # Registered after the first deploy names the service URL (infra/README.md, step 3).
+      # Registered once the service has its URL (infra/README.md, step 3).
       - key: PAYPAL_WEBHOOK_ID
         sync: false
       - key: LLM_PROVIDER
@@ -41,10 +41,10 @@ services:
         sync: false
       - key: OPENAI_API_KEY
         sync: false
-      # The custom domain is attached before the first deploy (infra/README.md, step 2), so PayPal
-      # return URLs and the webhook never change. No trailing slash.
+      # Dashboard-owned: the Render URL after the first deploy, https://dealingwith.si once the
+      # domain is attached (infra/README.md, step 2 and the last section). No trailing slash.
       - key: APP_URL
-        value: https://dealingwith.si
+        sync: false
       # Demo logins, demo seed and "Reset demo data" until real authentication ships after the
       # submission (docs/decisions/2026-11-08-hosted-at-dealingwith-si-demo-mode-until-submission.md).
       - key: DEMO_MODE

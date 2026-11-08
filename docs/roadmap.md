@@ -12,7 +12,7 @@ These are in the design as P2. They are the first things we pick up if time rema
 
 ## Hardening after the hackathon
 
-The first two are committed as the first work after the submission (decision `docs/decisions/2026-11-08-hosted-at-dealingwith-si-demo-mode-until-submission.md`): the service at dealingwith.si runs in demo mode until they ship.
+The first two are committed as the first work after the submission (decision `docs/decisions/2026-11-08-hosted-at-dealingwith-si-demo-mode-until-submission.md`): the hosted service runs in demo mode until they ship.
 
 - **Real authentication and onboarding:** provider signup, client invitations, email login; today sessions are demo-only and `DEMO_MODE` stays on until this exists.
 - **Live mode** with a PayPal Chile business account, including the 29-day authorization lifetime and the re-authorization path.
@@ -45,3 +45,4 @@ The first two are committed as the first work after the submission (decision `do
 - **Codex and other MCP clients** in the connection snippets once their remote MCP syntax is verified.
 - **`packages/ui`** populated with the quote card and mandate components shared between the web and MCP Apps.
 - **Webhook replay and admin tools** for reconciling payments without touching the database.
+- **Custom domain** `dealingwith.si`, attached after the first deploy on the Render URL (`infra/README.md`, last section).
