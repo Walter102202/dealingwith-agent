@@ -1,4 +1,5 @@
 import type { ErrorHandler } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { z } from 'zod';
 import { PaypalError } from '../integrations/paypal/gateway.js';
@@ -6,6 +7,12 @@ import { AppError } from '../lib/errors.js';
 import { PricingError } from '../modules/quotes/errors.js';
 import type { ApiEnv } from './auth.js';
 export const onError: ErrorHandler<ApiEnv> = (error, c) => {
+  if (error instanceof HTTPException && error.status === 400) {
+    return c.json(
+      { error: { code: 'validation_error', message: 'Request body must be valid JSON' } },
+      400,
+    );
+  }
   if (error instanceof z.ZodError)
     return c.json(
       {

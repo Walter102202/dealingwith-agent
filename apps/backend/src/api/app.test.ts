@@ -23,6 +23,15 @@ afterAll(async () => {
   await h.close();
 });
 describe('createApp', () => {
+  test('returns a validation error for malformed JSON instead of an internal error', async () => {
+    const response = await app.request('/api/session/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{',
+    });
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ error: { code: 'validation_error' } });
+  });
   test('serves health, configuration and signed demo sessions', async () => {
     expect((await app.request('/healthz')).status).toBe(200);
     expect(await (await app.request('/api/config')).json()).toMatchObject({ paypalMode: 'mock' });
