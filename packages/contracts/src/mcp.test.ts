@@ -2,9 +2,10 @@ import { describe, expect, test } from 'vitest';
 import { AcceptQuoteInputSchema, MCP_TOOL_NAMES, RequestQuoteInputSchema } from './mcp.js';
 
 describe('MCP tool inputs', () => {
-  test('exposes the eight tools of the spec', () => {
+  test('exposes the eight tools of the spec plus list_projects', () => {
     expect(MCP_TOOL_NAMES).toEqual([
       'list_services',
+      'list_projects',
       'get_project',
       'request_quote',
       'answer_questions',

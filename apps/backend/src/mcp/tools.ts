@@ -3,6 +3,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { listServices } from '../modules/catalog/catalog.js';
 import { getClient } from '../modules/clients/clients.js';
 import { getMandate } from '../modules/mandates/mandates.js';
+import { listProjectsForClient } from '../modules/projects/projects.js';
 import { getQuote } from '../modules/quotes/quotes.js';
 import { acceptQuote } from '../workflows/accept-quote.js';
 import type { Deps } from '../workflows/deps.js';
@@ -12,6 +13,7 @@ import {
   formatMandateMarkdown,
   formatPaymentMarkdown,
   formatProjectMarkdown,
+  formatProjectsMarkdown,
   formatQuoteMarkdown,
   formatServicesMarkdown,
 } from './format.js';
@@ -23,6 +25,12 @@ const TOOL_META: Record<McpToolName, ToolMeta> = {
     title: 'List services',
     description:
       "List the services and pricing rules your provider publishes. Prices are the provider's; the agent never computes them.",
+    readOnly: true,
+  },
+  list_projects: {
+    title: 'List projects',
+    description:
+      'List your projects with their ids, status and contracted amount. Call it first to find the projectId that get_project and request_quote take.',
     readOnly: true,
   },
   get_project: {
@@ -87,7 +95,7 @@ const text = (markdown: string, structuredContent: Record<string, unknown>) => (
   structuredContent,
 });
 
-/** Registers the eight tools of spec section 7.6, in `MCP_TOOL_NAMES` order, scoped to the authenticated agent. */
+/** Registers the eight tools of spec section 7.6 plus list_projects, in `MCP_TOOL_NAMES` order, scoped to the authenticated agent. */
 export function registerTools(server: McpServer, deps: Deps, agent: ClientAgent): void {
   const { db } = deps;
   server.registerTool(
@@ -101,6 +109,18 @@ export function registerTools(server: McpServer, deps: Deps, agent: ClientAgent)
       const client = await getClient(db, agent.clientId);
       const services = await listServices(db, client.businessId);
       return text(formatServicesMarkdown(services), { services });
+    },
+  );
+  server.registerTool(
+    'list_projects',
+    {
+      ...meta('list_projects'),
+      inputSchema: MCP_TOOLS.list_projects.input,
+      outputSchema: MCP_TOOLS.list_projects.output,
+    },
+    async () => {
+      const projects = await listProjectsForClient(db, agent.clientId);
+      return text(formatProjectsMarkdown(projects), { projects });
     },
   );
   server.registerTool(

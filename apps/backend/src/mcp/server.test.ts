@@ -82,7 +82,7 @@ describe('MCP server', () => {
       await client.close();
     }
   });
-  test('(a) lists exactly the eight tools of the contracts', async () => {
+  test('(a) lists exactly the tools of the contracts', async () => {
     const client = await connect('http://mcp.test/mcp', token);
     const { tools } = await client.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual([...MCP_TOOL_NAMES].sort());
@@ -170,6 +170,12 @@ describe('MCP server', () => {
     expect(result.content[0]?.text).toBe('project not accessible');
     const own = await call(client, 'get_project', { projectId: DEMO.project.id });
     expect(structured<{ project: { id: string } }>(own).project.id).toBe(DEMO.project.id);
+    const listed = await call(client, 'list_projects');
+    const ids = structured<{ projects: { id: string }[] }>(listed).projects.map((p) => p.id);
+    expect(ids).toContain(DEMO.project.id);
+    expect(ids).not.toContain(projectId);
+    expect(listed.content[0]?.text).toContain(`Retail KPI dashboard (${DEMO.project.id})`);
+    expect(listed.content[0]?.text).not.toContain('Rival project');
     await client.close();
   });
   test('(l) quotes, payments and answers of another client are not accessible by any tool or the resource', async () => {

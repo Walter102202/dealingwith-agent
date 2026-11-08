@@ -50,6 +50,18 @@ Services and pricing rules of the agent's provider.
 { "services": [ { "id": "…", "name": "Automations", "pricingRules": [ { "id": "S2.alert", "version": 1, "type": "fixed", "label": "Threshold alert email", "amountCents": 6000 } ], "deliveryDays": 1, "…": "…" } ] }
 ```
 
+### `list_projects`
+
+The client's projects with id, status and contracted amount. Call it first: `get_project` and `request_quote` take the `projectId` it prints. The Markdown text carries the ids too, so a model that only reads text can copy them.
+
+```json
+{ "name": "list_projects", "arguments": {} }
+```
+
+```json
+{ "projects": [ { "id": "a0000000-0000-4000-8000-000000000031", "title": "Retail KPI dashboard", "status": "in_progress", "totalContractedCents": 120000, "scopeClauses": [ "…" ] } ] }
+```
+
 ### `get_project`
 
 One of the client's projects with its scope clauses. A project of another client answers `project not accessible`.

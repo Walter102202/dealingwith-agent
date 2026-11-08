@@ -56,6 +56,20 @@ export function formatServicesMarkdown(services: Service[]): string {
     .join('\n\n');
 }
 
+export function formatProjectsMarkdown(projects: Project[]): string {
+  if (projects.length === 0)
+    return 'You have no projects yet: request a quote without a projectId to start one.';
+  return [
+    '# Your projects',
+    'Pass the id as projectId to get_project or request_quote.',
+    '',
+    ...projects.map(
+      (project) =>
+        `- ${project.title} (${project.id}) — ${project.status}, contracted ${formatUsd(project.totalContractedCents)}`,
+    ),
+  ].join('\n');
+}
+
 export function formatProjectMarkdown(project: Project): string {
   return [
     `# ${project.title} (${project.id}) — ${project.status}`,
@@ -92,6 +106,7 @@ export function formatMandateMarkdown(mandate: Mandate | null): string {
   if (!mandate) return 'This agent has no mandate: every accepted quote needs human approval.';
   return [
     `Mandate ${mandate.id}: ${mandate.status}`,
+    `Project: ${mandate.projectId}`,
     `Per purchase limit: ${formatUsd(mandate.perPurchaseLimitCents)}`,
     `Total limit: ${formatUsd(mandate.totalLimitCents)} (spent ${formatUsd(mandate.spentCents)})`,
     `Expires: ${mandate.expiresAt}`,

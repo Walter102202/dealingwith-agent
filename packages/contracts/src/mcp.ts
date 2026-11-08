@@ -6,9 +6,10 @@ import { IdSchema } from './primitives.js';
 import { QuoteSchema } from './quote.js';
 import { ProjectSchema } from './scope.js';
 
-/** The eight tools of spec section 7.6, in the order the spec lists them. */
+/** The eight tools of spec section 7.6 plus `list_projects` (decision 2026-11-08-list-projects-tool), in the order the spec lists them. */
 export const MCP_TOOL_NAMES = [
   'list_services',
+  'list_projects',
   'get_project',
   'request_quote',
   'answer_questions',
@@ -22,6 +23,9 @@ export type McpToolName = z.infer<typeof McpToolNameSchema>;
 
 export const ListServicesInputSchema = z.strictObject({});
 export const ListServicesOutputSchema = z.object({ services: z.array(ServiceSchema) });
+
+export const ListProjectsInputSchema = z.strictObject({});
+export const ListProjectsOutputSchema = z.object({ projects: z.array(ProjectSchema) });
 
 export const GetProjectInputSchema = z.strictObject({ projectId: IdSchema });
 export const GetProjectOutputSchema = z.object({ project: ProjectSchema });
@@ -57,6 +61,8 @@ export const GetMandateOutputSchema = z.object({ mandate: MandateSchema.nullable
 
 export type ListServicesInput = z.infer<typeof ListServicesInputSchema>;
 export type ListServicesOutput = z.infer<typeof ListServicesOutputSchema>;
+export type ListProjectsInput = z.infer<typeof ListProjectsInputSchema>;
+export type ListProjectsOutput = z.infer<typeof ListProjectsOutputSchema>;
 export type GetProjectInput = z.infer<typeof GetProjectInputSchema>;
 export type GetProjectOutput = z.infer<typeof GetProjectOutputSchema>;
 export type RequestQuoteInput = z.infer<typeof RequestQuoteInputSchema>;
@@ -75,6 +81,7 @@ export type GetMandateOutput = z.infer<typeof GetMandateOutputSchema>;
 /** Input and output schema per tool, for the MCP server to register from one table. */
 export const MCP_TOOLS = {
   list_services: { input: ListServicesInputSchema, output: ListServicesOutputSchema },
+  list_projects: { input: ListProjectsInputSchema, output: ListProjectsOutputSchema },
   get_project: { input: GetProjectInputSchema, output: GetProjectOutputSchema },
   request_quote: { input: RequestQuoteInputSchema, output: RequestQuoteOutputSchema },
   answer_questions: { input: AnswerQuestionsInputSchema, output: AnswerQuestionsOutputSchema },
