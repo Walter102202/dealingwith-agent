@@ -31,7 +31,7 @@ A quote can be priced, accepted and paid end to end against the mock PayPal gate
 - [x] **Payments and workflows** (A5). Done when: web accept returns an approval link; agent accept pays within the mandate or returns `approval_required`; capture and webhooks are idempotent; mandate funding activates the mandate.
 - [x] **Access** (A6). Done when: demo sessions are signed cookies and agent tokens are hashed, revocable and come with connection snippets.
 - [x] **HTTP API** (A7). Done when: the routes of the plan answer with validated bodies, SSE events stream per project, the built web is served statically and `/healthz` responds.
-- [ ] **Scenario tests** (A8). Done when: `tests/scenarios/01…05` pass from the repo root and prove the five expectations of spec section 7.8 through the HTTP API.
+- [x] **Scenario tests** (A8). Done when: `tests/scenarios/01…05` pass from the repo root and prove the five expectations of spec section 7.8 through the HTTP API.
 
 ---
 

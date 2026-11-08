@@ -11,6 +11,8 @@ Rules: one decision per file; never edit a past decision, write a new one that s
 
 ## Index
 
+- [2026-11-07 Scenario workspace Node types](2026-11-07-scenario-workspace-node-types.md)
+
 - [2026-11-07 Agent port placeholder inside src](2026-11-07-agent-port-placeholder.md)
 
 - [2026-11-07 Bound backend PGlite test workers](2026-11-07-bound-pglite-test-workers.md)
