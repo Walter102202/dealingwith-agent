@@ -57,6 +57,8 @@ Values live only in Render. `sync: false` means the dashboard owns the value: it
 
 ## Attaching the domain later
 
+Done on 2026-11-08: DNS at Hostinger (A `@` → `216.24.57.1`, CNAME `www` → `dealingwith-agent.onrender.com`, no AAAA), both names verified, `APP_URL=https://dealingwith.si`, webhook `https://dealingwith.si/api/webhooks/paypal` registered. The steps stay here for the record.
+
 `dealingwith.si` is attached after the service runs on the Render URL. Best done before the video is recorded, because every hosted URL in the README, the video and the Devpost entry changes with it.
 
 1. Declare it in the Blueprint through a pull request: `domains: [dealingwith.si]` under the service in `render.yaml` (Render adds `www.` with a redirect to the root). After the sync, the service's Custom Domains page shows the DNS records to create at the registrar (A records for the apex, a CNAME for `www`); create them and wait for "Verified" and the certificate.
