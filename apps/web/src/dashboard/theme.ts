@@ -3,9 +3,10 @@ import { studioTheme } from 'ag-studio';
 const TEXT_FONT = '"IBM Plex Sans", "Segoe UI", system-ui, sans-serif';
 const DISPLAY_FONT = '"Fraunces", Georgia, serif';
 
-// From --accent, --amber (lighter), --info (darker), --danger,
+// From --accent, --amber (lighter), --info (darker), --danger (lighter),
 // --ink-faint (darker), and --accent-deep (darker), with distinct lightness.
-const PALETTE = ['#0e6b52', '#bd791f', '#283d6d', '#a8321e', '#858e87', '#073b2d'] as const;
+// CIELAB L*: 40, 61, 31, 50, 20, 13; each color has at least 3:1 contrast on white.
+const PALETTE = ['#0e6b52', '#c2872b', '#314779', '#c15743', '#29322c', '#03271c'] as const;
 
 /**
  * AG Studio themed with the product tokens of `src/styles.css`: paper canvas,
