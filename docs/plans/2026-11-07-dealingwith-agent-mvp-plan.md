@@ -541,8 +541,8 @@ Revised 2026-11-07 by the integrator against the Phase 0 code on `main` (commits
   | `GET /api/services` | — | `Service[]` |
   | `GET /api/projects` | C (own projects), or P (all) | `Project[]` (added 2026-11-07 for the web's post-login redirect) |
   | `GET /api/projects/:id` | C owning it, or P | `ProjectView` |
-  | `POST /api/projects/:id/requests` | C owning it | `{ text }` → `Quote` (200) |
-  | `POST /api/requests` | C | `{ text }` → `Quote` (storefront, no project) |
+  | `POST /api/projects/:id/requests` | C owning it | `{ text, serviceId? }` → `Quote` (200; one fixed rule bypasses the agent) |
+  | `POST /api/requests` | C | `{ text, serviceId? }` → `Quote` (storefront; service must belong to the client business) |
   | `GET /api/quotes/:id` | C owning it, or P | `Quote` (latest; `?version=` for one) |
   | `GET /api/quotes/:id/versions` | C owning it, or P | `Quote[]` |
   | `POST /api/quotes/:id/answers` | C owning it | `{ answers: Record<string,string> }` → `Quote` |

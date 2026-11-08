@@ -1,9 +1,11 @@
-import type { Quote, RequestChannel } from '@dealingwith/contracts';
+import type { AgentOutput, Quote, RequestChannel } from '@dealingwith/contracts';
 import { AgentRunError } from '../agent/run.js';
 import { AppError } from '../lib/errors.js';
+import { getService } from '../modules/catalog/catalog.js';
+import { getClient } from '../modules/clients/clients.js';
 import { getProject } from '../modules/projects/projects.js';
 import { PricingError } from '../modules/quotes/errors.js';
-import { priceIntents } from '../modules/quotes/pricing.js';
+import { type PricedQuote, priceIntents } from '../modules/quotes/pricing.js';
 import { createQuoteVersion, getQuote } from '../modules/quotes/quotes.js';
 import { createRequest, getRequest, setRequestStatus } from '../modules/requests/requests.js';
 import type { Deps } from './deps.js';
@@ -16,6 +18,7 @@ type SubmitInput =
       channel: RequestChannel;
       agentId?: string;
       text: string;
+      serviceId?: string;
     }
   | {
       quoteId: string;
@@ -42,32 +45,64 @@ export async function submitRequest(deps: Deps, input: SubmitInput): Promise<Quo
     (await getProject(deps.db, input.projectId)).clientId !== input.clientId
   )
     throw new AppError('forbidden', 'Project belongs to another client', { status: 403 });
+  const service =
+    'serviceId' in input && input.serviceId
+      ? await getService(deps.db, input.serviceId)
+      : undefined;
+  if (service && service.businessId !== (await getClient(deps.db, input.clientId)).businessId)
+    throw new AppError('forbidden', 'Service belongs to another business', { status: 403 });
+  const fixedRules = service?.pricingRules.filter((rule) => rule.type === 'fixed') ?? [];
+  const fixed = fixedRules.length === 1 ? fixedRules[0] : undefined;
   const request = previous
     ? await getRequest(deps.db, previous.requestId)
     : await createRequest(deps.db, input as Extract<SubmitInput, { text: string }>);
   try {
-    const pack = await deps.agent.buildContextPack(deps.db, {
-      clientId: input.clientId,
-      ...(request.projectId ? { projectId: request.projectId } : {}),
-    });
-    const { output, runId } = await deps.agent.runAgent(deps, {
-      pack,
-      text: request.text,
-      skill: request.projectId ? 'analyze-additional' : 'contract-service',
-      requestId: request.id,
-      ...('answers' in input ? { answers: input.answers } : {}),
-    });
-    const priced = priceIntents(output.lineItems, {
-      services: pack.services,
-      scopeClauses: pack.project?.scopeClauses ?? [],
-    });
+    let output: AgentOutput;
+    let runId: string | undefined;
+    let priced: PricedQuote;
+    if (service && fixed) {
+      output = {
+        lineItems: [
+          {
+            kind: 'rule',
+            ref: { id: fixed.id, version: fixed.version },
+            quantity: 1,
+            label: service.name,
+            rationale: 'Fixed-price service bought from the storefront.',
+          },
+        ],
+        deliveryDays: service.deliveryDays,
+        explanation: `Fixed price for ${service.name}.`,
+        needsInfo: [],
+        confidence: 1,
+      };
+      priced = priceIntents(output.lineItems, { services: [service], scopeClauses: [] });
+    } else {
+      const pack = await deps.agent.buildContextPack(deps.db, {
+        clientId: input.clientId,
+        ...(request.projectId ? { projectId: request.projectId } : {}),
+      });
+      const run = await deps.agent.runAgent(deps, {
+        pack,
+        text: request.text,
+        skill: request.projectId ? 'analyze-additional' : 'contract-service',
+        requestId: request.id,
+        ...('answers' in input ? { answers: input.answers } : {}),
+      });
+      output = run.output;
+      runId = run.runId;
+      priced = priceIntents(output.lineItems, {
+        services: pack.services,
+        scopeClauses: pack.project?.scopeClauses ?? [],
+      });
+    }
     const quote = await createQuoteVersion(deps.db, {
       requestId: request.id,
       ...(request.projectId ? { projectId: request.projectId } : {}),
       ...(previous ? { quoteId: previous.id } : {}),
       priced,
       agentOutput: output,
-      agentRunId: runId,
+      ...(runId ? { agentRunId: runId } : {}),
       status: output.needsInfo.length ? 'needs_info' : 'published',
     });
     await setRequestStatus(deps.db, request.id, output.needsInfo.length ? 'needs_info' : 'quoted');
