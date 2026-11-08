@@ -21,3 +21,4 @@ Rules: one decision per file; never edit a past decision, write a new one that s
 - [2026-11-07 The agent module lives under src/agent](2026-11-07-agent-under-src.md)
 - [2026-11-07 Mock fixtures: TypeScript is the source, JSON is a tested mirror](2026-11-07-mock-fixtures-two-copies-one-test.md)
 - [2026-11-07 Agent run: one retry on schema failure, two error codes, a row per run](2026-11-07-agent-run-errors-and-retry.md)
+- [2026-11-07 Live eval imports the backend by path and simulates the first payment](2026-11-07-live-eval-imports-backend-by-path.md)
