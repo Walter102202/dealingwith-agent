@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import type { LineItemIntent } from '@dealingwith/contracts';
 import { QuoteSchema } from '@dealingwith/contracts';
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
@@ -7,7 +8,6 @@ import { createApp } from '../api/app.js';
 import { DEMO } from '../db/demo-data.js';
 import { agentRuns, businesses, quotes, requests, services } from '../db/schema.js';
 import { AppError } from '../lib/errors.js';
-import { PricingError } from '../modules/quotes/errors.js';
 import { getRequest } from '../modules/requests/requests.js';
 import { createHarness, publishedQuote } from '../test/workflow-harness.js';
 import { fakeAgentPort } from './fake-agent.js';
@@ -142,29 +142,104 @@ describe('submitRequest', () => {
     });
     expect(next).toMatchObject({ id: q.id, version: 2, totalCents: 19000 });
   });
-  test('fails requests whose agent output references an unknown rule', async () => {
+  test.each<LineItemIntent>([
+    {
+      kind: 'rule',
+      ref: { id: 'S9.nope', version: 1 },
+      quantity: 1,
+      label: 'Invalid',
+      rationale: 'Invalid',
+    },
+    { kind: 'included', scopeRef: 'C9', label: 'Invalid', rationale: 'Invalid' },
+  ])('retries an invalid citation then asks for clarification: $kind', async (line) => {
     h.deps.agent = fakeAgentPort({
       invalid: {
-        lineItems: [
-          {
-            kind: 'rule',
-            ref: { id: 'S9.nope', version: 1 },
-            quantity: 1,
-            label: 'Invalid',
-            rationale: 'Invalid',
-          },
-        ],
+        lineItems: [line],
         needsInfo: [],
         explanation: '',
         deliveryDays: 1,
         confidence: 1,
       },
     });
-    await expect(
-      submitRequest(h.deps, { clientId: DEMO.client.id, channel: 'web', text: 'invalid' }),
-    ).rejects.toBeInstanceOf(PricingError);
+    const run = vi.spyOn(h.deps.agent, 'runAgent');
+    const q = await submitRequest(h.deps, {
+      clientId: DEMO.client.id,
+      channel: 'web',
+      text: 'invalid',
+    });
+    expect(q).toMatchObject({ status: 'needs_info', totalCents: 0, lineItems: [] });
+    expect(q.needsInfo[0]?.question).toMatch(
+      /^We could not match part of your request to the contracted scope .*Could you describe what you need in other words\?$/,
+    );
+    expect(q.needsInfo[0]?.whyItChangesPrice).toBe(
+      'The price depends on which service or clause applies.',
+    );
+    expect(run).toHaveBeenCalledTimes(2);
+    expect(run.mock.calls[1]?.[1].text).toContain(
+      'invalid\n\nThe previous attempt could not be priced:',
+    );
+    expect(run.mock.calls[1]?.[1].text).toContain(
+      'Cite only clause and rule ids that appear in the context.',
+    );
+    expect((await h.deps.db.select().from(agentRuns)).map((r) => r.requestId)).toEqual([
+      q.requestId,
+      q.requestId,
+    ]);
+    expect(await getRequest(h.deps.db, q.requestId)).toMatchObject({ status: 'needs_info' });
+    expect(h.events.map((e) => e.type)).toEqual(['quote.needs_info']);
+  });
+  test('publishes when the second pricing attempt uses a valid citation', async () => {
+    const bad = fakeAgentPort({
+      request: {
+        lineItems: [{ kind: 'included', scopeRef: 'C9', label: 'Bad', rationale: 'Bad' }],
+        needsInfo: [],
+        explanation: '',
+        deliveryDays: 0,
+        confidence: 1,
+      },
+    });
+    const good = fakeAgentPort({
+      request: {
+        lineItems: [
+          {
+            kind: 'rule',
+            ref: { id: 'S2.report', version: 1 },
+            quantity: 1,
+            label: 'Summary',
+            rationale: 'S2.report',
+          },
+        ],
+        needsInfo: [],
+        explanation: 'Summary',
+        deliveryDays: 1,
+        confidence: 1,
+      },
+    });
+    let attempts = 0;
+    h.deps.agent = {
+      ...bad,
+      runAgent: (deps, input) => (++attempts === 1 ? bad : good).runAgent(deps, input),
+    };
     expect(
-      await h.deps.db.select().from(requests).where(eq(requests.status, 'failed')),
-    ).toHaveLength(1);
+      await submitRequest(h.deps, { clientId: DEMO.client.id, channel: 'web', text: 'request' }),
+    ).toMatchObject({ status: 'published', totalCents: 8000 });
+    expect(attempts).toBe(2);
+  });
+  test('asks which scripted request is intended for unmatched fake input', async () => {
+    const q = await submitRequest(h.deps, {
+      clientId: DEMO.client.id,
+      channel: 'web',
+      text: 'Something not scripted',
+    });
+    expect(q).toMatchObject({
+      status: 'needs_info',
+      needsInfo: [
+        {
+          question: 'This demo understands five scripted requests; which one do you mean?',
+          whyItChangesPrice: 'The price depends on which service or clause applies.',
+        },
+      ],
+    });
+    expect(await h.deps.db.select().from(agentRuns)).toHaveLength(1);
   });
 });

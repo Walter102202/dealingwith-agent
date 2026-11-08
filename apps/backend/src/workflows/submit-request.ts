@@ -27,6 +27,44 @@ type SubmitInput =
       channel: RequestChannel;
       agentId?: string;
     };
+async function runPricedAgent(deps: Deps, input: Parameters<Deps['agent']['runAgent']>[1]) {
+  let text = input.text;
+  for (let attempt = 0; ; attempt++) {
+    const run = await deps.agent.runAgent(deps, { ...input, text });
+    try {
+      return {
+        ...run,
+        priced: priceIntents(run.output.lineItems, {
+          services: input.pack.services,
+          scopeClauses: input.pack.project?.scopeClauses ?? [],
+        }),
+      };
+    } catch (error) {
+      if (!(error instanceof PricingError)) throw error;
+      if (attempt === 0) {
+        text = `${input.text}\n\nThe previous attempt could not be priced: ${error.message}. Cite only clause and rule ids that appear in the context.`;
+        continue;
+      }
+      const output: AgentOutput = {
+        lineItems: [],
+        needsInfo: [
+          {
+            question: `We could not match part of your request to the contracted scope (${error.message}). Could you describe what you need in other words?`,
+            whyItChangesPrice: 'The price depends on which service or clause applies.',
+          },
+        ],
+        explanation: 'Please clarify the requested scope before we prepare a price.',
+        deliveryDays: 0,
+        confidence: 0,
+      };
+      return {
+        output,
+        runId: run.runId,
+        priced: { lineItems: [], subtotalCents: 0, totalCents: 0 },
+      };
+    }
+  }
+}
 export async function submitRequest(deps: Deps, input: SubmitInput): Promise<Quote> {
   let previous: Quote | undefined;
   if ('quoteId' in input) {
@@ -82,7 +120,7 @@ export async function submitRequest(deps: Deps, input: SubmitInput): Promise<Quo
         clientId: input.clientId,
         ...(request.projectId ? { projectId: request.projectId } : {}),
       });
-      const run = await deps.agent.runAgent(deps, {
+      const run = await runPricedAgent(deps, {
         pack,
         text: request.text,
         skill: request.projectId ? 'analyze-additional' : 'contract-service',
@@ -91,10 +129,7 @@ export async function submitRequest(deps: Deps, input: SubmitInput): Promise<Quo
       });
       output = run.output;
       runId = run.runId;
-      priced = priceIntents(output.lineItems, {
-        services: pack.services,
-        scopeClauses: pack.project?.scopeClauses ?? [],
-      });
+      priced = run.priced;
     }
     const quote = await createQuoteVersion(deps.db, {
       requestId: request.id,
@@ -116,7 +151,6 @@ export async function submitRequest(deps: Deps, input: SubmitInput): Promise<Quo
     return quote;
   } catch (error) {
     await setRequestStatus(deps.db, request.id, 'failed');
-    if (error instanceof PricingError) throw error;
     if (error instanceof AgentRunError)
       throw new AppError(
         error.code === 'invalid_output' ? 'invalid_agent_output' : 'agent_failed',
