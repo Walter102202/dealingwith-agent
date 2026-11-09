@@ -41,7 +41,7 @@ export function ProjectPage() {
           {errorMessage(view.error)}
         </p>
         <p>
-          <Link to="/">Back to the storefront</Link>
+          <Link to="/store">Back to the storefront</Link>
         </p>
       </Layout>
     );

@@ -15,7 +15,7 @@ export function RequireSession({ as, children }: { as?: Role; children: ReactNod
   }
   if (!session) return <Navigate to="/login" replace />;
   if (as && session.role !== as) {
-    return <Navigate to={session.role === 'provider' ? '/dashboard' : '/'} replace />;
+    return <Navigate to={session.role === 'provider' ? '/dashboard' : '/store'} replace />;
   }
   return <>{children}</>;
 }

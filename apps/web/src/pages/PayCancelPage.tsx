@@ -14,7 +14,7 @@ export function PayCancelPage() {
             ready.
           </p>
           <p className={styles.links}>
-            <Link to="/" className={styles.primaryLink}>
+            <Link to="/store" className={styles.primaryLink}>
               Back to the storefront
             </Link>
           </p>

@@ -59,7 +59,7 @@ export function PayReturnPage() {
               {state.message}
             </p>
             <p className={styles.links}>
-              <Link to="/">Back to the storefront</Link>
+              <Link to="/store">Back to the storefront</Link>
             </p>
           </Card>
         ) : null}
@@ -82,7 +82,10 @@ function Receipt({ payment, quote }: { payment: Payment; quote: Quote | null }) 
           : 'Thank you. The provider has your order and will be in touch.'}
       </p>
       <p className={styles.links}>
-        <Link to={projectId ? `/portal/projects/${projectId}` : '/'} className={styles.primaryLink}>
+        <Link
+          to={projectId ? `/portal/projects/${projectId}` : '/store'}
+          className={styles.primaryLink}
+        >
           {projectId ? 'Back to project' : 'Back to the storefront'}
         </Link>
       </p>

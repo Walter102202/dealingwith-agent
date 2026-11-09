@@ -43,7 +43,7 @@ export function MandateFundedPage() {
                 {error}
               </p>
               <p className={styles.links}>
-                <Link to="/">Back to the storefront</Link>
+                <Link to="/store">Back to the storefront</Link>
               </p>
             </>
           ) : (

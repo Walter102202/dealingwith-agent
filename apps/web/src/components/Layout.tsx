@@ -63,6 +63,9 @@ export function Layout({ children, width = 'content' }: LayoutProps) {
             DealingWith
           </Link>
           <nav className={styles.nav} aria-label="Session">
+            <Link to="/store" className={styles.link}>
+              Storefront
+            </Link>
             {status === 'ready' && session ? (
               <>
                 <span className={styles.who}>

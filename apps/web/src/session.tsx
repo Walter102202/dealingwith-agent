@@ -52,7 +52,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       }
       const projects = await api.get(routes.projects.list, z.array(ProjectSchema));
       const first = projects[0];
-      void navigate(first ? `/portal/projects/${first.id}` : '/');
+      void navigate(first ? `/portal/projects/${first.id}` : '/store');
     },
     [navigate],
   );
