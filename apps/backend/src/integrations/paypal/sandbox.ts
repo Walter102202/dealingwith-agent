@@ -1,7 +1,12 @@
 import { formatPaypalAmount, parsePaypalAmount } from '@dealingwith/contracts';
 import { z } from 'zod';
 import { createTokenSource, PaypalHttpError, paypalJson } from './auth.js';
-import { type CaptureResult, PaypalError, type PaypalGateway } from './gateway.js';
+import {
+  type CaptureResult,
+  PaypalError,
+  type PaypalGateway,
+  type SignatureCheck,
+} from './gateway.js';
 
 const Amount = z.object({
   currency_code: z.literal('USD'),
@@ -233,8 +238,11 @@ export class SandboxPaypalGateway implements PaypalGateway {
       ),
     );
   }
-  async verifyWebhookSignature(headers: Record<string, string>, rawBody: string): Promise<boolean> {
-    if (!this.options.webhookId?.trim()) return false;
+  async verifyWebhookSignature(
+    headers: Record<string, string>,
+    rawBody: string,
+  ): Promise<SignatureCheck> {
+    if (!this.options.webhookId?.trim()) return { ok: false, reason: 'webhook_id_missing' };
     const normalized = Object.fromEntries(
       Object.entries(headers).map(([key, value]) => [key.toLowerCase(), value]),
     );
@@ -245,21 +253,25 @@ export class SandboxPaypalGateway implements PaypalGateway {
       transmission_sig: normalized['paypal-transmission-sig'],
       transmission_time: normalized['paypal-transmission-time'],
     };
-    if (Object.values(fields).some((value) => !value?.trim())) return false;
+    if (Object.values(fields).some((value) => !value?.trim()))
+      return { ok: false, reason: 'headers_missing' };
     let event: unknown;
     try {
       event = JSON.parse(rawBody);
     } catch {
-      return false;
+      return { ok: false, reason: 'body_not_json' };
     }
     const result = await this.request('/v1/notifications/verify-webhook-signature', {
       ...fields,
       webhook_id: this.options.webhookId,
       webhook_event: event,
     });
-    return (
-      parse(z.object({ verification_status: z.enum(['SUCCESS', 'FAILURE']) }), result)
-        .verification_status === 'SUCCESS'
-    );
+    const status = parse(
+      z.object({ verification_status: z.enum(['SUCCESS', 'FAILURE']) }),
+      result,
+    ).verification_status;
+    return status === 'SUCCESS'
+      ? { ok: true }
+      : { ok: false, reason: 'verification_failed', verificationStatus: status };
   }
 }

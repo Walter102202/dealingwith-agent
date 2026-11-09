@@ -128,8 +128,20 @@ describe('processWebhook', () => {
       id: 'CAP-unknown',
       supplementary_data: { related_ids: { order_id: 'unknown' } },
     });
-    expect(await processWebhook(h.deps, { headers: {}, rawBody })).toEqual({
-      result: 'invalid_signature',
+    const warn = vi.fn();
+    h.deps.logger = { ...h.deps.logger, warn };
+    expect(
+      await processWebhook(h.deps, {
+        headers: { 'paypal-transmission-id': 'tx-1' },
+        rawBody,
+        host: 'dealingwith.si',
+      }),
+    ).toEqual({ result: 'invalid_signature' });
+    expect(warn).toHaveBeenCalledExactlyOnceWith('webhook.rejected', {
+      reason: 'verification_failed',
+      host: 'dealingwith.si',
+      transmissionId: 'tx-1',
+      bodyBytes: Buffer.byteLength(rawBody),
     });
     expect(await h.deps.db.select().from(webhookEvents)).toHaveLength(0);
     expect(

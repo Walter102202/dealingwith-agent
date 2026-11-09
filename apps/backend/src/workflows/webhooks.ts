@@ -126,10 +126,25 @@ async function dispatch(
 }
 export async function processWebhook(
   deps: Deps,
-  input: { headers: Record<string, string>; rawBody: string },
+  input: { headers: Record<string, string>; rawBody: string; host?: string },
 ): Promise<{ result: 'processed' | 'duplicate' | 'ignored' | 'invalid_signature' }> {
-  if (!(await deps.paypal.verifyWebhookSignature(input.headers, input.rawBody)))
+  const check = await deps.paypal.verifyWebhookSignature(input.headers, input.rawBody);
+  if (!check.ok) {
+    // Enough to tell apart a delivery host, a missing header and PayPal refusing the body;
+    // the transmission id is the delivery's id in PayPal's dashboard. Never the body itself.
+    const lower = Object.fromEntries(
+      Object.entries(input.headers).map(([key, value]) => [key.toLowerCase(), value]),
+    );
+    const transmissionId = lower['paypal-transmission-id'];
+    deps.logger.warn('webhook.rejected', {
+      reason: check.reason,
+      ...(check.verificationStatus ? { verificationStatus: check.verificationStatus } : {}),
+      ...(input.host ? { host: input.host } : {}),
+      ...(transmissionId ? { transmissionId } : {}),
+      bodyBytes: Buffer.byteLength(input.rawBody),
+    });
     return { result: 'invalid_signature' };
+  }
   let parsed: unknown;
   try {
     parsed = JSON.parse(input.rawBody);

@@ -187,8 +187,10 @@ const headers = {
 };
 it.each(['SUCCESS', 'FAILURE'])('verifies the seven webhook fields for %s', async (status) => {
   const { gateway, request } = setup({ verification_status: status });
-  expect(await gateway.verifyWebhookSignature(headers, '{"id":"event"}')).toBe(
-    status === 'SUCCESS',
+  expect(await gateway.verifyWebhookSignature(headers, '{"id":"event"}')).toEqual(
+    status === 'SUCCESS'
+      ? { ok: true }
+      : { ok: false, reason: 'verification_failed', verificationStatus: 'FAILURE' },
   );
   expect(request()).toMatchObject({
     url: 'https://api-m.sandbox.paypal.com/v1/notifications/verify-webhook-signature',
@@ -209,15 +211,26 @@ it('accepts case-insensitive webhook headers', async () => {
       Object.fromEntries(Object.entries(headers).map(([key, value]) => [key.toUpperCase(), value])),
       '{}',
     ),
-  ).toBe(true);
+  ).toEqual({ ok: true });
 });
 it('rejects missing signature or webhook id without fetching', async () => {
   const { gateway, fetch } = setup({});
   const { 'paypal-transmission-sig': _, ...missing } = headers;
-  expect(await gateway.verifyWebhookSignature(missing, '{}')).toBe(false);
+  expect(await gateway.verifyWebhookSignature(missing, '{}')).toEqual({
+    ok: false,
+    reason: 'headers_missing',
+  });
+  expect(fetch).not.toHaveBeenCalled();
+  expect(await gateway.verifyWebhookSignature(headers, 'not json')).toEqual({
+    ok: false,
+    reason: 'body_not_json',
+  });
   expect(fetch).not.toHaveBeenCalled();
   const absent = setup({}, 200, '');
-  expect(await absent.gateway.verifyWebhookSignature(headers, '{}')).toBe(false);
+  expect(await absent.gateway.verifyWebhookSignature(headers, '{}')).toEqual({
+    ok: false,
+    reason: 'webhook_id_missing',
+  });
   expect(absent.fetch).not.toHaveBeenCalled();
 });
 
