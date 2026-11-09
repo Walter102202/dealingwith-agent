@@ -1,8 +1,8 @@
-import { ForAgents } from '../landing/ForAgents.js';
 import { Hero } from '../landing/Hero.js';
 import styles from '../landing/Landing.module.css';
 import { LandingHeader } from '../landing/LandingHeader.js';
 import {
+  Agents,
   BuiltOnPayPal,
   Footer,
   ForProviders,
@@ -20,7 +20,7 @@ export function LandingPage() {
         <Hero />
         <Problem />
         <HowItWorks />
-        <ForAgents />
+        <Agents />
         <BuiltOnPayPal />
         <ForProviders />
         <TryIt />

@@ -10,9 +10,9 @@ import styles from './Landing.module.css';
 
 const SECTIONS = [
   { id: 'how-it-works', label: 'How it works' },
-  { id: 'for-agents', label: 'For agents' },
+  { id: 'for-agents', label: 'Agents' },
   { id: 'paypal', label: 'PayPal' },
-  { id: 'for-providers', label: 'For providers' },
+  { id: 'for-providers', label: 'Providers' },
 ] as const;
 
 /** The signed-in client's first project, so "Open my project" lands where login would. */
@@ -44,30 +44,59 @@ export function useDemoCta(): { to: string; label: string } {
   return { to: '/login', label: 'Try the live demo' };
 }
 
+/** The section the reader is in, for the nav's active pill. */
+function useActiveSection(): string | null {
+  const [active, setActive] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) if (entry.isIntersecting) setActive(entry.target.id);
+      },
+      { rootMargin: '-45% 0px -50% 0px' },
+    );
+    for (const s of SECTIONS) {
+      const node = document.getElementById(s.id);
+      if (node) observer.observe(node);
+    }
+    return () => observer.disconnect();
+  }, []);
+  return active;
+}
+
+/** A floating pill: wordmark, sections, the demo door. */
 export function LandingHeader() {
   const cta = useDemoCta();
+  const active = useActiveSection();
   return (
-    <header className={styles.header}>
-      <div className={styles.headerBar}>
+    <header className={styles.navWrap}>
+      <nav className={styles.nav} aria-label="Primary">
         <Link to="/" className={styles.wordmark}>
+          <span className={styles.mark} aria-hidden="true" />
           DealingWith
         </Link>
-        <nav className={styles.headerNav} aria-label="Sections">
+        <ul className={styles.navLinks}>
           {SECTIONS.map((s) => (
-            <a key={s.id} href={`#${s.id}`} className={styles.navLink}>
-              {s.label}
-            </a>
+            <li key={s.id}>
+              <a
+                href={`#${s.id}`}
+                className={styles.navLink}
+                aria-current={active === s.id ? 'location' : undefined}
+              >
+                {s.label}
+              </a>
+            </li>
           ))}
-        </nav>
-        <div className={styles.headerActions}>
-          <a href={REPO_URL} className={styles.navLink} target="_blank" rel="noreferrer">
-            GitHub
-          </a>
-          <Link to={cta.to} className={styles.ctaSmall}>
-            {cta.label}
-          </Link>
-        </div>
-      </div>
+          <li>
+            <a href={REPO_URL} className={styles.navLink} target="_blank" rel="noreferrer">
+              GitHub
+            </a>
+          </li>
+        </ul>
+        <Link to={cta.to} className={`${styles.pill} ${styles.pillPrimary} ${styles.pillSm}`}>
+          {cta.label}
+        </Link>
+      </nav>
     </header>
   );
 }

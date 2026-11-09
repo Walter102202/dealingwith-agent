@@ -1,5 +1,5 @@
 import { QuoteSchema } from '@dealingwith/contracts';
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const apiMock = vi.hoisted(() => ({ get: vi.fn() }));
@@ -20,6 +20,14 @@ const projectId = '00000000-0000-4000-8000-0000000000f1';
 function signedIn(session: unknown) {
   sessionMock.current = { session, status: 'ready', loginAs: vi.fn(), logout: vi.fn() };
 }
+
+// Reduced motion: the replays render their final frame at once.
+window.matchMedia = ((query: string) => ({
+  matches: query.includes('reduce'),
+  media: query,
+  addEventListener: () => {},
+  removeEventListener: () => {},
+})) as unknown as typeof window.matchMedia;
 
 describe('LandingPage', () => {
   afterEach(() => {
@@ -42,14 +50,24 @@ describe('LandingPage', () => {
     );
   });
 
-  it('shows the demo quote read-only: included at US$0.00, the extra at US$80.00, no payment button', () => {
+  it('shows the demo quote read-only: included at US$0.00, the extra at US$80.00, no payment button', async () => {
     apiMock.get.mockResolvedValue(config);
     renderWithProviders(<LandingPage />);
-    const quote = screen.getByRole('article', { name: 'Quote v1' });
+    const quote = await screen.findByRole('article', { name: 'Quote v1' });
     expect(within(quote).getByText('US$0.00')).toBeInTheDocument();
     expect(within(quote).getByTestId('quote-total')).toHaveTextContent('US$80.00');
     expect(within(quote).queryByRole('button', { name: /PayPal/ })).toBeNull();
     expect(within(quote).queryByRole('button', { name: 'Ask for an adjustment' })).toBeNull();
+  });
+
+  it('replays the agent cases from the chips', async () => {
+    apiMock.get.mockResolvedValue(config);
+    renderWithProviders(<LandingPage />);
+    const panel = await screen.findByRole('tabpanel');
+    expect(await within(panel).findByText('paid')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: '/over-limit' }));
+    expect(await within(panel).findByText('approval_required')).toBeInTheDocument();
+    expect(within(panel).getByText('US$190.00')).toBeInTheDocument();
   });
 
   it('sends a signed-in client to their project', async () => {

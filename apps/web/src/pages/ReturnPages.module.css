@@ -4,8 +4,9 @@
 }
 
 .receipt {
-  font-family: var(--font-display);
   font-size: var(--text-lg);
+  font-weight: 600;
+  letter-spacing: -0.02em;
   margin-bottom: var(--space-3);
 }
 
@@ -17,8 +18,8 @@
   display: inline-flex;
   align-items: center;
   min-height: 40px;
-  padding: 0 var(--space-4);
-  border-radius: var(--radius-control);
+  padding: 0 18px;
+  border-radius: 999px;
   background: var(--accent);
   color: var(--accent-ink);
   font-weight: 500;

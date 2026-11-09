@@ -4,19 +4,26 @@
   justify-content: center;
   gap: var(--space-2);
   min-height: 40px;
-  padding: 0 var(--space-4);
-  border-radius: var(--radius-control);
+  padding: 0 18px;
+  border-radius: 999px;
   border: 1px solid transparent;
   font-weight: 500;
+  letter-spacing: -0.01em;
   cursor: pointer;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .button {
     transition:
-      background-color 120ms ease,
-      border-color 120ms ease;
+      background-color 240ms var(--ease),
+      border-color 240ms var(--ease),
+      transform 240ms var(--ease);
+  }
+
+  .button:not(:disabled):active {
+    transform: scale(0.965);
   }
 }
 
@@ -36,7 +43,7 @@
 
 .secondary {
   background: var(--surface);
-  border-color: var(--line-strong);
+  border-color: var(--line);
   color: var(--ink);
 }
 

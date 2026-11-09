@@ -22,7 +22,7 @@
   padding: var(--space-2) var(--space-3);
   background: var(--surface-muted);
   border-radius: var(--radius-control);
-  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
   line-height: 1.5;
   overflow-x: auto;
