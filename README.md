@@ -29,7 +29,7 @@ Sign in as Mara. The project page has a request box labelled "Describe what you 
 4. "Send the Monday summary to our regional managers too." Already covered by the clause paid in request 1: included at US$0.00, the button reads "Accept at no cost". The engine respects paid additionals.
 5. "Make the dashboard load faster." One question back: is the slowness caused by data volume or by the dashboard design? Nothing is priced or published until it is answered.
 
-Requests 2 and 3 can also be typed on the web; the mandate only applies when the agent pays. To run them as the agent, see the next section.
+Requests 2 and 3 can also be typed on the web; the mandate only applies when the agent pays. To run them as the agent, see the next section. Then sign out and "Enter as provider": you land on the provider dashboard, where the payments and requests you just made are already counted.
 
 ## Connect your agent
 
@@ -57,6 +57,10 @@ Cursor (`.cursor/mcp.json`):
 Claude Desktop and claude.ai custom connectors cannot send headers, so they use a capability URL. Settings → Connectors → Add custom connector, paste `https://<host>/mcp/dwa_…`, choose "No sign in". Treat the URL as a secret: anyone with the link can act as your agent.
 
 Tools: `list_services`, `list_projects`, `get_project`, `request_quote`, `answer_questions`, `get_quote`, `accept_quote`, `get_payment`, `get_mandate`. `accept_quote` spends money only within the client's mandate; otherwise it returns an approval link. The full guide, with request and response shapes, is [`docs/mcp.md`](docs/mcp.md).
+
+## Provider dashboard (AG Studio)
+
+The provider's home is a dashboard built with [AG Studio](https://www.ag-grid.com/) (`ag-studio-react` 3.1.0, on AG Grid Enterprise and AG Charts): four widgets fed by our own API, "Revenue by service" (paid quote lines, US$), "Quotes pipeline" (quotes by status and channel), "Unpaid additionals" (a grid of priced lines on published or accepted quotes) and "Requests over time". The data sources (quotes, quote lines, payments, requests) and the saved dashboard definition are hand-written in [`apps/web/src/dashboard/`](apps/web/src/dashboard/) so they stay readable and diffable. The dashboard opens in AG Studio's edit mode, so widgets can be rearranged or added on the spot; those changes are not saved between visits. Without a license key it renders in AG Studio's trial mode with a watermark. Decisions: [`docs/decisions/2026-11-07-ag-studio-trial-first.md`](docs/decisions/2026-11-07-ag-studio-trial-first.md), [`docs/decisions/2026-11-07-ag-studio-definition-loading.md`](docs/decisions/2026-11-07-ag-studio-definition-loading.md).
 
 ## Architecture
 
