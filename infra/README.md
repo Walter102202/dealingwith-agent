@@ -57,7 +57,7 @@ Values live only in Render. `sync: false` means the dashboard owns the value: it
 
 ## Attaching the domain later
 
-Done on 2026-11-08: DNS at Hostinger (A `@` → `216.24.57.1`, CNAME `www` → `dealingwith-agent.onrender.com`, no AAAA), both names verified, `APP_URL=https://dealingwith.si`, webhook `https://dealingwith.si/api/webhooks/paypal` registered. The steps stay here for the record.
+Done on 2026-11-08: DNS at Hostinger (A `@` → `216.24.57.1`, CNAME `www` → `dealingwith-agent.onrender.com`, no AAAA), both names verified, `APP_URL=https://dealingwith.si`. The PayPal webhook stays on the Render host (`https://dealingwith-agent.onrender.com/api/webhooks/paypal`, id in `PAYPAL_WEBHOOK_ID`): deliveries to the same path on the domain reached the service with a signature PayPal's verify call rejected, and other attempts never connected, while the Render host processed the next capture in 21 seconds. PayPal does not require the webhook host to match `APP_URL`. The steps stay here for the record; step 3 is the one not applied.
 
 `dealingwith.si` is attached after the service runs on the Render URL. Best done before the video is recorded, because every hosted URL in the README, the video and the Devpost entry changes with it.
 
