@@ -221,4 +221,4 @@ Against the Render deployment, first on its Render URL (`https://dealingwith-age
 - The capability URL `https://dealingwith-agent.onrender.com/mcp/dwa_…` with no header listed the same nine tools, which is the path Claude Desktop and claude.ai connectors use.
 - "Reset demo data" afterwards left the mandate funded and the project back at clauses C1 to C3.
 
-The hosted MCP endpoint is `https://dealingwith.si/mcp`; the Render URL still answers but the snippets and the PayPal webhook use the domain (`infra/README.md`, last section).
+The hosted MCP endpoint is `https://dealingwith.si/mcp`; the Render URL still answers and keeps the PayPal webhook (`infra/README.md`, last section).
