@@ -4,7 +4,7 @@ A working guide for the MVP build. Milestones are outcomes, not dates. Each stag
 
 Legend: `[ ]` not started · `[~]` in progress · `[x]` done
 
-**Current position:** M0, M2, M3, the web (D1-D6), W, A9, E (E2), I1 and I2 done and merged into `main` on 2026-11-08; G1-G3 done the same day; I3 and I4 done on 2026-11-08 (live eval 5/5 with both providers; the service is live at `https://dealingwith-agent.onrender.com` with webhook, funded mandate and MCP verified from outside); G4 done the same day. The domain `https://dealingwith.si` is live since 2026-11-08 (DNS at Hostinger, `APP_URL` points at it; the PayPal webhook stays on the Render host, see `infra/README.md`). Open: G5, I5 and M6.
+**Current position:** M0, M2, M3, the web (D1-D6), W, A9, E (E2), I1 and I2 done and merged into `main` on 2026-11-08; G1-G3 done the same day; I3 and I4 done on 2026-11-08 (live eval 5/5 with both providers; the service is live at `https://dealingwith-agent.onrender.com` with webhook, funded mandate and MCP verified from outside); G4 done the same day. The domain `https://dealingwith.si` is live since 2026-11-08 (DNS at Hostinger, `APP_URL` points at it; the PayPal webhook stays on the Render host because PayPal's sender does not reach the domain, verified 2026-11-09, see `infra/README.md`). Open: G5, I5 and M6.
 
 ---
 
