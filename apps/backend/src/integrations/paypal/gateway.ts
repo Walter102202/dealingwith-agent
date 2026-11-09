@@ -40,8 +40,19 @@ export interface PaypalGateway {
     authorizationId: string,
     i: { amountCents: number; finalCapture: boolean; requestId: string; invoiceId: string },
   ): Promise<CaptureResult>;
-  verifyWebhookSignature(headers: Record<string, string>, rawBody: string): Promise<boolean>;
+  verifyWebhookSignature(headers: Record<string, string>, rawBody: string): Promise<SignatureCheck>;
 }
+/**
+ * Why a webhook was rejected, so the service log can tell a missing header from a body PayPal's
+ * verify call refused. `verificationStatus` is PayPal's own answer when the call was made.
+ */
+export type SignatureCheck =
+  | { ok: true }
+  | {
+      ok: false;
+      reason: 'webhook_id_missing' | 'headers_missing' | 'body_not_json' | 'verification_failed';
+      verificationStatus?: string;
+    };
 export class PaypalError extends AppError {
   constructor(code: string, status = 422, message = code.replaceAll('_', ' ')) {
     super(code, message, { status });

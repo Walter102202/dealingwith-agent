@@ -84,8 +84,13 @@ describe('MockPaypalGateway', () => {
         throw new Error('offline');
       },
     });
-    expect(await paypal.verifyWebhookSignature({ 'X-Mock-Signature': 'secret' }, '')).toBe(true);
-    expect(await paypal.verifyWebhookSignature({}, '')).toBe(false);
+    expect(await paypal.verifyWebhookSignature({ 'X-Mock-Signature': 'secret' }, '')).toEqual({
+      ok: true,
+    });
+    expect(await paypal.verifyWebhookSignature({}, '')).toEqual({
+      ok: false,
+      reason: 'verification_failed',
+    });
     const order = await paypal.createOrder(input);
     await paypal.approve(order.orderId);
     expect(await paypal.captureOrder(order.orderId, 'capture')).toMatchObject({

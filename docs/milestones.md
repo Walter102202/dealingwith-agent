@@ -76,6 +76,7 @@ The same code runs against PayPal sandbox, a real model and Render.
 - [x] **Webhooks verified** (I2). Done when: a sandbox capture produces a verified, processed webhook and a resend is recorded as duplicate.
 - [x] **Live model passes** (I3; 5/5 with `claude-opus-5-5` and 5/5 with `gpt-6.1-sol` on 2026-11-08). Done when: the live eval passes five of five with Anthropic and with OpenAI using the same prompts.
 - [x] **Deployed on Render** (I4; live on 2026-11-08 at `https://dealingwith-agent.onrender.com`: webhook registered and processing, mandate funded with a US$2,000.00 authorization that expires 2026-12-07 and must be renewed on 2026-11-30, MCP smoke and Claude Code verified from outside; the domain `dealingwith.si` follows `infra/README.md`, last section). Done when: the hosted URL serves the app, the webhook points at it, the demo mandate is funded once, and MCP works from Claude Desktop and Claude Code against the hosted URL.
+- [x] **Webhook rejections explain themselves** (I2 follow-up, 2026-11-09): a rejected webhook logs `webhook.rejected` with the reason, PayPal's verification status, the host it arrived on and the transmission id, so a delivery to the domain can be told apart from one to the Render host without guessing (`infra/README.md`, "Day to day").
 - [ ] **Pre-submission checks** (I5). Done when: a fresh browser completes the five demo requests on the hosted URL, CI is green, nothing private is in the repo, both Render services are on the always-on plans of the Blueprint (`0.5c-512mb`, `0.1c-256mb`).
 
 ---

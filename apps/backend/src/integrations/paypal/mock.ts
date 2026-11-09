@@ -5,6 +5,7 @@ import {
   type OrderStatus,
   PaypalError,
   type PaypalGateway,
+  type SignatureCheck,
 } from './gateway.js';
 
 type OrderInput = Parameters<PaypalGateway['createOrder']>[0];
@@ -183,11 +184,12 @@ export class MockPaypalGateway implements PaypalGateway {
   async verifyWebhookSignature(
     headers: Record<string, string>,
     _rawBody: string,
-  ): Promise<boolean> {
-    return Object.entries(headers).some(
+  ): Promise<SignatureCheck> {
+    const signed = Object.entries(headers).some(
       ([key, value]) =>
         key.toLowerCase() === 'x-mock-signature' && value === this.options.webhookSecret,
     );
+    return signed ? { ok: true } : { ok: false, reason: 'verification_failed' };
   }
   async emitWebhook(eventType: string, resource: Record<string, unknown>): Promise<void> {
     const event: MockWebhookEvent = {
