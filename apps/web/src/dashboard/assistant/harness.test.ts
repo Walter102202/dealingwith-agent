@@ -16,6 +16,7 @@ vi.mock('ag-studio', async (original) => ({
 
 import { COLLECTIONS_AGENT, leadWithCollections } from './agents.js';
 import { ASSISTANT_MODELS, assistantHarness, PROMPT_STARTERS } from './harness.js';
+import { KEEP_FORMAT_GUIDANCE } from './keep-format.js';
 
 const tool = (name: string) => ({ name }) as AgAiTool;
 const definition = (id: string): AgAnyAiAgentDefinition => ({
@@ -63,6 +64,9 @@ describe('assistantHarness', () => {
     const instructions = collections?.instructions?.(agentContext, undefined) ?? '';
     expect(instructions).toContain('Collections agent for Andes Data Studio');
     expect(instructions).toContain('sign off with that name');
+    // The Widget agent keeps the format keys a restyle leaves out.
+    const widget = config.agents.find((a) => a.id === 'widget');
+    expect(widget?.instructions?.(agentContext, {})).toContain(KEEP_FORMAT_GUIDANCE);
   });
 
   it('offers one Claude model with a fast and a thorough effort', () => {

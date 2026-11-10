@@ -1,7 +1,7 @@
 import type { AgFormatShapeParams } from 'ag-studio';
 import { describe, expect, it, vi } from 'vitest';
 import { budgetMeterDefinition } from './budget/definition.js';
-import { KEEP_FORMAT_GUIDANCE, shapeBuilder } from './format-shape.js';
+import { shapeBuilder } from './format-shape.js';
 import { kpiTileDefinition } from './kpi/definition.js';
 import { quotesTableDefinition } from './quotes-table/definition.js';
 
@@ -101,7 +101,11 @@ describe('custom widget format shapes', () => {
       expect(option.optional).toBe(true);
       expect(option.description).toBeTruthy();
     }
-    expect(definition.ai?.configuration).toContain(KEEP_FORMAT_GUIDANCE);
+    // Left-out keys are kept by the Widget agent's tool (assistant/keep-format.ts),
+    // so no widget tells the agent that format is replaced whole any more.
+    expect(definition.ai?.configuration).not.toMatch(/replaces format/);
+    expect(shape.description).toMatch(/left out keeps its current value/);
+    expect(shape.fields?.title?.fields?.enabled?.description).toMatch(/false hides it/);
   });
 
   it('declares the quotes table options the table honours', () => {

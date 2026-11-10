@@ -1,4 +1,4 @@
-import { KEEP_FORMAT_GUIDANCE, shapeBuilder, widgetFormatShape } from '../format-shape.js';
+import { shapeBuilder, widgetFormatShape } from '../format-shape.js';
 import type { BudgetMeterDefinition, BudgetMeterStyle } from '../types.js';
 import { BudgetMeterComp } from './BudgetMeter.js';
 
@@ -88,6 +88,7 @@ export const budgetMeterDefinition: BudgetMeterDefinition = {
   ai: {
     description: 'A meter of what an AI agent has spent of its mandate and what is left.',
     usage: 'Use to show the client agent budget. Map spent and limit to the mandates source.',
-    configuration: `- format.style.showBar, showPerPurchase, showStatus and showExpires turn each detail off or on; the amount left always shows.\n- ${KEEP_FORMAT_GUIDANCE}`,
+    configuration:
+      '- format.style.showBar, showPerPurchase, showStatus and showExpires turn each detail off or on; the amount left always shows.',
   },
 };
