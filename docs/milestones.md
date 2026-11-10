@@ -67,6 +67,7 @@ Humans can do everything the agent can, and see what the agent did.
 - [x] **Provider dashboard** (D6). Done when: the AG Studio dashboard shows revenue by service, pipeline, unpaid additionals and requests over time with the product theme, and "Reset demo data" works. Fallback: the same with AG Grid and AG Charts Community if AG Studio cannot be used.
 - [x] **Product landing page** (L1, 2026-11-09). Done when: `/` explains the product (promise, change-order problem, how it works, MCP and mandates, PayPal flows, provider dashboard) with the real quote card in a read-only preview and doors into the demo; the storefront lives at `/store` and every storefront link points there (`docs/decisions/2026-11-09-landing-at-root-storefront-at-store.md`).
 - [x] **Dashboard as a report with custom widgets** (D7, 2026-11-10). Done when: `/dashboard` opens in read mode on Overview, Collections and Agent channel with an Edit toggle; the quotes table (AG Grid), agent budget and KPI tiles are custom Studio widgets that cross-filter with the charts; the dashboard fits a 380 px screen (`docs/decisions/2026-11-10-studio-custom-widgets.md`, `docs/decisions/2026-11-10-dashboard-read-mode-by-default.md`).
+- [x] **Header and dashboard toolbar on phones and tablets** (D8, 2026-11-10). Done when: at 840 px and below every session action for each role sits in a Menu pill with nothing hidden or cut off down to 320 px, a failed demo reset shows in the open menu, and Assistant and Edit are both reachable on a 380 px dashboard (`docs/decisions/2026-11-10-header-menu-on-phones.md`, `docs/decisions/2026-11-10-header-menu-from-840px.md`, `docs/decisions/2026-11-10-dashboard-toolbar-icons-on-phones.md`).
 - [x] **Cercana favicon** (F1, 2026-11-10). Done when: the approved two-piece D replaces the serif placeholder in browser tabs, SVG and ICO assets are checked at 16 and 32 pixels on light and dark backgrounds, and the production build serves the favicon and Apple touch icon (`docs/decisions/2026-11-10-cercana-favicon.md`).
 
 ---
@@ -114,9 +115,11 @@ Added 2026-11-08 when David joined. Policy: `CONSTITUTION.md`; runbook: `docs/ci
 
 Added 2026-11-10 on `feat/studio-assistant`. Decisions: `2026-11-10-assistant-anthropic-adapter-on-backend`, `2026-11-10-assistant-no-thinking-replay`, `2026-11-10-assistant-daily-turn-cap`, `2026-11-10-collections-agent-amounts-from-data`.
 
-- [~] **Turn endpoint** (S1). Done when: `POST /api/dashboard/assistant/turn` streams AG events from Claude Sonnet 5.5 for a provider session, is off without `ANTHROPIC_API_KEY`, and stops at `ASSISTANT_DAILY_TURN_LIMIT`.
-- [~] **Assistant in the dashboard** (S2). Done when: the AI panel on `/dashboard` answers a data question and adds a chart, with a Fast and a Thorough effort.
-- [~] **Collections agent** (S3). Done when: asking for a payment reminder shows a draft whose amounts and total come from the quote data, signed by the provider, and nothing is sent.
+- [x] **Turn endpoint** (S1; live on the hosted URL since 2026-11-10). Done when: `POST /api/dashboard/assistant/turn` streams AG events from Claude Sonnet 5.5 for a provider session, is off without `ANTHROPIC_API_KEY`, and stops at `ASSISTANT_DAILY_TURN_LIMIT`.
+- [x] **Assistant in the dashboard** (S2). Done when: the AI panel on `/dashboard` answers a data question and adds a chart, with a Fast and a Thorough effort.
+- [x] **Collections agent** (S3). Done when: asking for a payment reminder shows a draft whose amounts and total come from the quote data, signed by the provider, and nothing is sent.
+- [x] **Reminder draft in view** (S4, 2026-11-10). Done when: the draft shows above the report as soon as it is ready, at its full height in the page's one scroll down to the total, with Dismiss (`docs/decisions/2026-11-10-reminder-draft-above-the-report.md`, `docs/decisions/2026-11-10-reminder-draft-in-the-page-scroll.md`).
+- [x] **Assistant restyles the custom widgets** (S5, 2026-11-10). Done when: the assistant can change the quotes table's density and total row, which details the agent budget shows and the KPI tile's value size and count line, and a restyle keeps the titles and every other format key it leaves out (`docs/decisions/2026-11-10-custom-widget-format-shapes.md`, `docs/decisions/2026-11-10-restyle-keeps-format-keys.md`).
 
 ## Walter's actions (outside the code)
 

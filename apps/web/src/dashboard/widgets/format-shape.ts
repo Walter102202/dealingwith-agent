@@ -13,16 +13,8 @@ import type {
  * 2026-11-10-custom-widget-format-shapes). A widget's `formatShape` is the
  * schema Studio's AI agents read to restyle it, and the parser Studio runs on
  * its `format` before loading it: keys the shape does not declare are dropped.
+ * An assistant restyle keeps the keys it leaves out (`assistant/keep-format.ts`).
  */
-
-/**
- * Appended to each widget's `ai.configuration`, which Studio puts in its Widget
- * agent's instructions. `configure_widget` patches a widget one level deep, so
- * a `format` it sends replaces the old one: an agent that sends only the style
- * it was asked to change wipes the titles (seen live on 2026-11-10).
- */
-export const KEEP_FORMAT_GUIDANCE =
-  'configure_widget replaces format as a whole: whenever you send format, copy the current format.title, format.subtitle, format.caption, format.widget, format.crossFilter and format.triggerCrossFilter from view_widget into it unchanged, and change only what was asked.';
 
 const builders = new WeakMap<object, AgShapeBuilder>();
 
@@ -50,7 +42,10 @@ function titleShape(s: AgShapeBuilder) {
   return s.object(
     {
       enabled: s
-        .boolean({ description: 'Whether to show it. When true, also set text.' })
+        .boolean({
+          description:
+            'Whether to show it. false hides it and keeps the text; when true, also set text.',
+        })
         .optional(),
       text: s.string({ description: 'The display text.' }).optional(),
       typography: s
@@ -124,7 +119,7 @@ export function widgetFormatShape<TStyle>(
       },
       {
         description:
-          'Visual formatting. Set only the properties the user asks for; leave the rest unset to keep the defaults.',
+          'Visual formatting. Set only the properties the user asks for; a property left out keeps its current value.',
       },
     )
     .optional();

@@ -1,8 +1,10 @@
-/* A band between the dashboard header and the report; scrolls on its own so the report keeps its room. */
+/*
+ * A band between the dashboard header and the report, always at its full
+ * height: the page scrolls through it, so the draft has no scroll of its own
+ * (see DashboardPage, decision 2026-11-10-reminder-draft-in-the-page-scroll).
+ */
 .card {
   flex-shrink: 0;
-  max-height: 42vh;
-  overflow: auto;
   padding: var(--space-3) var(--space-5) var(--space-4);
   border-bottom: 1px solid var(--line);
   background: var(--surface-muted);

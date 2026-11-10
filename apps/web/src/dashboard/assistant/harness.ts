@@ -9,6 +9,7 @@ import {
 } from 'ag-studio';
 import { claudeAdapter } from './adapter.js';
 import { type CollectionsSource, collectionsAgent, leadWithCollections } from './agents.js';
+import { widgetKeepingFormat } from './keep-format.js';
 
 /** The server owns the model; the reader picks only how hard it thinks. */
 export const ASSISTANT_MODELS: AgAiModel[] = [
@@ -43,18 +44,19 @@ export const PROMPT_STARTERS: AgAiPromptStarter[] = [
 ];
 
 /**
- * AG's five agents on Claude, the lead able to delegate to Collections, and
- * Collections itself. `source` is read at call time, so the harness is built
+ * AG's five agents on Claude, the lead able to delegate to Collections, the
+ * Widget agent keeping the format keys a restyle leaves out, and Collections itself. `source` is read at call time, so the harness is built
  * once per page and never rebuilt when the data refreshes.
  */
 export function assistantHarness(
   source: CollectionsSource,
   adapter: AgLlmAdapter = claudeAdapter(),
 ): AgAiHarnessSetup {
-  return ({ api }) =>
+  return ({ api }) => {
     // AG 3.1.0 types this callback's `api` as the UI-less AgCoreStudioApi while
     // createAiHarness takes AgStudioApi; in the browser Studio passes the full API.
-    createAiHarness(api as AgStudioApi, ({ builtIn }) => ({
+    const studio = api as AgStudioApi;
+    return createAiHarness(studio, ({ builtIn }) => ({
       primary: 'lead',
       models: ASSISTANT_MODELS,
       promptStarters: PROMPT_STARTERS,
@@ -63,8 +65,9 @@ export function assistantHarness(
         directLlmRunner({ ...builtIn.planning, adapter }),
         directLlmRunner({ ...builtIn.data, adapter }),
         directLlmRunner({ ...builtIn.page, adapter }),
-        directLlmRunner({ ...builtIn.widget, adapter }),
+        directLlmRunner({ ...widgetKeepingFormat(builtIn.widget, studio), adapter }),
         collectionsAgent(adapter, source),
       ],
     }));
+  };
 }

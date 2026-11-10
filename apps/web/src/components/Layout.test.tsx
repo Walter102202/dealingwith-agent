@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '../test/render.js';
 
@@ -120,7 +120,10 @@ describe('Layout menu on phones', () => {
     demoMode: true,
     assistant: { enabled: false },
   };
-  afterEach(() => vi.clearAllMocks());
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllGlobals();
+  });
 
   const openMenu = () => {
     const button = screen.getByRole('button', { name: 'Menu' });
@@ -168,6 +171,34 @@ describe('Layout menu on phones', () => {
     expect(button).toHaveAttribute('aria-expanded', 'true');
     fireEvent.click(screen.getByRole('link', { name: 'Dashboard' }));
     expect(button).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('keeps the menu open while resetting and reopens it with the alert when the reset fails', async () => {
+    sessionMock.current = provider;
+    apiMock.get.mockResolvedValue(config);
+    let fail: (error: Error) => void = () => undefined;
+    apiMock.post.mockReturnValue(
+      new Promise((_, reject) => {
+        fail = reject;
+      }),
+    );
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => true),
+    );
+    renderLayout();
+    const button = openMenu();
+    const panel = document.getElementById(button.getAttribute('aria-controls') ?? '');
+    if (!panel) throw new Error('the Menu button controls no element');
+    fireEvent.click(await within(panel).findByRole('button', { name: 'Reset demo data' }));
+    expect(button).toHaveAttribute('aria-expanded', 'true');
+    // A press outside while the request runs closes the menu; the failure must still be seen.
+    fireEvent.pointerDown(screen.getByText('body'));
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+    await act(async () => fail(new Error('The demo could not be reset.')));
+    expect(within(panel).getByRole('alert')).toHaveTextContent('The demo could not be reset.');
+    expect(button).toHaveAttribute('aria-expanded', 'true');
+    expect(navigationMock.reload).not.toHaveBeenCalled();
   });
 
   it('offers the signed-out visitor the storefront and the demo sign in', () => {

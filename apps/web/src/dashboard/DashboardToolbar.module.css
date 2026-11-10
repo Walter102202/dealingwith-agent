@@ -38,6 +38,11 @@
   box-shadow: 0 1px 2px rgb(var(--ink-rgb) / 0.08);
 }
 
+.actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
 .editing,
 .editing:not(:disabled):hover {
   background: var(--ink);
@@ -46,8 +51,9 @@
 }
 
 /*
- * Phones: the toolbar dissolves into the page header's grid, so Edit sits
- * beside the title and the page tabs take their own full-width row.
+ * Phones: the toolbar dissolves into the page header's grid, so Assistant and
+ * Edit sit beside the title as icon buttons (their labels stay as the
+ * accessible names) and the page tabs take their own full-width row.
  */
 @media (max-width: 600px) {
   .toolbar {
@@ -60,9 +66,23 @@
     justify-self: start;
   }
 
-  .edit {
+  .actions {
     grid-column: 2;
     grid-row: 1;
+  }
+
+  .actions .edit {
+    width: 40px;
+    padding: 0;
+  }
+
+  .label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 }
 

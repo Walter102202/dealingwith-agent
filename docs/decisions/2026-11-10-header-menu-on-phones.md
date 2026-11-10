@@ -17,3 +17,5 @@ At 600 px and below, the session actions move into a panel under the pill, opene
 ## Consequences
 
 Every header action is one tap behind Menu on a phone, for every role, with no horizontal scrolling at 320 px. The short "Reset" label and the 420 px rule are gone, since the menu has room for the full label. Between 600 and 840 px the pill still drops the provider's name and Storefront link as before; widening the menu to that range would change the 768 px header.
+
+The 600 px breakpoint is superseded by [2026-11-10 Header: the Menu pill from 840 px down, for every role](2026-11-10-header-menu-from-840px.md).
