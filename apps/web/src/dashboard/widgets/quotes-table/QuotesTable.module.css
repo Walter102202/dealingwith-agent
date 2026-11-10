@@ -1,0 +1,71 @@
+.table {
+  height: 100%;
+  width: 100%;
+  font-family: var(--font-text);
+}
+
+.table :global(.ag-cell) {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.table :global(.ag-right-aligned-cell) {
+  justify-content: flex-end;
+}
+
+.table :global(.ag-row-pinned) :global(.ag-cell) {
+  cursor: default;
+}
+
+.selectedRow {
+  background: var(--accent-tint);
+}
+
+.dimmedRow {
+  opacity: 0.4;
+}
+
+.client {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  min-width: 0;
+}
+
+.clientName {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project {
+  color: var(--ink-soft);
+  font-size: var(--text-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rule {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--ink-soft);
+}
+
+.pill,
+.pressed {
+  display: inline-flex;
+  border-radius: var(--radius-pill);
+}
+
+.pressed {
+  box-shadow: 0 0 0 2px var(--ink);
+}

@@ -1,4 +1,4 @@
-import { DashboardDataSchema, formatUsd } from '@dealingwith/contracts';
+import { DashboardDataSchema } from '@dealingwith/contracts';
 import type { AgReportState } from 'ag-studio';
 import { AgStudio, AgStudioProvider } from 'ag-studio-react';
 import { useCallback, useMemo } from 'react';
@@ -7,10 +7,14 @@ import { useApi } from '../api/hooks.js';
 import { routes } from '../api/routes.js';
 import { Layout } from '../components/Layout.js';
 import { useDashboardAssistant } from '../dashboard/assistant/useDashboardAssistant.js';
+import { DashboardToolbar } from '../dashboard/DashboardToolbar.js';
 import { studioLicenseKey } from '../dashboard/license.js';
+import { DASHBOARD_BREAKPOINTS } from '../dashboard/responsive.js';
 import { toStudioSources } from '../dashboard/sources.js';
-import { DASHBOARD_STATE } from '../dashboard/studio-config.js';
+import { DASHBOARD_LAYOUT, DASHBOARD_PAGES, DASHBOARD_STATE } from '../dashboard/studio-config.js';
 import { dashboardTheme } from '../dashboard/theme.js';
+import { useDashboardControls } from '../dashboard/use-dashboard-controls.js';
+import { type DashboardRegistry, dashboardWidgets } from '../dashboard/widgets/index.js';
 import { useSession } from '../session.js';
 import styles from './DashboardPage.module.css';
 
@@ -31,13 +35,16 @@ export default function DashboardPage() {
   const studioData = useMemo(() => (data ? toStudioSources(data) : null), [data]);
   const licenseKey = studioLicenseKey();
   const assistant = useDashboardAssistant(data);
+  const controls = useDashboardControls(DASHBOARD_STATE.selectedPageId);
+  const { onStateUpdated: reportPage } = controls;
 
-  const onStateUpdated = useCallback((event: { state: AgReportState }) => {
-    if (import.meta.env.DEV) window.__dwStudioState = event.state;
-  }, []);
-
-  const mandate = data?.mandate ?? null;
-  const remaining = mandate ? Math.max(0, mandate.totalLimitCents - mandate.spentCents) : null;
+  const onStateUpdated = useCallback(
+    (event: Parameters<typeof reportPage>[0]) => {
+      reportPage(event);
+      if (import.meta.env.DEV) window.__dwStudioState = event.state;
+    },
+    [reportPage],
+  );
 
   return (
     <Layout width="wide">
@@ -49,10 +56,22 @@ export default function DashboardPage() {
             </h1>
             <p className="muted small">Quotes, additionals and payments across every client.</p>
           </div>
-          {remaining !== null ? (
-            <p className={styles.budget}>
-              Demo mandate budget left <strong>{formatUsd(remaining)}</strong>
-            </p>
+          {studioData && assistant ? (
+            <DashboardToolbar
+              pages={DASHBOARD_PAGES}
+              pageId={controls.pageId}
+              onSelectPage={controls.selectPage}
+              editing={controls.view === 'edit'}
+              onToggleEdit={controls.toggleEdit}
+              {...(assistant.ai
+                ? {
+                    assistant: {
+                      open: controls.view === 'assistant',
+                      onToggle: controls.toggleAssistant,
+                    },
+                  }
+                : {})}
+            />
           ) : null}
         </header>
 
@@ -66,12 +85,17 @@ export default function DashboardPage() {
         {studioData && assistant ? (
           <div className={styles.studio}>
             <AgStudioProvider {...(licenseKey ? { licenseKey } : {})}>
-              <AgStudio
+              <AgStudio<DashboardRegistry>
                 data={studioData}
-                mode="edit"
+                mode={controls.mode}
                 theme={dashboardTheme}
                 initialState={DASHBOARD_STATE}
                 onStateUpdated={onStateUpdated}
+                onApiReady={controls.onApiReady}
+                widgets={dashboardWidgets}
+                panels={controls.panels}
+                layout={DASHBOARD_LAYOUT}
+                responsiveLayoutBreakpoints={DASHBOARD_BREAKPOINTS}
                 {...assistant}
               />
             </AgStudioProvider>

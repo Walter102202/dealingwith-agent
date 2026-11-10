@@ -14,7 +14,7 @@ export function Badge({ tone, children }: BadgeProps) {
   return <span className={`${styles.badge} ${styles[tone]}`}>{children}</span>;
 }
 
-type Status = QuoteStatus | MandateStatus | PaymentStatus;
+export type Status = QuoteStatus | MandateStatus | PaymentStatus;
 
 const TONES: Record<Status, Tone> = {
   draft: 'neutral',
@@ -35,6 +35,10 @@ const TONES: Record<Status, Tone> = {
   denied: 'danger',
   refunded: 'neutral',
 };
+
+/** True for a status word the contracts define (the dashboard table gets free-form values). */
+export const isStatus = (value: unknown): value is Status =>
+  typeof value === 'string' && Object.hasOwn(TONES, value);
 
 const LABELS: Partial<Record<Status, string>> = {
   needs_info: 'Needs info',

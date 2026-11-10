@@ -19,26 +19,35 @@
   font-size: var(--text-lg);
 }
 
-.budget {
-  color: var(--ink-soft);
-  white-space: nowrap;
-}
-
-.budget strong {
-  color: var(--ink);
-  font-weight: 500;
-}
-
 .studio {
   flex: 1;
   min-height: 480px;
   width: 100%;
 }
 
-@media (max-width: 600px) {
+/* Studio's root is as tall as its minimum (600 px) unless its wrappers have a height: fill the page. */
+.studio > div,
+.studio > div > :global(.ag-styled-root),
+.studio > div > :global(.ag-styled-root) > :global(.ag-styled-root),
+.studio :global(.ag-studio-root) {
+  height: 100%;
+}
+
+/* Title above the page tabs once both no longer fit on one line. */
+@media (max-width: 900px) {
   .head {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+/* Phones: title and Edit share the first row, the page tabs take the second (see DashboardToolbar). */
+@media (max-width: 600px) {
+  .head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: var(--space-3);
     padding: var(--space-3) var(--space-4);
   }
 }
