@@ -22,7 +22,7 @@ import type {
  * it was asked to change wipes the titles (seen live on 2026-11-10).
  */
 export const KEEP_FORMAT_GUIDANCE =
-  'configure_widget replaces format as a whole: whenever you send format, copy the current format.title, format.subtitle, format.caption and format.crossFilter from view_widget into it unchanged, and change only what was asked.';
+  'configure_widget replaces format as a whole: whenever you send format, copy the current format.title, format.subtitle, format.caption, format.widget, format.crossFilter and format.triggerCrossFilter from view_widget into it unchanged, and change only what was asked.';
 
 const builders = new WeakMap<object, AgShapeBuilder>();
 
@@ -74,9 +74,27 @@ function titleShape(s: AgShapeBuilder) {
   );
 }
 
+/** The card around a widget, as Studio's own widgets declare it; Studio draws it for every widget. */
+function appearanceShape(s: AgShapeBuilder) {
+  return s.object(
+    {
+      backgroundColor: s.string({ description: 'Card background as a CSS colour.' }).optional(),
+      borderRadius: s.number({ description: 'Corner radius in pixels.' }).optional(),
+      borderEnabled: s.boolean({ description: 'Whether to draw a border.' }).optional(),
+      borderWidth: s.number({ description: 'Border width in pixels.' }).optional(),
+      borderColor: s.string({ description: 'Border colour as a CSS colour.' }).optional(),
+    },
+    {
+      description:
+        'The card around the widget. Set only when a background, border or corner radius is asked for.',
+    },
+  );
+}
+
 /**
- * The whole `format` of a DealingWith widget: Studio's titles and cross-filter
- * setting, which Studio draws and applies itself, and the widget's own `style`.
+ * The whole `format` of a DealingWith widget: Studio's titles, card appearance
+ * and cross-filter settings, which Studio draws and applies itself, and the
+ * widget's own `style`.
  */
 export function widgetFormatShape<TStyle>(
   s: AgShapeBuilder,
@@ -89,10 +107,17 @@ export function widgetFormatShape<TStyle>(
         title: title.optional(),
         subtitle: title.optional(),
         caption: title.optional(),
+        widget: appearanceShape(s).optional(),
         crossFilter: s
           .enum(['highlight', 'filter', 'none'], {
             description:
               'What a click elsewhere on the page does to this widget: highlight, filter, or nothing.',
+          })
+          .optional(),
+        triggerCrossFilter: s
+          .boolean({
+            description:
+              'Whether a click in this widget starts a cross filter in the others. Default true.',
           })
           .optional(),
         style: style.optional(),

@@ -28,7 +28,7 @@ const recorder = {
     recorded({ kind: 'object', fields, ...describe_(opts) }),
   boolean: (opts?: { description?: string }) => recorded({ kind: 'boolean', ...describe_(opts) }),
   string: (opts?: { description?: string }) => recorded({ kind: 'string', ...describe_(opts) }),
-  number: () => recorded({ kind: 'number' }),
+  number: (opts?: { description?: string }) => recorded({ kind: 'number', ...describe_(opts) }),
   enum: (values: readonly string[], opts?: { description?: string }) =>
     recorded({ kind: 'enum', values, ...describe_(opts) }),
 };
@@ -69,15 +69,24 @@ describe('custom widget format shapes', () => {
     ['quotes-table', quotesTableDefinition],
     ['agent-budget', budgetMeterDefinition],
     ['kpi-tile', kpiTileDefinition],
-  ] as const)('%s keeps Studio titles and cross filter, all optional', (_id, definition) => {
+  ] as const)('%s keeps Studio titles, card and cross filter, all optional', (_id, definition) => {
     const shape = declared(definition);
     expect(shape.optional).toBe(true);
     expect(Object.keys(shape.fields ?? {})).toEqual([
       'title',
       'subtitle',
       'caption',
+      'widget',
       'crossFilter',
+      'triggerCrossFilter',
       'style',
+    ]);
+    expect(Object.keys(shape.fields?.widget?.fields ?? {})).toEqual([
+      'backgroundColor',
+      'borderRadius',
+      'borderEnabled',
+      'borderWidth',
+      'borderColor',
     ]);
     expect(Object.keys(shape.fields?.title?.fields ?? {})).toEqual([
       'enabled',
