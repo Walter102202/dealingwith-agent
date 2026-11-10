@@ -27,6 +27,7 @@ import {
   toTableRows,
   totalCents,
 } from './rows.js';
+import { tableLayout } from './style.js';
 
 type Params = AgWidgetParams<QuotesTableWidget>;
 
@@ -62,13 +63,15 @@ function Table({ params, fields }: { params: Params; fields: CompleteTableFields
   const selections = selectedValues(widgetApi.getCrossFilterSelections());
   const rows = toTableRows(response.results.rows, fields, selections, response.crossFilter?.rows);
 
+  const layout = tableLayout(format?.style);
   const [width, setWidth] = useState<number | null>(null);
   const fit = fitColumns(width, fields);
   const signature = query.map((f) => f.key).join('|');
-  const fitKey = `${fit.hidden.join(',')}|${fit.pinAmount}`;
-  // biome-ignore lint/correctness/useExhaustiveDependencies: columns change only when the mapped fields or the fit do.
+  const fitKey = `${fit.hidden.join(',')}|${fit.pinAmount}|${layout.showProject}`;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: columns change only when the mapped fields, the fit or the density do.
   const columns = useMemo(
-    () => buildColumns(fields, widgetApi.formatFieldValue, fit),
+    () =>
+      buildColumns(fields, widgetApi.formatFieldValue, fit, { showProject: layout.showProject }),
     [signature, fitKey, widgetApi],
   );
 
@@ -107,10 +110,10 @@ function Table({ params, fields }: { params: Params; fields: CompleteTableFields
         rowData={rows}
         columnDefs={columns}
         getRowId={(p) => p.data.id}
-        pinnedBottomRowData={format?.style?.totalRow === false ? [] : [total]}
+        pinnedBottomRowData={layout.totalRow ? [total] : []}
         rowClassRules={ROW_CLASSES}
-        rowHeight={44}
-        headerHeight={38}
+        rowHeight={layout.rowHeight}
+        headerHeight={layout.headerHeight}
         suppressDragLeaveHidesColumns
         onGridSizeChanged={(e) => setWidth(e.clientWidth)}
         onCellClicked={onCellClicked}

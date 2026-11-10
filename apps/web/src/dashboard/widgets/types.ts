@@ -17,6 +17,8 @@ type Fields = AgWidgetFieldReference[];
 export interface QuotesTableStyle {
   /** Show a pinned total row under the lines. @default true */
   totalRow?: boolean;
+  /** `compact` uses shorter rows and drops the project line under the client. @default 'comfortable' */
+  density?: 'comfortable' | 'compact';
 }
 
 export interface QuotesTableWidget {
@@ -45,7 +47,15 @@ export interface BudgetMeterWidget {
     expires?: Fields;
     status?: Fields;
   };
-  format?: AgWidgetDataFormat<Record<string, never>>;
+  format?: AgWidgetDataFormat<BudgetMeterStyle>;
+}
+
+/** Which details the agent budget meter shows; each one also needs its field mapped. All default to true. */
+export interface BudgetMeterStyle {
+  showBar?: boolean;
+  showPerPurchase?: boolean;
+  showStatus?: boolean;
+  showExpires?: boolean;
 }
 
 export interface KpiTileStyle {
@@ -53,6 +63,10 @@ export interface KpiTileStyle {
   countOne?: string;
   /** Words after the count otherwise, e.g. "quotes waiting for the client". */
   countMany?: string;
+  /** Show the count line when a count is mapped. @default true */
+  showCount?: boolean;
+  /** Font size of the headline number (not the tile). @default 'regular' */
+  valueSize?: 'compact' | 'regular' | 'large';
 }
 
 export interface KpiTileWidget {

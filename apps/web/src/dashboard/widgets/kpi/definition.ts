@@ -1,4 +1,5 @@
-import type { KpiTileDefinition } from '../types.js';
+import { KEEP_FORMAT_GUIDANCE, shapeBuilder, widgetFormatShape } from '../format-shape.js';
+import type { KpiTileDefinition, KpiTileStyle } from '../types.js';
 import { KpiTileComp } from './KpiTile.js';
 
 const ICON =
@@ -37,10 +38,48 @@ export const kpiTileDefinition: KpiTileDefinition = {
       supportsCrossHighlight: false,
     });
     form.items[1]?.items.push(
+      {
+        type: 'select',
+        id: 'format.style.valueSize',
+        label: 'Value size',
+        defaultValue: 'regular',
+        items: [
+          { label: 'Compact', value: 'compact' },
+          { label: 'Regular', value: 'regular' },
+          { label: 'Large', value: 'large' },
+        ],
+      },
+      { type: 'checkbox', id: 'format.style.showCount', label: 'Count line', defaultValue: true },
       { type: 'textfield', id: 'format.style.countOne', label: 'Count words (one)' },
       { type: 'textfield', id: 'format.style.countMany', label: 'Count words (many)' },
     );
     return form;
+  },
+  formatShape: ({ api }) => {
+    const s = shapeBuilder(api);
+    return widgetFormatShape<KpiTileStyle>(
+      s,
+      s.object({
+        valueSize: s
+          .enum(['compact', 'regular', 'large'], {
+            description:
+              'Font size of the headline number only, not the tile; resize the tile through its layout. Default "regular".',
+          })
+          .optional(),
+        showCount: s
+          .boolean({
+            description:
+              'Show the count line under the value, when a count is mapped. Default true.',
+          })
+          .optional(),
+        countOne: s
+          .string({ description: 'Words after a count of 1, e.g. "quote waiting for the client".' })
+          .optional(),
+        countMany: s
+          .string({ description: 'Words after any other count, e.g. "quotes waiting".' })
+          .optional(),
+      }),
+    );
   },
   comp: KpiTileComp,
   defaultSize: { width: 300, height: 140 },
@@ -48,5 +87,6 @@ export const kpiTileDefinition: KpiTileDefinition = {
   ai: {
     description: 'A single headline number with an optional count line underneath.',
     usage: 'Use for totals such as unpaid additionals or money collected.',
+    configuration: `- format.style.valueSize sets the font size of the headline number only (compact, regular or large); to make the tile itself bigger, change its layout instead; format.style.showCount hides or shows the count line; countOne and countMany are its words.\n- ${KEEP_FORMAT_GUIDANCE}`,
   },
 };

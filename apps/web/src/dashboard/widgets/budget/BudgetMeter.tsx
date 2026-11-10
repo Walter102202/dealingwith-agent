@@ -4,7 +4,7 @@ import { use } from 'react';
 import { formatCents } from '../money.js';
 import type { BudgetMeterWidget } from '../types.js';
 import styles from './BudgetMeter.module.css';
-import { budgetMeter } from './budget.js';
+import { budgetMeter, meterParts } from './budget.js';
 
 type Params = AgWidgetParams<BudgetMeterWidget>;
 
@@ -24,10 +24,11 @@ interface MeterProps {
 }
 
 function Meter({ params, spent, limit }: MeterProps) {
-  const { widgetApi, dataMapping } = params;
-  const perPurchase = dataMapping.perPurchase?.at(0);
-  const expires = dataMapping.expires?.at(0);
-  const status = dataMapping.status?.at(0);
+  const { widgetApi, dataMapping, format } = params;
+  const parts = meterParts(format?.style);
+  const perPurchase = parts.perPurchase ? dataMapping.perPurchase?.at(0) : undefined;
+  const expires = parts.expires ? dataMapping.expires?.at(0) : undefined;
+  const status = parts.status ? dataMapping.status?.at(0) : undefined;
   const extras = [perPurchase, expires, status].filter((f): f is AgWidgetField => f != null);
 
   const response = use(widgetApi.getData({ fields: [spent, limit, ...extras] }));
@@ -46,12 +47,14 @@ function Meter({ params, spent, limit }: MeterProps) {
         <span className={styles.leftLabel}>left</span>
       </p>
       {/* Decorative: the "Spent" fact below says the same in words. */}
-      <div className={styles.track} aria-hidden="true">
-        <div
-          className={`${styles.fill} ${meter.overLimit ? styles.over : ''}`}
-          style={{ width: `${meter.spentPercent}%` }}
-        />
-      </div>
+      {parts.bar ? (
+        <div className={styles.track} aria-hidden="true">
+          <div
+            className={`${styles.fill} ${meter.overLimit ? styles.over : ''}`}
+            style={{ width: `${meter.spentPercent}%` }}
+          />
+        </div>
+      ) : null}
       <dl className={styles.facts}>
         <div>
           <dt>Spent</dt>

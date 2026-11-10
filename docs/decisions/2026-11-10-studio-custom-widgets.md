@@ -23,3 +23,5 @@ Cents fields carry `context: { unit: 'cents' }` in `sources.ts`; the widgets rea
 ## Consequences
 
 The three pages are built from stock charts plus these widgets, and all of them stay editable in the editor (they appear under "DealingWith" in Compose). `ag-grid-community` and `ag-grid-react` are now declared by `apps/web` at 36.3.0; upgrading Studio means moving them together. The widgets define no `formatShape`, so Studio's AI assistant cannot restyle them yet; that is the first thing to add if the assistant needs to. The Overview pipeline now counts quotes from the `lines` source so that its bars and the table cross-filter each other, which leaves out quotes still at "needs info" with no priced lines.
+
+The `formatShape` consequence is superseded by [2026-11-10 custom widgets get format shapes](2026-11-10-custom-widget-format-shapes.md).

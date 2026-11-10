@@ -1,4 +1,22 @@
 import { centsOf } from '../money.js';
+import type { BudgetMeterStyle } from '../types.js';
+
+/** Which parts of the meter `format.style` turns on; every part defaults to on. */
+export interface MeterParts {
+  bar: boolean;
+  perPurchase: boolean;
+  status: boolean;
+  expires: boolean;
+}
+
+export function meterParts(style: BudgetMeterStyle | undefined): MeterParts {
+  return {
+    bar: style?.showBar !== false,
+    perPurchase: style?.showPerPurchase !== false,
+    status: style?.showStatus !== false,
+    expires: style?.showExpires !== false,
+  };
+}
 
 /** What the agent budget meter shows. Every amount is integer cents. */
 export interface BudgetMeter {

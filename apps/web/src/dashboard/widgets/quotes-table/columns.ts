@@ -77,17 +77,21 @@ const slotValue =
   ({ data }: { data: TableRow | undefined }) =>
     data ? (slot === 'amount' ? data.amount : data.values[slot]) : undefined;
 
-/** AG Grid column definitions for the mapped fields, one column per mapped slot. */
+/**
+ * AG Grid column definitions for the mapped fields, one column per mapped slot.
+ * `showProject: false` (compact rows) leaves the project line out of the client cell.
+ */
 export function buildColumns(
   fields: CompleteTableFields,
   format: Format,
   fit: ColumnFit = { hidden: [], pinAmount: false },
+  { showProject = true }: { showProject?: boolean } = {},
 ): ColDef<TableRow>[] {
   return SPECS.flatMap((spec) => {
     const field = fields[spec.slot];
     if (!field) return [];
     const params: CellParams & { project?: AgWidgetField } = { slot: spec.slot, field, format };
-    if (spec.slot === 'client' && fields.project) params.project = fields.project;
+    if (spec.slot === 'client' && fields.project && showProject) params.project = fields.project;
     const column: ColDef<TableRow> = {
       colId: spec.slot,
       headerName: spec.header,

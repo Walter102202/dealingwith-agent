@@ -4,7 +4,7 @@ import { use } from 'react';
 import { formatValue } from '../money.js';
 import type { KpiTileWidget } from '../types.js';
 import styles from './KpiTile.module.css';
-import { countLine } from './kpi.js';
+import { countLine, tileLayout } from './kpi.js';
 
 type Params = AgWidgetParams<KpiTileWidget>;
 
@@ -15,9 +15,16 @@ export function KpiTileComp(params: Params) {
   return <Tile params={params} value={value} />;
 }
 
+const VALUE_SIZE = {
+  compact: styles.compact,
+  regular: '',
+  large: styles.large,
+} as const;
+
 function Tile({ params, value }: { params: Params; value: AgWidgetField }) {
   const { widgetApi, dataMapping, format } = params;
-  const count = dataMapping.count?.at(0);
+  const layout = tileLayout(format?.style);
+  const count = layout.showCount ? dataMapping.count?.at(0) : undefined;
   const fields = count ? [value, count] : [value];
 
   const response = use(widgetApi.getData({ fields }));
@@ -33,7 +40,9 @@ function Tile({ params, value }: { params: Params; value: AgWidgetField }) {
 
   return (
     <div className={styles.tile}>
-      <p className={styles.value}>{show(value, row[value.key])}</p>
+      <p className={`${styles.value} ${VALUE_SIZE[layout.valueSize] ?? ''}`.trim()}>
+        {show(value, row[value.key])}
+      </p>
       {detail ? <p className={styles.detail}>{detail}</p> : null}
     </div>
   );

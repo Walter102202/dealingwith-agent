@@ -1,4 +1,5 @@
-import type { QuotesTableDefinition } from '../types.js';
+import { KEEP_FORMAT_GUIDANCE, shapeBuilder, widgetFormatShape } from '../format-shape.js';
+import type { QuotesTableDefinition, QuotesTableStyle } from '../types.js';
 import { QuotesTableComp } from './QuotesTable.js';
 
 const ICON =
@@ -50,13 +51,37 @@ export const quotesTableDefinition: QuotesTableDefinition = {
       ],
       supportsCrossHighlight: true,
     });
-    form.items[1]?.items.push({
-      type: 'checkbox',
-      id: 'format.style.totalRow',
-      label: 'Total row',
-      defaultValue: true,
-    });
+    form.items[1]?.items.push(
+      { type: 'checkbox', id: 'format.style.totalRow', label: 'Total row', defaultValue: true },
+      {
+        type: 'select',
+        id: 'format.style.density',
+        label: 'Density',
+        defaultValue: 'comfortable',
+        items: [
+          { label: 'Comfortable', value: 'comfortable' },
+          { label: 'Compact', value: 'compact' },
+        ],
+      },
+    );
     return form;
+  },
+  formatShape: ({ api }) => {
+    const s = shapeBuilder(api);
+    return widgetFormatShape<QuotesTableStyle>(
+      s,
+      s.object({
+        totalRow: s
+          .boolean({ description: 'Show the pinned total row under the lines. Default true.' })
+          .optional(),
+        density: s
+          .enum(['comfortable', 'compact'], {
+            description:
+              'Row height. "comfortable" (default) shows the project under the client; "compact" uses short single-line rows to fit more lines.',
+          })
+          .optional(),
+      }),
+    );
   },
   comp: QuotesTableComp,
   defaultSize: { width: 720, height: 360 },
@@ -66,5 +91,6 @@ export const quotesTableDefinition: QuotesTableDefinition = {
     description:
       'A table of quote lines: client, line, rule, channel and status pills, amount and a total.',
     usage: 'Use to list priced additionals, paid or unpaid. Map fields from the lines source.',
+    configuration: `- format.style.totalRow hides or shows the total row; format.style.density "compact" fits more rows.\n- ${KEEP_FORMAT_GUIDANCE}`,
   },
 };
