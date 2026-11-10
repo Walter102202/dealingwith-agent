@@ -41,12 +41,35 @@ export function DashboardToolbar({
           );
         })}
       </nav>
-      {assistant ? (
+      <div className={styles.actions}>
+        {assistant ? (
+          <Button
+            variant="secondary"
+            className={assistant.open ? `${styles.edit} ${styles.editing}` : styles.edit}
+            aria-pressed={assistant.open}
+            onClick={assistant.onToggle}
+          >
+            <svg
+              aria-hidden="true"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M8 2.5 9.4 6.6 13.5 8 9.4 9.4 8 13.5 6.6 9.4 2.5 8 6.6 6.6z" />
+            </svg>
+            <span className={styles.label}>Assistant</span>
+          </Button>
+        ) : null}
         <Button
           variant="secondary"
-          className={assistant.open ? `${styles.edit} ${styles.editing}` : styles.edit}
-          aria-pressed={assistant.open}
-          onClick={assistant.onToggle}
+          className={editing ? `${styles.edit} ${styles.editing}` : styles.edit}
+          aria-pressed={editing}
+          onClick={onToggleEdit}
         >
           <svg
             aria-hidden="true"
@@ -59,32 +82,11 @@ export function DashboardToolbar({
             strokeLinecap="round"
             strokeLinejoin="round"
           >
-            <path d="M8 2.5 9.4 6.6 13.5 8 9.4 9.4 8 13.5 6.6 9.4 2.5 8 6.6 6.6z" />
+            <path d="M10.5 2.5 13.5 5.5 6 13H3v-3z" />
           </svg>
-          Assistant
+          <span className={styles.label}>Edit</span>
         </Button>
-      ) : null}
-      <Button
-        variant="secondary"
-        className={editing ? `${styles.edit} ${styles.editing}` : styles.edit}
-        aria-pressed={editing}
-        onClick={onToggleEdit}
-      >
-        <svg
-          aria-hidden="true"
-          width="16"
-          height="16"
-          viewBox="0 0 16 16"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M10.5 2.5 13.5 5.5 6 13H3v-3z" />
-        </svg>
-        Edit
-      </Button>
+      </div>
     </div>
   );
 }
