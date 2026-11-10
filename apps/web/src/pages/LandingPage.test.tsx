@@ -18,7 +18,12 @@ import { DEMO_QUOTE, DEMO_REQUEST } from '../landing/demo-quote.js';
 import { renderWithProviders } from '../test/render.js';
 import { LandingPage } from './LandingPage.js';
 
-const config = { paypalMode: 'mock', appUrl: 'http://localhost:5173', demoMode: true };
+const config = {
+  paypalMode: 'mock',
+  appUrl: 'http://localhost:5173',
+  demoMode: true,
+  assistant: { enabled: false },
+};
 const projectId = '00000000-0000-4000-8000-0000000000f1';
 
 function signedIn(session: unknown) {

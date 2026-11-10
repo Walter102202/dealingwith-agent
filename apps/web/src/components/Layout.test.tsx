@@ -46,7 +46,12 @@ describe('Layout reset demo data', () => {
 
   it('shows Reset demo data to the provider in demo mode and resets after confirmation', async () => {
     sessionMock.current = provider;
-    apiMock.get.mockResolvedValue({ paypalMode: 'mock', appUrl: 'http://x', demoMode: true });
+    apiMock.get.mockResolvedValue({
+      paypalMode: 'mock',
+      appUrl: 'http://x',
+      demoMode: true,
+      assistant: { enabled: false },
+    });
     apiMock.post.mockResolvedValue({ ok: true });
     vi.stubGlobal(
       'confirm',
@@ -66,7 +71,12 @@ describe('Layout reset demo data', () => {
 
   it('does nothing when the confirmation is declined', async () => {
     sessionMock.current = provider;
-    apiMock.get.mockResolvedValue({ paypalMode: 'mock', appUrl: 'http://x', demoMode: true });
+    apiMock.get.mockResolvedValue({
+      paypalMode: 'mock',
+      appUrl: 'http://x',
+      demoMode: true,
+      assistant: { enabled: false },
+    });
     vi.stubGlobal(
       'confirm',
       vi.fn(() => false),
@@ -78,7 +88,12 @@ describe('Layout reset demo data', () => {
 
   it('hides the button for clients and outside demo mode', async () => {
     sessionMock.current = client;
-    apiMock.get.mockResolvedValue({ paypalMode: 'mock', appUrl: 'http://x', demoMode: true });
+    apiMock.get.mockResolvedValue({
+      paypalMode: 'mock',
+      appUrl: 'http://x',
+      demoMode: true,
+      assistant: { enabled: false },
+    });
     const first = renderLayout();
     await screen.findByText('body');
     expect(screen.queryByRole('button', { name: 'Reset demo data' })).toBeNull();
@@ -90,6 +105,7 @@ describe('Layout reset demo data', () => {
       paypalClientId: 'x',
       appUrl: 'http://x',
       demoMode: false,
+      assistant: { enabled: false },
     });
     renderLayout();
     await waitFor(() => expect(apiMock.get).toHaveBeenCalled());

@@ -18,6 +18,7 @@ describe('AppConfigProvider', () => {
       paypalMode: 'mock',
       appUrl: 'http://localhost:5174',
       demoMode: true,
+      assistant: { enabled: false },
     });
     render(
       <AppConfigProvider>
@@ -32,7 +33,12 @@ describe('AppConfigProvider', () => {
   it('retries once when the first request failed, then settles', async () => {
     vi.mocked(api.get)
       .mockRejectedValueOnce(new Error('network down'))
-      .mockResolvedValue({ paypalMode: 'mock', appUrl: 'http://localhost:5174', demoMode: true });
+      .mockResolvedValue({
+        paypalMode: 'mock',
+        appUrl: 'http://localhost:5174',
+        demoMode: true,
+        assistant: { enabled: false },
+      });
     render(
       <AppConfigProvider>
         <Consumer />

@@ -20,6 +20,8 @@ export const AppConfigSchema = z.object({
   paypalClientId: z.string().min(1).optional(),
   appUrl: z.url(),
   demoMode: z.boolean(),
+  /** The dashboard's AI assistant; enabled when the server holds an Anthropic key. */
+  assistant: z.object({ enabled: z.boolean() }),
 });
 export type AppConfig = z.infer<typeof AppConfigSchema>;
 

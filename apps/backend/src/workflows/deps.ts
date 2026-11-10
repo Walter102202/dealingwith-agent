@@ -1,4 +1,5 @@
 import type { AgentPort } from '../agent/port.js';
+import type { AssistantPort } from '../assistant/port.js';
 import type { Db } from '../db/client.js';
 import type { Env } from '../env.js';
 import type { PaypalGateway } from '../integrations/paypal/gateway.js';
@@ -12,6 +13,8 @@ export type Deps = {
   now: () => Date;
   logger: Logger;
   agent: AgentPort;
+  /** The dashboard assistant; `null` when the server holds no Anthropic key. */
+  assistant: AssistantPort | null;
 };
 /** The real port lives in `src/agent/port.ts`; the fake one in `./fake-agent.ts`. */
 export type { AgentPort };
