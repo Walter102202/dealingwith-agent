@@ -17,6 +17,9 @@ vi.mock('../api/client.js', () => ({
   errorMessage: String,
 }));
 vi.mock('ag-studio-react', () => ({ AgStudio: () => null, AgStudioProvider: () => null }));
+vi.mock('../dashboard/assistant/useDashboardAssistant.js', () => ({
+  useDashboardAssistant: () => ({}),
+}));
 
 import DashboardPage from './DashboardPage.js';
 

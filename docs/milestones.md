@@ -108,6 +108,14 @@ Added 2026-11-08 when David joined. Policy: `CONSTITUTION.md`; runbook: `docs/ci
 - [x] **Gated delivery** (G4; `autoDeployTrigger: checksPass` in effect since 2026-11-08, PRs #6 to #8 deployed only after their green run; with the `main` ruleset a red `main` cannot be produced by a merge). Done when: `render.yaml` sets `autoDeployTrigger: checksPass` and a red CI on `main` does not deploy.
 - [ ] **David onboarded** (G5). Done when: David has write access and has read `CONSTITUTION.md`, `AGENTS.md`, `CLAUDE.md` and `docs/ci-cd.md`.
 
+## S — Dashboard assistant (AG Studio AI)
+
+Added 2026-11-10 on `feat/studio-assistant`. Decisions: `2026-11-10-assistant-anthropic-adapter-on-backend`, `2026-11-10-assistant-no-thinking-replay`, `2026-11-10-assistant-daily-turn-cap`, `2026-11-10-collections-agent-amounts-from-data`.
+
+- [~] **Turn endpoint** (S1). Done when: `POST /api/dashboard/assistant/turn` streams AG events from Claude Sonnet 5.5 for a provider session, is off without `ANTHROPIC_API_KEY`, and stops at `ASSISTANT_DAILY_TURN_LIMIT`.
+- [~] **Assistant in the dashboard** (S2). Done when: the AI panel on `/dashboard` answers a data question and adds a chart, with a Fast and a Thorough effort.
+- [~] **Collections agent** (S3). Done when: asking for a payment reminder shows a draft whose amounts and total come from the quote data, signed by the provider, and nothing is sent.
+
 ## Walter's actions (outside the code)
 
 - [x] Apply the `main` ruleset (active since 2026-11-08, id 26787773): `gh api -X POST repos/Walter102202/dealingwith-agent/rulesets --input infra/github/main-ruleset.json` (G3).

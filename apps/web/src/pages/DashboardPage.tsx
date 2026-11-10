@@ -6,6 +6,7 @@ import { api, errorMessage } from '../api/client.js';
 import { useApi } from '../api/hooks.js';
 import { routes } from '../api/routes.js';
 import { Layout } from '../components/Layout.js';
+import { useDashboardAssistant } from '../dashboard/assistant/useDashboardAssistant.js';
 import { studioLicenseKey } from '../dashboard/license.js';
 import { toStudioSources } from '../dashboard/sources.js';
 import { DASHBOARD_STATE } from '../dashboard/studio-config.js';
@@ -29,6 +30,7 @@ export default function DashboardPage() {
   const data = dashboard.data;
   const studioData = useMemo(() => (data ? toStudioSources(data) : null), [data]);
   const licenseKey = studioLicenseKey();
+  const assistant = useDashboardAssistant(data);
 
   const onStateUpdated = useCallback((event: { state: AgReportState }) => {
     if (import.meta.env.DEV) window.__dwStudioState = event.state;
@@ -61,7 +63,7 @@ export default function DashboardPage() {
         ) : null}
         {!studioData && !dashboard.error ? <p className="muted">Loading dashboard…</p> : null}
 
-        {studioData ? (
+        {studioData && assistant ? (
           <div className={styles.studio}>
             <AgStudioProvider {...(licenseKey ? { licenseKey } : {})}>
               <AgStudio
@@ -70,6 +72,7 @@ export default function DashboardPage() {
                 theme={dashboardTheme}
                 initialState={DASHBOARD_STATE}
                 onStateUpdated={onStateUpdated}
+                {...assistant}
               />
             </AgStudioProvider>
           </div>
