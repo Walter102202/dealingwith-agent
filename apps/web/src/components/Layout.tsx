@@ -63,12 +63,7 @@ function ResetDemoButton({ onFailure }: { onFailure: () => void }) {
 
   return (
     <>
-      <Button
-        variant="secondary"
-        busy={busy}
-        data-menu-stays-open
-        onClick={() => void reset()}
-      >
+      <Button variant="secondary" busy={busy} data-menu-stays-open onClick={() => void reset()}>
         Reset demo data
       </Button>
       {error ? (
