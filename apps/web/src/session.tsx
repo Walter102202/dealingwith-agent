@@ -15,6 +15,18 @@ export interface SessionState {
   logout: () => Promise<void>;
 }
 
+/**
+ * Where a signed-in role belongs: the provider's dashboard, or the client's
+ * first project (the storefront when there is none). Sign-in and the landing's
+ * call to action both use it, so they land in the same place.
+ */
+export async function homePath(role: Role): Promise<string> {
+  if (role === 'provider') return '/dashboard';
+  const projects = await api.get(routes.projects.list, z.array(ProjectSchema));
+  const first = projects[0];
+  return first ? `/portal/projects/${first.id}` : '/store';
+}
+
 const SessionContext = createContext<SessionState | null>(null);
 
 const OkSchema = z.object({ ok: z.literal(true) });
@@ -46,13 +58,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     async (role: Role) => {
       const s = await api.post(routes.session.login, { role }, SessionSchema);
       setSession(s);
-      if (s.role === 'provider') {
-        void navigate('/dashboard');
-        return;
-      }
-      const projects = await api.get(routes.projects.list, z.array(ProjectSchema));
-      const first = projects[0];
-      void navigate(first ? `/portal/projects/${first.id}` : '/');
+      void navigate(await homePath(s.role));
     },
     [navigate],
   );

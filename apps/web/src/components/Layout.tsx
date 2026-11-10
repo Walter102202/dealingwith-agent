@@ -40,7 +40,10 @@ function ResetDemoButton() {
   return (
     <>
       <Button variant="secondary" busy={busy} onClick={() => void reset()}>
-        Reset demo data
+        <span className={styles.long}>Reset demo data</span>
+        <span className={styles.short} aria-hidden="true">
+          Reset
+        </span>
       </Button>
       {error ? (
         <span className="error small" role="alert">
@@ -63,6 +66,14 @@ export function Layout({ children, width = 'content' }: LayoutProps) {
             DealingWith
           </Link>
           <nav className={styles.nav} aria-label="Session">
+            <Link
+              to="/store"
+              className={`${styles.link} ${
+                session?.role === 'provider' ? styles.hideBelowTablet : styles.hideBelowPhone
+              }`}
+            >
+              Storefront
+            </Link>
             {status === 'ready' && session ? (
               <>
                 <span className={styles.who}>

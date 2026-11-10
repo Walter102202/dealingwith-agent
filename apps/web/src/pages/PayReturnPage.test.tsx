@@ -72,7 +72,7 @@ describe('PayReturnPage', () => {
       const back = await screen.findByRole('link', {
         name: hasProject ? 'Back to project' : 'Back to the storefront',
       });
-      expect(back).toHaveAttribute('href', hasProject ? `/portal/projects/${projectId}` : '/');
+      expect(back).toHaveAttribute('href', hasProject ? `/portal/projects/${projectId}` : '/store');
     },
   );
 

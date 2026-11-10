@@ -8,15 +8,21 @@ import { NeedsInfoForm } from './NeedsInfoForm.js';
 import { PayWithPayPal } from './PayWithPayPal.js';
 import styles from './QuoteCard.module.css';
 
-interface QuoteCardProps {
-  quote: Quote;
-  /** Called when a payment completes without leaving the page (sandbox capture). */
+interface QuoteCardActions {
+  preview?: never;
   /** The quote was paid in place (sandbox capture or zero total); the backend sends no payment for a zero total. */
   onAccept: (payment?: Payment) => Promise<void> | void;
   /** Free-text adjustment; the page posts it as `answers.adjustment`. */
   onAdjust: (text: string) => Promise<void>;
   onAnswers: (answers: Record<string, string>) => Promise<void>;
 }
+
+/** A read-only quote for the landing page: lines, sources and total, no actions. */
+interface QuoteCardPreview {
+  preview: true;
+}
+
+type QuoteCardProps = { quote: Quote } & (QuoteCardActions | QuoteCardPreview);
 
 export function deliveryLabel(days: number): string {
   return days === 1 ? '1 day' : `${days} days`;
@@ -115,8 +121,10 @@ function AdjustForm({
  * The hero: a quote laid out like a document. Each line says what it is,
  * whether it is included or an extra, why, and what it cites.
  */
-export function QuoteCard({ quote, onAccept, onAdjust, onAnswers }: QuoteCardProps) {
+export function QuoteCard(props: QuoteCardProps) {
+  const { quote } = props;
   const [adjusting, setAdjusting] = useState(false);
+  const actions = props.preview ? null : props;
   const published = quote.status === 'published';
   const payable = published || quote.status === 'accepted';
 
@@ -132,7 +140,7 @@ export function QuoteCard({ quote, onAccept, onAdjust, onAnswers }: QuoteCardPro
       {quote.status === 'needs_info' ? (
         <>
           <p className={styles.explanation}>{quote.explanation}</p>
-          <NeedsInfoForm items={quote.needsInfo} onSubmit={onAnswers} />
+          {actions ? <NeedsInfoForm items={quote.needsInfo} onSubmit={actions.onAnswers} /> : null}
         </>
       ) : (
         <>
@@ -155,7 +163,7 @@ export function QuoteCard({ quote, onAccept, onAdjust, onAnswers }: QuoteCardPro
             </div>
           </dl>
           <p className={styles.explanation}>{quote.explanation}</p>
-          {payable ? (
+          {payable && actions ? (
             <div className={styles.footer}>
               <div className={styles.pay}>
                 <span className={styles.payLabel}>Accept quote v{quote.version}</span>
@@ -163,11 +171,11 @@ export function QuoteCard({ quote, onAccept, onAdjust, onAnswers }: QuoteCardPro
                   quoteId={quote.id}
                   version={quote.version}
                   amountCents={quote.totalCents}
-                  onPaid={(payment) => void onAccept(payment)}
+                  onPaid={(payment) => void actions.onAccept(payment)}
                 />
               </div>
               {!published ? null : adjusting ? (
-                <AdjustForm onAdjust={onAdjust} onClose={() => setAdjusting(false)} />
+                <AdjustForm onAdjust={actions.onAdjust} onClose={() => setAdjusting(false)} />
               ) : (
                 <Button onClick={() => setAdjusting(true)}>Ask for an adjustment</Button>
               )}

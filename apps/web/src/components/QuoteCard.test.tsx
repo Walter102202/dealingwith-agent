@@ -108,4 +108,19 @@ describe('QuoteCard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send request' }));
     expect(onAdjust).toHaveBeenCalledWith('Send it on Tuesdays instead');
   });
+
+  it('preview shows lines, sources and total with no actions', () => {
+    renderWithProviders(<QuoteCard quote={requestOne} preview />);
+    expect(screen.getByTestId('quote-total')).toHaveTextContent('US$80.00');
+    expect(screen.queryByText(/^Accept quote v/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Ask for an adjustment' })).toBeNull();
+    const extra = screen.getByText('Weekly Monday summary email').closest('li') as HTMLElement;
+    fireEvent.click(within(extra).getByText('Why this line'));
+    expect(within(extra).getByText('Rule S2.report.v1')).toBeInTheDocument();
+  });
+
+  it('preview of a needs-info quote shows the explanation without the form', () => {
+    renderWithProviders(<QuoteCard quote={needsInfo} preview />);
+    expect(screen.queryByRole('button', { name: 'Send answers' })).toBeNull();
+  });
 });

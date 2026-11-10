@@ -1,0 +1,113 @@
+/* Section 03: the mandate under the agent terminal. */
+
+.mandate {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: clamp(32px, 5vw, 80px);
+  align-items: center;
+  margin-top: clamp(64px, 8vw, 112px);
+}
+
+.mandateCopy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.meterCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: clamp(24px, 3vw, 36px);
+  border-radius: 28px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px rgb(var(--ink-rgb) / 0.06);
+}
+
+.meterHead,
+.meterLegend {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.meterHead {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.meterLegend {
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.meter {
+  position: relative;
+  height: 12px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+}
+
+.meterFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+}
+
+.meterCap {
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--ink);
+}
+
+.outcomes {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.outcomes li {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  gap: var(--space-3);
+  align-items: baseline;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  color: var(--ink-soft);
+}
+
+.outcomeCode {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.outcomes li[data-tone="ok"] .outcomeCode {
+  color: var(--accent);
+}
+
+.outcomes li[data-tone="warn"] .outcomeCode {
+  color: var(--amber);
+}
+
+.outcomes li[data-tone="danger"] .outcomeCode {
+  color: var(--danger);
+}
+
+@media (max-width: 980px) {
+  .mandate {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .outcomes li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+}

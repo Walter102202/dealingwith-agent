@@ -14,7 +14,7 @@ describe('RequireSession', () => {
   it.each([
     { role: null, as: 'client', status: 'ready', expected: '/login' },
     { role: 'provider', as: 'client', status: 'ready', expected: '/dashboard' },
-    { role: 'client', as: 'provider', status: 'ready', expected: '/' },
+    { role: 'client', as: 'provider', status: 'ready', expected: '/store' },
     { role: 'client', as: 'client', status: 'ready', expected: 'Protected content' },
     { role: null, as: 'client', status: 'loading', expected: 'Loading…' },
   ] as const)('$role / $as / $status → $expected', ({ role, as, status, expected }) => {
@@ -28,7 +28,7 @@ describe('RequireSession', () => {
           />
           <Route path="/login" element={<p>/login</p>} />
           <Route path="/dashboard" element={<p>/dashboard</p>} />
-          <Route path="/" element={<p>/</p>} />
+          <Route path="/store" element={<p>/store</p>} />
         </Routes>
       </MemoryRouter>,
     );

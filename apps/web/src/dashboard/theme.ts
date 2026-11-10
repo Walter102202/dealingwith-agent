@@ -1,7 +1,7 @@
 import { studioTheme } from 'ag-studio';
 
-const TEXT_FONT = '"IBM Plex Sans", "Segoe UI", system-ui, sans-serif';
-const DISPLAY_FONT = '"Fraunces", Georgia, serif';
+const TEXT_FONT = '"Geist", -apple-system, "Segoe UI", system-ui, sans-serif';
+const DISPLAY_FONT = TEXT_FONT;
 
 // From --accent, --amber (lighter), --info (darker), --danger (lighter),
 // --ink-faint (darker), and --accent-deep (darker), with distinct lightness.
@@ -10,7 +10,7 @@ const PALETTE = ['#0e6b52', '#c2872b', '#314779', '#c15743', '#29322c', '#03271c
 
 /**
  * AG Studio themed with the product tokens of `src/styles.css`: paper canvas,
- * pine accent, IBM Plex Sans, Fraunces for widget titles. Built on
+ * pine accent, Geist for text and widget titles. Built on
  * `studioTheme` (not `createStudioTheme()`) so the icon set, buttons and
  * inputs keep their parts.
  */
@@ -27,11 +27,11 @@ export const dashboardTheme = studioTheme.withParams({
   studioPanelWidth: 200,
   studioWidgetBackgroundColor: '#ffffff',
   studioWidgetBorder: { width: 1, color: '#d8ddd6' },
-  studioWidgetBorderRadius: 8,
+  studioWidgetBorderRadius: 18,
   studioWidgetPadding: 8,
   studioWidgetTitleFontFamily: DISPLAY_FONT,
   studioWidgetTitleFontSize: 18,
-  studioWidgetTitleFontWeight: '500',
+  studioWidgetTitleFontWeight: '600',
   studioWidgetTitleTextColor: '#16211c',
   studioWidgetSubtitleTextColor: '#5b665f',
   studioToggleButtonActiveBackgroundColor: '#0e6b52',

@@ -1,0 +1,286 @@
+/*
+ * The landing page, shared parts: page frame, wordmark, pills, type, reveals,
+ * section frame. Each section keeps its own stylesheet next to its component.
+ * Same colour tokens as the app (src/styles.css); motion is
+ * transform/opacity/filter only.
+ */
+
+.page {
+  --container: 1200px;
+  --gutter: clamp(20px, 4vw, 48px);
+  --display: clamp(3rem, 7.2vw, 6.5rem);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  overflow-x: clip;
+}
+
+.container {
+  width: min(100% - 2 * var(--gutter), var(--container));
+  margin-inline: auto;
+}
+
+.page section[id] {
+  scroll-margin-top: 24px;
+}
+
+.page code {
+  font-family: var(--font-mono);
+  letter-spacing: 0;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: var(--space-2);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.mark {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  position: relative;
+}
+
+.mark::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* Pills */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 48px;
+  padding: 0 24px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color 240ms var(--ease),
+    transform 240ms var(--ease),
+    box-shadow 240ms var(--ease);
+}
+
+.pill:active {
+  transform: scale(0.965);
+}
+
+.pillPrimary {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.pillPrimary:hover {
+  transform: scale(1.025);
+  box-shadow: 0 10px 30px rgb(var(--ink-rgb) / 0.22);
+}
+
+.pillSecondary {
+  background: rgb(var(--ink-rgb) / 0.06);
+  color: var(--ink);
+}
+
+.pillSecondary:hover {
+  background: rgb(var(--ink-rgb) / 0.11);
+}
+
+.pillSm {
+  min-height: 36px;
+  padding: 0 16px;
+  font-size: 13.5px;
+}
+
+/* Type */
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.eyebrowN {
+  display: inline-block;
+  margin-right: var(--space-3);
+  color: var(--accent);
+}
+
+.display {
+  font-size: var(--display);
+  font-weight: 500;
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+  background: linear-gradient(178deg, var(--ink) 35%, var(--ink-soft) 110%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-bottom: 0.06em;
+}
+
+.h2 {
+  font-size: clamp(2.25rem, 4.6vw, 4.25rem);
+  font-weight: 500;
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+  max-width: 16ch;
+}
+
+.h3 {
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+}
+
+.lede {
+  font-size: clamp(1.0625rem, 1.3vw, 1.25rem);
+  line-height: 1.5;
+  letter-spacing: -0.012em;
+  color: var(--ink-soft);
+  max-width: 52ch;
+}
+
+.textLink {
+  font-weight: 500;
+}
+
+/* Motion */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  filter: blur(6px);
+  transition:
+    opacity 1000ms var(--ease),
+    transform 1000ms var(--ease),
+    filter 1000ms var(--ease);
+}
+
+.revealIn {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+.reveal[data-delay="1"],
+.rise[data-delay="1"] {
+  transition-delay: 90ms;
+  animation-delay: 190ms;
+}
+
+.reveal[data-delay="2"],
+.rise[data-delay="2"] {
+  transition-delay: 180ms;
+  animation-delay: 280ms;
+}
+
+.reveal[data-delay="3"],
+.rise[data-delay="3"] {
+  transition-delay: 270ms;
+  animation-delay: 370ms;
+}
+
+.rise {
+  animation: rise 1100ms var(--ease) 100ms both;
+}
+
+.riseLate {
+  animation: riseScale 1400ms var(--ease) 550ms both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes riseScale {
+  from {
+    opacity: 0;
+    transform: translateY(48px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Sections: space does the work, no rules between them */
+
+.section {
+  padding-block: clamp(96px, 11vw, 160px);
+}
+
+.sectionAlt {
+  background: var(--surface);
+}
+
+.head {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: var(--space-5) clamp(32px, 5vw, 80px);
+  align-items: end;
+  margin-bottom: clamp(48px, 6vw, 80px);
+}
+
+.head > :first-child {
+  grid-column: 1 / -1;
+}
+
+/* Reduced motion: everything is simply there */
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+
+  .rise,
+  .riseLate {
+    animation: none;
+  }
+}
+
+@media (max-width: 980px) {
+  .head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* A call to action whose target is still loading. */
+.pillPending {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.pillPending:hover,
+.pillPending:active {
+  transform: none;
+  box-shadow: none;
+}
