@@ -1,4 +1,4 @@
-import { KEEP_FORMAT_GUIDANCE, shapeBuilder, widgetFormatShape } from '../format-shape.js';
+import { shapeBuilder, widgetFormatShape } from '../format-shape.js';
 import type { KpiTileDefinition, KpiTileStyle } from '../types.js';
 import { KpiTileComp } from './KpiTile.js';
 
@@ -87,6 +87,7 @@ export const kpiTileDefinition: KpiTileDefinition = {
   ai: {
     description: 'A single headline number with an optional count line underneath.',
     usage: 'Use for totals such as unpaid additionals or money collected.',
-    configuration: `- format.style.valueSize sets the font size of the headline number only (compact, regular or large); to make the tile itself bigger, change its layout instead; format.style.showCount hides or shows the count line; countOne and countMany are its words.\n- ${KEEP_FORMAT_GUIDANCE}`,
+    configuration:
+      '- format.style.valueSize sets the font size of the headline number only (compact, regular or large); to make the tile itself bigger, change its layout instead; format.style.showCount hides or shows the count line; countOne and countMany are its words.',
   },
 };

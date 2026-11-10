@@ -1,4 +1,4 @@
-import { KEEP_FORMAT_GUIDANCE, shapeBuilder, widgetFormatShape } from '../format-shape.js';
+import { shapeBuilder, widgetFormatShape } from '../format-shape.js';
 import type { QuotesTableDefinition, QuotesTableStyle } from '../types.js';
 import { QuotesTableComp } from './QuotesTable.js';
 
@@ -91,6 +91,7 @@ export const quotesTableDefinition: QuotesTableDefinition = {
     description:
       'A table of quote lines: client, line, rule, channel and status pills, amount and a total.',
     usage: 'Use to list priced additionals, paid or unpaid. Map fields from the lines source.',
-    configuration: `- format.style.totalRow hides or shows the total row; format.style.density "compact" fits more rows.\n- ${KEEP_FORMAT_GUIDANCE}`,
+    configuration:
+      '- format.style.totalRow hides or shows the total row; format.style.density "compact" fits more rows.',
   },
 };
