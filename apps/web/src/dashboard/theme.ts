@@ -23,7 +23,10 @@ export const dashboardTheme = studioTheme.withParams({
   accentColor: '#0e6b52',
   studioCanvasBackgroundColor: '#f5f6f2',
   studioCanvasFontFamily: TEXT_FONT,
-  studioCanvasMinWidth: 640,
+  // No outer minimum (Studio's default is 600 px) and a phone-width canvas, so
+  // view mode re-flows on narrow screens (responsive.ts) instead of scrolling sideways.
+  studioMinWidth: 0,
+  studioCanvasMinWidth: 300,
   studioPanelWidth: 200,
   studioWidgetBackgroundColor: '#ffffff',
   studioWidgetBorder: { width: 1, color: '#d8ddd6' },

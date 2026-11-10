@@ -1,104 +1,36 @@
-import type { AgReportState } from 'ag-studio';
+import type { AgPageLayoutState, AgPanelConfig, AgReportState } from 'ag-studio';
+import { AGENT_CHANNEL } from './report/agent-channel.js';
+import { COLLECTIONS } from './report/collections.js';
+import { OVERVIEW } from './report/overview.js';
+import type { DashboardRegistry } from './widgets/types.js';
 
 /**
- * The saved dashboard definition (spec 7.7): revenue by service, quotes
- * pipeline by status and channel, unpaid additionals, requests over time.
- *
- * Shape learned from `onStateUpdated` in the editor (decision
- * 2026-11-07-ag-studio-definition-loading): field ids are `<sourceId>.<field>`,
- * date components are `<field>.<unit>`, widget filters live under
- * `filter.widget[<widgetId>]`, the canvas is 24 columns of 16 px rows.
+ * The saved dashboard definition (spec 7.7), three pages hand-written from the
+ * state shape learned in the editor (decision 2026-11-07-ag-studio-definition-loading).
+ * Each page lives in `./report/`; Studio has no page names, so the header
+ * draws the page tabs from `DASHBOARD_PAGES`.
  */
 
-const REVENUE = 'revenue-by-service';
-const PIPELINE = 'quotes-pipeline';
-const UNPAID = 'unpaid-additionals';
-const REQUESTS = 'requests-over-time';
+export const DASHBOARD_PAGES = [
+  { id: OVERVIEW.id, title: 'Overview' },
+  { id: COLLECTIONS.id, title: 'Collections' },
+  { id: AGENT_CHANNEL.id, title: 'Agent channel' },
+] as const;
 
-export const DASHBOARD_STATE: AgReportState = {
+export const DASHBOARD_STATE: AgReportState<DashboardRegistry> = {
   version: '3.1.0',
-  selectedPageId: 'overview',
-  pages: [
-    {
-      id: 'overview',
-      widgets: {
-        [REVENUE]: {
-          type: 'bar-chart-grouped',
-          format: {
-            title: { enabled: true, text: 'Revenue by service' },
-            subtitle: { enabled: true, text: 'Paid quote lines, US$' },
-          },
-          dataMapping: {
-            categoryKey: [{ id: 'lines.serviceName' }],
-            valueKey: [{ id: 'lines.amountUsd', aggregation: 'sum' }],
-          },
-        },
-        [PIPELINE]: {
-          type: 'column-chart-stacked',
-          format: {
-            title: { enabled: true, text: 'Quotes pipeline' },
-            subtitle: { enabled: true, text: 'Quotes by status and channel' },
-          },
-          dataMapping: {
-            categoryKey: [{ id: 'quotes.status' }],
-            valueKey: [{ id: 'quotes.quoteId', aggregation: 'count' }],
-            legendKey: [{ id: 'quotes.channel' }],
-          },
-        },
-        [UNPAID]: {
-          type: 'grid',
-          format: {
-            title: { enabled: true, text: 'Unpaid additionals' },
-            subtitle: {
-              enabled: true,
-              text: 'Priced lines on quotes that are published or accepted',
-            },
-            style: { columnAutoSize: true },
-          },
-          dataMapping: {
-            cols: [
-              { id: 'lines.clientName' },
-              { id: 'lines.projectTitle' },
-              { id: 'lines.label' },
-              { id: 'lines.ruleId' },
-              { id: 'lines.quoteStatus' },
-              { id: 'lines.channel' },
-              { id: 'lines.amountUsd', aggregation: 'sum' },
-            ],
-          },
-        },
-        [REQUESTS]: {
-          type: 'line-chart',
-          format: {
-            title: { enabled: true, text: 'Requests over time' },
-            subtitle: { enabled: true, text: 'Requests received per day' },
-          },
-          dataMapping: {
-            categoryKey: [{ id: 'requests.day' }],
-            valueKey: [{ id: 'requests.requestId', aggregation: 'count' }],
-          },
-        },
-      },
-      widgetLayout: {
-        [REVENUE]: { xTrack: 0, yTrack: 0, xSpan: 12, ySpan: 20 },
-        [PIPELINE]: { xTrack: 12, yTrack: 0, xSpan: 12, ySpan: 20 },
-        [UNPAID]: { xTrack: 0, yTrack: 20, xSpan: 24, ySpan: 20 },
-        [REQUESTS]: { xTrack: 0, yTrack: 40, xSpan: 24, ySpan: 18 },
-      },
-      filter: {
-        widget: {
-          [REVENUE]: [
-            { field: { id: 'lines.quoteStatus' }, model: { operator: 'equals', value: 'paid' } },
-          ],
-          [UNPAID]: [
-            { field: { id: 'lines.kind' }, model: { operator: 'equals', value: 'rule' } },
-            {
-              field: { id: 'lines.quoteStatus' },
-              model: { operator: 'isIn', value: ['published', 'accepted'] },
-            },
-          ],
-        },
-      },
-    },
-  ],
+  selectedPageId: OVERVIEW.id,
+  pages: [OVERVIEW, COLLECTIONS, AGENT_CHANNEL],
 };
+
+/**
+ * Read mode is a clean report: no panels. Edit mode keeps Studio's default
+ * placement (assistant on the left; filters, compose and data on the right).
+ */
+export const DASHBOARD_PANELS: AgPanelConfig = {
+  view: { left: [], right: [] },
+  edit: { left: ['ai'], right: ['filters', 'edit', 'data'] },
+};
+
+/** Lets the canvas shrink to a phone; `responsive.ts` re-flows the widgets below 1000 px. */
+export const DASHBOARD_LAYOUT: Partial<AgPageLayoutState> = { minWidth: 300 };
