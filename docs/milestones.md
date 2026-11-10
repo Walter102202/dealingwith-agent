@@ -67,6 +67,7 @@ Humans can do everything the agent can, and see what the agent did.
 - [x] **Provider dashboard** (D6). Done when: the AG Studio dashboard shows revenue by service, pipeline, unpaid additionals and requests over time with the product theme, and "Reset demo data" works. Fallback: the same with AG Grid and AG Charts Community if AG Studio cannot be used.
 - [x] **Product landing page** (L1, 2026-11-09). Done when: `/` explains the product (promise, change-order problem, how it works, MCP and mandates, PayPal flows, provider dashboard) with the real quote card in a read-only preview and doors into the demo; the storefront lives at `/store` and every storefront link points there (`docs/decisions/2026-11-09-landing-at-root-storefront-at-store.md`).
 - [x] **Dashboard as a report with custom widgets** (D7, 2026-11-10). Done when: `/dashboard` opens in read mode on Overview, Collections and Agent channel with an Edit toggle; the quotes table (AG Grid), agent budget and KPI tiles are custom Studio widgets that cross-filter with the charts; the dashboard fits a 380 px screen (`docs/decisions/2026-11-10-studio-custom-widgets.md`, `docs/decisions/2026-11-10-dashboard-read-mode-by-default.md`).
+- [x] **Cercana favicon** (F1, 2026-11-10). Done when: the approved two-piece D replaces the serif placeholder in browser tabs, SVG and ICO assets are checked at 16 and 32 pixels on light and dark backgrounds, and the production build serves the favicon and Apple touch icon (`docs/decisions/2026-11-10-cercana-favicon.md`).
 
 ---
 
