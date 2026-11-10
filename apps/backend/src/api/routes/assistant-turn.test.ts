@@ -7,6 +7,7 @@ import type { AssistantPort } from '../../assistant/port.js';
 import type { Logger } from '../../observability/logger.js';
 import { createHarness } from '../../test/workflow-harness.js';
 import { createApp } from '../app.js';
+import { ASSISTANT_MAX_BODY_BYTES } from './dashboard.js';
 
 const PATH = '/api/dashboard/assistant/turn';
 const SECRET_PROMPT = 'Which client owes the most?';
@@ -186,6 +187,19 @@ describe('POST /api/dashboard/assistant/turn', () => {
     expect(all).toEqual([
       { type: 'error', error: { code: 'assistant_refused', message: expect.any(String) } },
     ]);
+  });
+
+  test('refuses an oversized conversation before it reaches the model or the cap', async () => {
+    const llm = fakeAssistantLlm(answer);
+    const { post } = setup(llm, 1);
+    const response = await post({ ...body, instructions: 'x'.repeat(ASSISTANT_MAX_BODY_BYTES) });
+    expect(response.status).toBe(413);
+    expect(await response.json()).toMatchObject({
+      error: { code: 'assistant_request_too_large' },
+    });
+    expect(llm.signals).toHaveLength(0);
+    // The single turn of today's budget is still available.
+    expect((await post()).status).toBe(200);
   });
 
   test('aborting the request aborts the upstream call', async () => {

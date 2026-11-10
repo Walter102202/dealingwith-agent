@@ -52,7 +52,11 @@ export function leadWithCollections(lead: AgAnyAiAgentDefinition): AgAnyAiAgentD
   };
 }
 
-/** A custom agent next to AG's built-ins: reachable by the lead and selectable in the chat. */
+/**
+ * A custom agent next to AG's built-ins. The lead reaches it by delegation; AG
+ * Studio 3.1.0's chat panel always starts threads with the primary agent, so it
+ * is not offered as a starting agent there.
+ */
 export function collectionsAgent(
   adapter: AgLlmAdapter,
   source: CollectionsSource,

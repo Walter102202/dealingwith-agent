@@ -1,11 +1,19 @@
 import { AssistantTurnRequestSchema } from '@dealingwith/contracts';
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import { streamSSE } from 'hono/streaming';
 import { openAssistantTurn } from '../../assistant/turn.js';
 import { AppError } from '../../lib/errors.js';
 import { buildDashboardData } from '../../modules/dashboard/dashboard.js';
 import { type ApiEnv, requireSession } from '../auth.js';
 import { jsonBody } from '../validate.js';
+
+/**
+ * A Studio turn is tens of kilobytes. The cap bounds what one request can make
+ * Claude read, because the daily cap counts turns, not tokens.
+ */
+export const ASSISTANT_MAX_BODY_BYTES = 1024 * 1024;
+
 export function dashboardRoutes() {
   const app = new Hono<ApiEnv>();
   app.get('/api/dashboard/data', requireSession('provider'), async (c) =>
@@ -24,6 +32,16 @@ export function dashboardRoutes() {
         });
       await next();
     },
+    bodyLimit({
+      maxSize: ASSISTANT_MAX_BODY_BYTES,
+      onError: () => {
+        throw new AppError(
+          'assistant_request_too_large',
+          'This conversation is too long for the assistant. Start a new conversation.',
+          { status: 413 },
+        );
+      },
+    }),
     jsonBody(AssistantTurnRequestSchema),
     async (c) => {
       const deps = c.get('deps');
