@@ -1,6 +1,7 @@
 export * from './access.js';
 export * from './agent.js';
 export * from './api.js';
+export * from './assistant.js';
 export * from './catalog.js';
 export * from './context.js';
 export * from './events.js';
