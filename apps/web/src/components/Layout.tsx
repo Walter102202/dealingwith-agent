@@ -37,9 +37,10 @@ function MenuIcon({ open }: { open: boolean }) {
 
 /**
  * Provider-only, demo mode only: puts the demo back to its scripted starting
- * point from any page. On phones the button and its alert live in the menu
- * panel, so pressing it leaves the menu open and a failure reopens it
- * (`onFailure`); otherwise the alert would sit in a hidden panel.
+ * point from any page. Where the header folds into the Menu pill, the button
+ * and its alert live in the menu panel, so pressing it leaves the menu open
+ * and a failure reopens it (`onFailure`); otherwise the alert would sit in a
+ * hidden panel.
  */
 function ResetDemoButton({ onFailure }: { onFailure: () => void }) {
   const config = useAppConfig();
@@ -115,9 +116,10 @@ function useSessionMenu(buttonId: string) {
 }
 
 /**
- * Header with the wordmark and the demo session; the page below it. Below
- * 600 px the session actions fold into a Menu pill (decision
- * 2026-11-10-header-menu-on-phones); wider, they sit in the pill as before.
+ * Header with the wordmark and the demo session; the page below it. At 840 px
+ * and below the session actions fold into a Menu pill for every role
+ * (decision 2026-11-10-header-menu-from-840px); wider, they all sit in the
+ * pill.
  */
 export function Layout({ children, width = 'content' }: LayoutProps) {
   const { session, status, logout } = useSession();
@@ -151,12 +153,7 @@ export function Layout({ children, width = 'content' }: LayoutProps) {
               className={`${styles.items} ${menu.open ? styles.open : ''}`}
               onClick={menu.closeOnAction}
             >
-              <Link
-                to="/store"
-                className={`${styles.link} ${
-                  session?.role === 'provider' ? styles.hideBelowTablet : ''
-                }`}
-              >
+              <Link to="/store" className={styles.link}>
                 Storefront
               </Link>
               {status === 'ready' && session ? (

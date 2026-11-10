@@ -105,25 +105,20 @@
   padding: var(--wide-page-gap) 0 0;
 }
 
-/*
- * Narrow headers, measured in a browser: a signed-in provider needs about
- * 830px for everything. Between 600 and 840px the pill drops the name and the
- * provider's Storefront link. At 600px and below every session action moves
- * into a panel under the pill, opened from a Menu pill, so nothing is cut off
- * or scrolls sideways (decision 2026-11-10-header-menu-on-phones).
- */
-@media (max-width: 840px) {
-  .who,
-  .hideBelowTablet {
-    display: none;
-  }
-}
-
 @media (max-width: 600px) {
   .main {
     padding-top: var(--space-5);
   }
+}
 
+/*
+ * Narrow headers, measured in a browser: a signed-in provider's actions need
+ * 635px of pill, which a viewport of about 822px leaves. At 840px and below
+ * every session action, for every role, moves into a panel under the pill,
+ * opened from a Menu pill, so nothing is hidden, cut off or scrolls sideways
+ * (decision 2026-11-10-header-menu-from-840px).
+ */
+@media (max-width: 840px) {
   .bar {
     position: relative;
   }
@@ -154,9 +149,7 @@
     display: flex;
   }
 
-  /* Everything the wider pill hides is in the menu. */
-  .items .link,
-  .items .hideBelowTablet {
+  .items .link {
     display: flex;
     min-height: 44px;
   }
