@@ -20,3 +20,5 @@ The draft tool runs in the browser, so when `draft_payment_reminder` succeeds it
 ## Consequences
 
 The draft appears the moment the tool finishes, without a click, on every page of the dashboard and in both the assistant and edit views. Only the latest draft is shown; earlier ones stay in the chat. Drafts replayed from a saved conversation do not reopen the card, since the tool does not run again. If a later Studio release adds an expanded-by-default option for tool steps, the card can go and the chat step can open itself instead.
+
+The card's own scroll past 42% of the viewport is superseded by [2026-11-10 Reminder drafts read in the page's scroll](2026-11-10-reminder-draft-in-the-page-scroll.md).

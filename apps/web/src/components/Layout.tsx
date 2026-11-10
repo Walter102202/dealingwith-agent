@@ -35,8 +35,14 @@ function MenuIcon({ open }: { open: boolean }) {
   );
 }
 
-/** Provider-only, demo mode only: puts the demo back to its scripted starting point from any page. */
-function ResetDemoButton() {
+/**
+ * Provider-only, demo mode only: puts the demo back to its scripted starting
+ * point from any page. Where the header folds into the Menu pill, the button
+ * and its alert live in the menu panel, so pressing it leaves the menu open
+ * and a failure reopens it (`onFailure`); otherwise the alert would sit in a
+ * hidden panel.
+ */
+function ResetDemoButton({ onFailure }: { onFailure: () => void }) {
   const config = useAppConfig();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,12 +58,13 @@ function ResetDemoButton() {
     } catch (e) {
       setError(errorMessage(e));
       setBusy(false);
+      onFailure();
     }
   };
 
   return (
     <>
-      <Button variant="secondary" busy={busy} onClick={() => void reset()}>
+      <Button variant="secondary" busy={busy} data-menu-stays-open onClick={() => void reset()}>
         Reset demo data
       </Button>
       {error ? (
@@ -71,7 +78,9 @@ function ResetDemoButton() {
 
 /**
  * The phone menu's open state. It closes on Escape (focus back on the Menu
- * button), on a press outside the nav, and once an action in it is chosen.
+ * button), on a press outside the nav, and once an action in it is chosen,
+ * except an action marked `data-menu-stays-open`, whose outcome shows in the
+ * panel.
  */
 function useSessionMenu(buttonId: string) {
   const [open, setOpen] = useState(false);
@@ -94,15 +103,23 @@ function useSessionMenu(buttonId: string) {
     };
   }, [open, buttonId]);
   const closeOnAction = (e: MouseEvent<HTMLElement>) => {
-    if (e.target instanceof Element && e.target.closest('a, button')) setOpen(false);
+    const action = e.target instanceof Element ? e.target.closest('a, button') : null;
+    if (action && !action.hasAttribute('data-menu-stays-open')) setOpen(false);
   };
-  return { open, toggle: () => setOpen((o) => !o), navRef, closeOnAction };
+  return {
+    open,
+    toggle: () => setOpen((o) => !o),
+    show: () => setOpen(true),
+    navRef,
+    closeOnAction,
+  };
 }
 
 /**
- * Header with the wordmark and the demo session; the page below it. Below
- * 600 px the session actions fold into a Menu pill (decision
- * 2026-11-10-header-menu-on-phones); wider, they sit in the pill as before.
+ * Header with the wordmark and the demo session; the page below it. At 840 px
+ * and below the session actions fold into a Menu pill for every role
+ * (decision 2026-11-10-header-menu-from-840px); wider, they all sit in the
+ * pill.
  */
 export function Layout({ children, width = 'content' }: LayoutProps) {
   const { session, status, logout } = useSession();
@@ -136,12 +153,7 @@ export function Layout({ children, width = 'content' }: LayoutProps) {
               className={`${styles.items} ${menu.open ? styles.open : ''}`}
               onClick={menu.closeOnAction}
             >
-              <Link
-                to="/store"
-                className={`${styles.link} ${
-                  session?.role === 'provider' ? styles.hideBelowTablet : ''
-                }`}
-              >
+              <Link to="/store" className={styles.link}>
                 Storefront
               </Link>
               {status === 'ready' && session ? (
@@ -155,7 +167,7 @@ export function Layout({ children, width = 'content' }: LayoutProps) {
                       <Link to="/dashboard" className={styles.link}>
                         Dashboard
                       </Link>
-                      <ResetDemoButton />
+                      <ResetDemoButton onFailure={menu.show} />
                     </>
                   ) : null}
                   <Button variant="ghost" onClick={() => void logout()}>
