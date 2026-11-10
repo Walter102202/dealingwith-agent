@@ -56,6 +56,7 @@ import {
   DASHBOARD_STATE,
 } from '../dashboard/studio-config.js';
 import DashboardPage from './DashboardPage.js';
+import pageStyles from './DashboardPage.module.css';
 
 beforeEach(() => {
   hardResetState();
@@ -155,6 +156,28 @@ describe('DashboardPage studio', () => {
     fireEvent.click(within(card).getByRole('button', { name: 'Dismiss' }));
     expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('');
+  });
+
+  it('lets the page grow while a draft is open, so the draft reads in the page scroll', async () => {
+    assistantMock.props = { ai: () => null, modules: [] };
+    render(<DashboardPage />);
+    await screen.findByRole('button', { name: 'Assistant' });
+    const page = screen.getByRole('heading', { level: 1 }).closest('header')?.parentElement;
+    const withDraft = pageStyles.withDraft ?? 'withDraft';
+    expect(page).not.toHaveClass(withDraft);
+    act(() =>
+      assistantMock.onDraft?.({
+        clientName: 'Mara Lopez',
+        greeting: 'Hi Mara,',
+        message: 'Thanks for the extra work.',
+        signOff: 'Best, Andes',
+        lines: [{ quoteRef: 'Q-7F3A2C10 v1', label: 'Extra report pages', amountCents: 12000 }],
+        totalCents: 12000,
+      }),
+    );
+    expect(page).toHaveClass(withDraft);
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+    expect(page).not.toHaveClass(withDraft);
   });
 
   it('opens the assistant beside the report: Studio edit mode with only the AI panel', async () => {

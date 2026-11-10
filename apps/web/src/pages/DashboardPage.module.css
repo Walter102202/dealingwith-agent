@@ -25,6 +25,21 @@
   width: 100%;
 }
 
+/*
+ * With a reminder draft open the page grows past the screen: the draft reads
+ * at its full height in the page's one scroll, and Studio keeps a whole screen
+ * below it for the chat and the report (decision
+ * 2026-11-10-reminder-draft-in-the-page-scroll).
+ */
+.page.withDraft {
+  height: auto;
+}
+
+.withDraft .studio {
+  flex: none;
+  height: calc(100vh - var(--header-offset) - var(--wide-page-gap));
+}
+
 /* Studio's root is as tall as its minimum (600 px) unless its wrappers have a height: fill the page. */
 .studio > div,
 .studio > div > :global(.ag-styled-root),

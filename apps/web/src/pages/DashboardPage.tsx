@@ -51,7 +51,7 @@ export default function DashboardPage() {
 
   return (
     <Layout width="wide">
-      <div className={styles.page}>
+      <div className={draft ? `${styles.page} ${styles.withDraft}` : styles.page}>
         <header className={styles.head}>
           <div>
             <h1 className={styles.title}>
