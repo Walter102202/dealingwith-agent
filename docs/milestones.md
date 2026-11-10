@@ -87,7 +87,7 @@ The same code runs against PayPal sandbox, a real model and Render.
 
 ## M6 — Submitted
 
-- [ ] **README final** (S1). Done when: URL, demo logins, judge buyer account, video, judge path, architecture, flows and limits are in the README.
+- [~] **README final** (S1; rewritten on 2026-11-10 for the dashboard assistant, the custom widgets and the PayPal and AI map; the video link and the judge buyer account are still `TBD`). Done when: URL, demo logins, judge buyer account, video, judge path, architecture, flows and limits are in the README.
 - [ ] **Video** (S2). Done when: a public YouTube video under three minutes follows `docs/demo-script.md`.
 - [ ] **Devpost** (S3). Done when: the submission is complete with repo, video, hosted URL and the AG Grid sponsor prize opted in.
 
