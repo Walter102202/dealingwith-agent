@@ -1,11 +1,13 @@
 import { DashboardDataSchema } from '@dealingwith/contracts';
 import type { AgReportState } from 'ag-studio';
 import { AgStudio, AgStudioProvider } from 'ag-studio-react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { api, errorMessage } from '../api/client.js';
 import { useApi } from '../api/hooks.js';
 import { routes } from '../api/routes.js';
 import { Layout } from '../components/Layout.js';
+import type { ReminderView } from '../dashboard/assistant/ReminderDraft.js';
+import { ReminderDraftCard } from '../dashboard/assistant/ReminderDraftCard.js';
 import { useDashboardAssistant } from '../dashboard/assistant/useDashboardAssistant.js';
 import { DashboardToolbar } from '../dashboard/DashboardToolbar.js';
 import { studioLicenseKey } from '../dashboard/license.js';
@@ -34,7 +36,8 @@ export default function DashboardPage() {
   const data = dashboard.data;
   const studioData = useMemo(() => (data ? toStudioSources(data) : null), [data]);
   const licenseKey = studioLicenseKey();
-  const assistant = useDashboardAssistant(data);
+  const [draft, setDraft] = useState<ReminderView | null>(null);
+  const assistant = useDashboardAssistant(data, setDraft);
   const controls = useDashboardControls(DASHBOARD_STATE.selectedPageId);
   const { onStateUpdated: reportPage } = controls;
 
@@ -81,6 +84,11 @@ export default function DashboardPage() {
           </p>
         ) : null}
         {!studioData && !dashboard.error ? <p className="muted">Loading dashboard…</p> : null}
+
+        <p className="visually-hidden" role="status">
+          {draft ? `Payment reminder for ${draft.clientName} is ready above the report.` : ''}
+        </p>
+        {draft ? <ReminderDraftCard reminder={draft} onDismiss={() => setDraft(null)} /> : null}
 
         {studioData && assistant ? (
           <div className={styles.studio}>

@@ -4,6 +4,7 @@ import type { AgAiToolDisplay } from 'ag-studio-react';
 import { z } from 'zod';
 import { DRAFT_REMINDER_TOOL } from './collections.js';
 import styles from './ReminderDetail.module.css';
+import { ReminderDraft } from './ReminderDraft.js';
 
 /** The draft as the tool returned it; amounts are cents rendered by code. */
 const ReminderSchema = z.object({
@@ -26,40 +27,15 @@ const reminderOf = (result: unknown) => {
   return parsed.success ? parsed.data.data : null;
 };
 
-/** The payment reminder draft, shown in the chat under the Collections step. */
+/**
+ * The payment reminder draft in the chat, under the Collections step. Studio
+ * keeps tool steps collapsed, so the page also shows the latest draft above
+ * the report (`ReminderDraftCard`); this keeps it in the conversation history.
+ */
 export function ReminderDetail(props: AgAiToolDetailParams) {
   const reminder = reminderOf(props.result);
   if (!reminder) return <p className={styles.note}>Drafting the reminder…</p>;
-  return (
-    <section
-      className={styles.draft}
-      aria-label={`Payment reminder draft for ${reminder.clientName}`}
-    >
-      <p>{reminder.greeting}</p>
-      <p className={styles.message}>{reminder.message}</p>
-      <table className={styles.lines}>
-        <tbody>
-          {reminder.lines.map((line) => (
-            <tr key={`${line.quoteRef}:${line.label}`}>
-              <td>
-                {line.label}
-                <span className={styles.ref}>{line.quoteRef}</span>
-              </td>
-              <td className={styles.amount}>{formatUsd(line.amountCents)}</td>
-            </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td>Total due</td>
-            <td className={styles.amount}>{formatUsd(reminder.totalCents)}</td>
-          </tr>
-        </tfoot>
-      </table>
-      <p className={styles.message}>{reminder.signOff}</p>
-      <p className={styles.note}>Draft only. Nothing has been sent.</p>
-    </section>
-  );
+  return <ReminderDraft reminder={reminder} />;
 }
 
 const clientCount = (n: number) => `${n} ${n === 1 ? 'client' : 'clients'}`;

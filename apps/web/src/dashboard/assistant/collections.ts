@@ -201,7 +201,14 @@ export function listUnpaidTool(getData: GetData): AgAiTool {
 
 export const DRAFT_REMINDER_TOOL = 'draft_payment_reminder';
 
-export function draftReminderTool(getData: GetData): AgAiTool {
+/**
+ * `onDraft` hands each successful draft to the page, which shows it above the
+ * report the moment it is ready (decision 2026-11-10-reminder-draft-above-the-report).
+ */
+export function draftReminderTool(
+  getData: GetData,
+  onDraft?: (reminder: Reminder) => void,
+): AgAiTool {
   const description =
     "Drafts a payment reminder for one client's unpaid additionals. You write only the words; the itemised quote references, amounts and total are filled in from the quote data. Never put amounts in the words. The draft is shown to the user; nothing is sent.";
   const text = (about: string) => ({ type: 'string', description: about });
@@ -231,9 +238,10 @@ export function draftReminderTool(getData: GetData): AgAiTool {
       if (!result.ok)
         return { success: false, issues: result.issues.map((message) => ({ message })) };
       const { reminder } = result;
+      onDraft?.(reminder);
       return {
         success: true,
-        response: `Draft ready for ${reminder.clientName}: ${reminder.lines.length} line(s), total ${formatUsd(reminder.totalCents)}. It is shown to the user in this step with the amounts filled in from the quote data; do not restate or recompute them.`,
+        response: `Draft ready for ${reminder.clientName}: ${reminder.lines.length} line(s), total ${formatUsd(reminder.totalCents)}. It is shown to the user above the report, with the amounts filled in from the quote data; do not restate or recompute them.`,
         data: reminder,
       };
     },

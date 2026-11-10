@@ -183,6 +183,28 @@ describe('Collections tools', () => {
     });
   });
 
+  it('draft_payment_reminder hands the page each finished draft, amounts from the data', async () => {
+    const drafts: unknown[] = [];
+    const tool = draftReminderTool(
+      () => data,
+      (reminder) => drafts.push(reminder),
+    );
+    await tool.execute?.(call(tool.name, { ...wording, message: 'Pay $5' }), ctx);
+    expect(drafts).toEqual([]);
+    await tool.execute?.(call(tool.name, { ...wording, totalCents: 1 }), ctx);
+    expect(drafts).toEqual([
+      expect.objectContaining({
+        clientName: 'Mara Lopez',
+        greeting: wording.greeting,
+        totalCents: 16550,
+        lines: [
+          expect.objectContaining({ quoteRef: 'Q-7F3A2C10 v1', amountCents: 12000 }),
+          expect.objectContaining({ quoteRef: 'Q-9B1E4D20 v2', amountCents: 4550 }),
+        ],
+      }),
+    ]);
+  });
+
   it('list_unpaid_additionals formats the balances with formatUsd and filters by client', async () => {
     const tool = listUnpaidTool(() => data);
     const all = await tool.execute?.(call(tool.name, {}), ctx);

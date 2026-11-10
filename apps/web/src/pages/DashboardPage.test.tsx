@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -20,9 +20,15 @@ vi.mock('../api/client.js', () => ({
   errorMessage: String,
 }));
 /** What `/api/config` decides: `{}` when the assistant is off, its Studio props when on. */
-const assistantMock = vi.hoisted(() => ({ props: {} as Record<string, unknown> }));
+const assistantMock = vi.hoisted(() => ({
+  props: {} as Record<string, unknown>,
+  onDraft: undefined as ((reminder: unknown) => void) | undefined,
+}));
 vi.mock('../dashboard/assistant/useDashboardAssistant.js', () => ({
-  useDashboardAssistant: () => assistantMock.props,
+  useDashboardAssistant: (_data: unknown, onDraft: (reminder: unknown) => void) => {
+    assistantMock.onDraft = onDraft;
+    return assistantMock.props;
+  },
 }));
 
 /** What the page hands Studio, and a fake Studio API the page drives. */
@@ -124,6 +130,31 @@ describe('DashboardPage studio', () => {
     await screen.findByRole('button', { name: 'Edit' });
     expect(screen.queryByRole('button', { name: 'Assistant' })).not.toBeInTheDocument();
     expect(studio.props.ai).toBeUndefined();
+  });
+
+  it('shows a finished reminder draft above the report until it is dismissed', async () => {
+    assistantMock.props = { ai: () => null, modules: [] };
+    render(<DashboardPage />);
+    await screen.findByRole('button', { name: 'Assistant' });
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+    act(() =>
+      assistantMock.onDraft?.({
+        clientName: 'Mara Lopez',
+        greeting: 'Hi Mara,',
+        message: 'Thanks for the extra work.',
+        signOff: 'Best, Andes',
+        lines: [{ quoteRef: 'Q-7F3A2C10 v1', label: 'Extra report pages', amountCents: 12000 }],
+        totalCents: 12000,
+      }),
+    );
+    const card = screen.getByRole('complementary', { name: 'Reminder draft from the assistant' });
+    expect(card).toHaveTextContent('Total dueUS$120.00');
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Payment reminder for Mara Lopez is ready above the report.',
+    );
+    fireEvent.click(within(card).getByRole('button', { name: 'Dismiss' }));
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('');
   });
 
   it('opens the assistant beside the report: Studio edit mode with only the AI panel', async () => {
