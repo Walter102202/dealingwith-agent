@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { AppConfigProvider } from './api/config.js';
 import { Layout } from './components/Layout.js';
 import { RequireSession } from './components/RequireSession.js';
+import { ScrollToTop } from './components/ScrollToTop.js';
 import { LandingPage } from './pages/LandingPage.js';
 import { LoginPage } from './pages/LoginPage.js';
 import { MandateFundedPage } from './pages/MandateFundedPage.js';
@@ -18,6 +19,7 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage.js'));
 export function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <SessionProvider>
         <AppConfigProvider>
           <Routes>

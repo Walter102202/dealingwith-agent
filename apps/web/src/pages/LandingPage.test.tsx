@@ -1,4 +1,4 @@
-import { QuoteSchema } from '@dealingwith/contracts';
+import { connectionSnippets, QuoteSchema } from '@dealingwith/contracts';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -8,9 +8,13 @@ vi.mock('../api/client.js', async (importOriginal) => {
   return { ...actual, api: { ...actual.api, get: apiMock.get } };
 });
 const sessionMock = vi.hoisted(() => ({ current: { session: null, status: 'ready' } as unknown }));
-vi.mock('../session.js', () => ({ useSession: () => sessionMock.current }));
+vi.mock('../session.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../session.js')>();
+  return { ...actual, useSession: () => sessionMock.current };
+});
 
-import { DEMO_QUOTE } from '../landing/demo-quote.js';
+import { DEMO_QUOTES } from '../api/fixtures/quotes.js';
+import { DEMO_QUOTE, DEMO_REQUEST } from '../landing/demo-quote.js';
 import { renderWithProviders } from '../test/render.js';
 import { LandingPage } from './LandingPage.js';
 
@@ -70,30 +74,73 @@ describe('LandingPage', () => {
     expect(within(panel).getByText('US$190.00')).toBeInTheDocument();
   });
 
-  it('sends a signed-in client to their project', async () => {
+  it('sends a signed-in client to their project, with one projects request and no detour', async () => {
     signedIn({ role: 'client', name: 'Mara Keller' });
-    apiMock.get.mockImplementation(async (path: string) =>
+    let answer: (projects: unknown) => void = () => {};
+    apiMock.get.mockImplementation((path: string) =>
       path === '/api/projects'
-        ? [
-            {
-              id: projectId,
-              businessId: '00000000-0000-4000-8000-0000000000f2',
-              clientId: '00000000-0000-4000-8000-0000000000f3',
-              serviceId: '00000000-0000-4000-8000-0000000000f4',
-              title: 'Retail KPI dashboard',
-              status: 'active',
-              scopeClauses: [],
-              totalContractedCents: 0,
-            },
-          ]
-        : config,
+        ? new Promise((resolve) => {
+            answer = resolve;
+          })
+        : Promise.resolve(config),
+    );
+    renderWithProviders(<LandingPage />);
+    // Until the project is known the call to action is not a link anywhere.
+    await waitFor(() =>
+      expect(apiMock.get).toHaveBeenCalledWith('/api/projects', expect.anything()),
+    );
+    expect(screen.queryAllByRole('link', { name: 'Open my project' })).toHaveLength(0);
+    expect(screen.getAllByText('Open my project')).toHaveLength(2);
+    answer([
+      {
+        id: projectId,
+        businessId: '00000000-0000-4000-8000-0000000000f2',
+        clientId: '00000000-0000-4000-8000-0000000000f3',
+        serviceId: '00000000-0000-4000-8000-0000000000f4',
+        title: 'Retail KPI dashboard',
+        status: 'active',
+        scopeClauses: [],
+        totalContractedCents: 0,
+      },
+    ]);
+    await waitFor(() => {
+      const links = screen.getAllByRole('link', { name: 'Open my project' });
+      expect(links).toHaveLength(2);
+      for (const link of links) {
+        expect(link).toHaveAttribute('href', `/portal/projects/${projectId}`);
+      }
+    });
+    const projectCalls = apiMock.get.mock.calls.filter(([path]) => path === '/api/projects');
+    expect(projectCalls).toHaveLength(1);
+  });
+
+  it('falls back to the demo doors when the projects request fails', async () => {
+    signedIn({ role: 'client', name: 'Mara Keller' });
+    apiMock.get.mockImplementation((path: string) =>
+      path === '/api/projects' ? Promise.reject(new Error('offline')) : Promise.resolve(config),
     );
     renderWithProviders(<LandingPage />);
     await waitFor(() => {
       for (const link of screen.getAllByRole('link', { name: 'Open my project' })) {
-        expect(link).toHaveAttribute('href', `/portal/projects/${projectId}`);
+        expect(link).toHaveAttribute('href', '/login');
       }
     });
+  });
+
+  it('signs straight in from the role doors', () => {
+    const loginAs = vi.fn().mockResolvedValue(undefined);
+    sessionMock.current = { session: null, status: 'ready', loginAs, logout: vi.fn() };
+    apiMock.get.mockResolvedValue(config);
+    renderWithProviders(<LandingPage />);
+    fireEvent.click(screen.getByRole('button', { name: /Enter as Mara/ }));
+    expect(loginAs).toHaveBeenCalledWith('client');
+  });
+
+  it('prints the same Claude Code command as the API', () => {
+    apiMock.get.mockResolvedValue(config);
+    renderWithProviders(<LandingPage />);
+    const { claudeCode } = connectionSnippets({ appUrl: window.location.origin, token: 'dwa_…' });
+    expect(screen.getByText(claudeCode)).toBeInTheDocument();
   });
 
   it('sends a signed-in provider to the dashboard', () => {
@@ -108,9 +155,12 @@ describe('LandingPage', () => {
 });
 
 describe('DEMO_QUOTE', () => {
-  it('is a valid contracts quote with the demo script amounts', () => {
+  it('is the fixture quote for demo request 1, paid', () => {
     const quote = QuoteSchema.parse(DEMO_QUOTE);
+    expect(quote.status).toBe('paid');
     expect(quote.totalCents).toBe(8000);
     expect(quote.lineItems.map((line) => line.amountCents)).toEqual([0, 8000]);
+    const key = Object.keys(DEMO_QUOTES).find((k) => DEMO_REQUEST.includes(k));
+    expect(key && DEMO_QUOTES[key]?.lineItems).toEqual(quote.lineItems);
   });
 });

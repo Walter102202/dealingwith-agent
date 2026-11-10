@@ -1,0 +1,281 @@
+/* The app window in the hero, replaying the first request of the demo. */
+
+.app {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  min-height: 600px;
+  background: var(--paper);
+}
+
+.appSide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+  text-align: left;
+}
+
+.appEyebrow {
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.appTitle {
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-4);
+}
+
+.appLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-faint);
+}
+
+.clauses {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.clauses li {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  gap: 2px var(--space-2);
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  font-size: 13.5px;
+}
+
+.clauses code {
+  font-size: 12px;
+  color: var(--ink-faint);
+  padding-top: 1px;
+}
+
+.clauses em {
+  grid-column: 2;
+  font-style: normal;
+  font-size: 12px;
+  color: var(--accent);
+}
+
+.clauseOut span {
+  text-decoration: line-through;
+  color: var(--ink-faint);
+}
+
+.clauses li.clauseNew {
+  animation: pop 700ms var(--ease) both;
+  background: linear-gradient(90deg, var(--accent-tint), transparent);
+  margin: 0 calc(-1 * var(--space-2));
+  padding-inline: var(--space-2);
+  border-radius: 10px;
+}
+
+.clauseNew code {
+  color: var(--accent);
+}
+
+.mandateMini {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: 14px;
+  background: var(--surface-muted);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.mandateMini strong {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.appMain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  text-align: left;
+}
+
+.composer {
+  padding: var(--space-3) var(--space-4);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition: box-shadow 300ms var(--ease);
+}
+
+.composer[data-active] {
+  box-shadow:
+    inset 0 0 0 1px var(--accent),
+    0 0 0 4px var(--accent-tint);
+}
+
+.composerLabel {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-faint);
+  margin-bottom: 4px;
+}
+
+.composerText {
+  min-height: 1.5em;
+  font-size: var(--text-md);
+  letter-spacing: -0.012em;
+}
+
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  background: var(--accent);
+  animation: blink 1s steps(1) infinite;
+}
+
+.thinking {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  animation: pop 500ms var(--ease) both;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  animation: spin 800ms linear infinite;
+}
+
+.appQuote {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  animation: pop 800ms var(--ease) both;
+}
+
+.payRow {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.payPill,
+.paidPill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 22px;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+
+.payPill {
+  background: var(--ink);
+  color: var(--paper);
+  transition: transform 300ms var(--ease);
+}
+
+.payPill[data-pressed] {
+  transform: scale(0.95);
+  box-shadow: 0 0 0 6px var(--accent-tint);
+}
+
+.paidPill {
+  background: var(--accent-tint);
+  color: var(--accent-deep);
+  animation: pop 600ms var(--ease) both;
+}
+
+.check {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  position: relative;
+}
+
+.check::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 3px;
+  width: 5px;
+  height: 9px;
+  border: solid var(--accent-ink);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clauseNew,
+  .appQuote,
+  .paidPill,
+  .thinking {
+    animation: none;
+  }
+
+  .caret {
+    display: none;
+  }
+}
+
+@media (max-width: 980px) {
+  .app {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .appSide {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .mandateMini {
+    margin-top: var(--space-3);
+  }
+}
+
+@media (max-width: 640px) {
+  .appMain,
+  .appSide {
+    padding: var(--space-4);
+  }
+}

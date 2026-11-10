@@ -1,0 +1,47 @@
+/* The hero: the promise, centered, and the stage for the app replay. */
+
+.hero {
+  padding: clamp(140px, 18vh, 200px) 0 clamp(72px, 9vw, 120px);
+  background:
+    radial-gradient(56rem 28rem at 50% 0%, var(--accent-tint), transparent 70%), var(--paper);
+}
+
+.heroCopy {
+  width: min(100% - 2 * var(--gutter), 960px);
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+  text-align: center;
+}
+
+.heroTitle {
+  max-width: 13ch;
+}
+
+.heroLead {
+  font-size: clamp(1.125rem, 1.6vw, 1.375rem);
+  line-height: 1.5;
+  letter-spacing: -0.014em;
+  color: var(--ink-soft);
+  max-width: 46ch;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.heroNote {
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+}
+
+.heroStage {
+  width: min(100% - 2 * var(--gutter), 1120px);
+  margin: clamp(56px, 7vw, 96px) auto 0;
+}

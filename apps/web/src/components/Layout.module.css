@@ -8,7 +8,7 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  padding: 10px var(--space-4) 0;
+  padding: var(--header-gap) var(--space-4) 0;
 }
 
 .bar {
@@ -16,13 +16,13 @@
   max-width: var(--content-width);
   margin: 0 auto;
   padding: 0 10px 0 20px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(22px) saturate(170%);
   -webkit-backdrop-filter: blur(22px) saturate(170%);
   box-shadow:
-    inset 0 0 0 1px rgba(22, 33, 28, 0.08),
-    0 10px 30px rgba(22, 33, 28, 0.08);
+    inset 0 0 0 1px rgb(var(--ink-rgb) / 0.08),
+    0 10px 30px rgb(var(--ink-rgb) / 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -54,7 +54,7 @@
 .role {
   padding: 1px var(--space-2);
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   color: var(--ink-faint);
 }
 
@@ -63,7 +63,7 @@
   align-items: center;
   min-height: 34px;
   padding: 0 12px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   color: var(--ink-soft);
   font-weight: 500;
   font-size: var(--text-xs);
@@ -75,7 +75,7 @@
 
 .link:hover {
   color: var(--ink);
-  background: rgba(22, 33, 28, 0.05);
+  background: rgb(var(--ink-rgb) / 0.05);
 }
 
 .main {
@@ -92,15 +92,56 @@
 }
 
 .main.wide {
-  padding: var(--space-4) 0 0;
+  padding: var(--wide-page-gap) 0 0;
+}
+
+/*
+ * Narrow headers, measured in a browser: a signed-in provider needs about
+ * 830px for everything, a client about 340px. Below that the pill sheds, in
+ * order, the name, the provider's Storefront link, "Reset demo data" for a
+ * visible "Reset" (the full label stays for screen readers) and the client's
+ * Storefront link; on a phone the
+ * provider's remaining controls scroll inside the pill instead of the page.
+ */
+.short {
+  display: none;
+}
+
+@media (max-width: 840px) {
+  .who,
+  .hideBelowTablet {
+    display: none;
+  }
 }
 
 @media (max-width: 600px) {
-  .who {
-    display: none;
-  }
-
   .main {
     padding-top: var(--space-5);
+  }
+
+  .long {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .short {
+    display: inline;
+  }
+
+  .nav {
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-block: var(--space-1);
+  }
+}
+
+@media (max-width: 420px) {
+  .hideBelowPhone {
+    display: none;
   }
 }

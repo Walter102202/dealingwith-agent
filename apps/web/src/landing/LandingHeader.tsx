@@ -1,12 +1,9 @@
-import { ProjectSchema } from '@dealingwith/contracts';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { z } from 'zod';
-import { api } from '../api/client.js';
-import { routes } from '../api/routes.js';
-import { useSession } from '../session.js';
+import { CtaLink, type DemoCta } from './cta.js';
 import { REPO_URL } from './demo-quote.js';
-import styles from './Landing.module.css';
+import base from './Landing.module.css';
+import styles from './LandingHeader.module.css';
 
 const SECTIONS = [
   { id: 'how-it-works', label: 'How it works' },
@@ -15,43 +12,24 @@ const SECTIONS = [
   { id: 'for-providers', label: 'Providers' },
 ] as const;
 
-/** The signed-in client's first project, so "Open my project" lands where login would. */
-function useClientHome(enabled: boolean): string {
-  const [href, setHref] = useState('/store');
-  useEffect(() => {
-    if (!enabled) return;
-    let cancelled = false;
-    api
-      .get(routes.projects.list, z.array(ProjectSchema))
-      .then((projects) => {
-        const first = projects[0];
-        if (!cancelled && first) setHref(`/portal/projects/${first.id}`);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [enabled]);
-  return href;
-}
-
-/** Where the primary call to action goes: the demo doors, or home for whoever is signed in. */
-export function useDemoCta(): { to: string; label: string } {
-  const { session } = useSession();
-  const clientHome = useClientHome(session?.role === 'client');
-  if (session?.role === 'provider') return { to: '/dashboard', label: 'Open dashboard' };
-  if (session?.role === 'client') return { to: clientHome, label: 'Open my project' };
-  return { to: '/login', label: 'Try the live demo' };
-}
-
-/** The section the reader is in, for the nav's active pill. */
+/**
+ * The section the reader is in, for the nav's active pill: the first section,
+ * in page order, that crosses the band near the middle of the viewport. Null
+ * above the first one (the hero) and below the last (the invitation, the
+ * footer).
+ */
 function useActiveSection(): string | null {
   const [active, setActive] = useState<string | null>(null);
   useEffect(() => {
     if (typeof IntersectionObserver === 'undefined') return;
+    const inBand = new Set<string>();
     const observer = new IntersectionObserver(
       (entries) => {
-        for (const entry of entries) if (entry.isIntersecting) setActive(entry.target.id);
+        for (const entry of entries) {
+          if (entry.isIntersecting) inBand.add(entry.target.id);
+          else inBand.delete(entry.target.id);
+        }
+        setActive(SECTIONS.find((s) => inBand.has(s.id))?.id ?? null);
       },
       { rootMargin: '-45% 0px -50% 0px' },
     );
@@ -65,14 +43,13 @@ function useActiveSection(): string | null {
 }
 
 /** A floating pill: wordmark, sections, the demo door. */
-export function LandingHeader() {
-  const cta = useDemoCta();
+export function LandingHeader({ cta }: { cta: DemoCta }) {
   const active = useActiveSection();
   return (
     <header className={styles.navWrap}>
       <nav className={styles.nav} aria-label="Primary">
-        <Link to="/" className={styles.wordmark}>
-          <span className={styles.mark} aria-hidden="true" />
+        <Link to="/" className={base.wordmark}>
+          <span className={base.mark} aria-hidden="true" />
           DealingWith
         </Link>
         <ul className={styles.navLinks}>
@@ -93,9 +70,7 @@ export function LandingHeader() {
             </a>
           </li>
         </ul>
-        <Link to={cta.to} className={`${styles.pill} ${styles.pillPrimary} ${styles.pillSm}`}>
-          {cta.label}
-        </Link>
+        <CtaLink cta={cta} className={`${base.pill} ${base.pillPrimary} ${base.pillSm}`} />
       </nav>
     </header>
   );

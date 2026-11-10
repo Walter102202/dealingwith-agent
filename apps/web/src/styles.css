@@ -23,6 +23,8 @@
   --surface: #ffffff;
   --surface-muted: #eef0ea;
   --ink: #16211c;
+  /* --ink as RGB channels, for translucent ink: rgb(var(--ink-rgb) / 0.08). Keep in step with --ink. */
+  --ink-rgb: 22 33 28;
   --ink-soft: #5b665f;
   --ink-faint: #8a948d;
   --line: #d8ddd6;
@@ -37,6 +39,14 @@
   --danger-tint: #fae6e1;
   --info-tint: #e6ebf5;
   --info: #35508f;
+
+  /* The landing's agent terminal: light text on an ink panel. */
+  --term-bg: var(--ink);
+  --term-ink-rgb: 233 238 233;
+  --term-bright: #ffffff;
+  --term-ok: #7fd1b4;
+  --term-warn: #f0b45a;
+  --term-info: #a8bdf2;
 
   --font-display: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --font-text: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
@@ -60,11 +70,18 @@
 
   --radius-control: 10px;
   --radius-card: 18px;
-  --shadow-card: 0 1px 2px rgba(22, 33, 28, 0.04), 0 8px 28px rgba(22, 33, 28, 0.05);
+  --radius-pill: 999px;
+  --pill-padding-x: 18px;
+  --shadow-card: 0 1px 2px rgb(var(--ink-rgb) / 0.04), 0 8px 28px rgb(var(--ink-rgb) / 0.05);
   --focus-ring: 0 0 0 4px rgba(14, 107, 82, 0.3);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --content-width: 1080px;
+  /* The sticky header: a gap above the pill, the pill itself. */
+  --header-gap: 10px;
   --header-height: 52px;
+  --header-offset: calc(var(--header-gap) + var(--header-height));
+  /* Top padding of a wide page (the dashboard) under the header. */
+  --wide-page-gap: var(--space-4);
 }
 
 *,

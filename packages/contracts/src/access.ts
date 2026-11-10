@@ -46,6 +46,32 @@ export const ConnectionSnippetsSchema = z.object({
 });
 export type ConnectionSnippets = z.infer<typeof ConnectionSnippetsSchema>;
 
+/**
+ * The snippets for one token. Lives here, not in the backend, so the API, the
+ * web fixtures and the landing page print the same commands.
+ */
+export function connectionSnippets({
+  appUrl,
+  token,
+}: {
+  appUrl: string;
+  token: string;
+}): ConnectionSnippets {
+  return {
+    claudeDesktop: `${appUrl}/mcp/${token}\nAdd this URL as a custom connector in Claude Desktop (Settings → Connectors → Add custom connector). Treat it as a secret: anyone with the link can act as your agent.`,
+    claudeCode: `claude mcp add --transport http dealingwith ${appUrl}/mcp --header "Authorization: Bearer ${token}"`,
+    cursor: JSON.stringify(
+      {
+        mcpServers: {
+          dealingwith: { url: `${appUrl}/mcp`, headers: { Authorization: `Bearer ${token}` } },
+        },
+      },
+      null,
+      2,
+    ),
+  };
+}
+
 /** Response of `POST /api/agents`: the only time the plain token is visible. */
 export const IssuedAgentSchema = z.object({
   token: AgentTokenSchema,

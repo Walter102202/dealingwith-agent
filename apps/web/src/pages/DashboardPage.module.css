@@ -1,7 +1,8 @@
 .page {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - var(--header-height));
+  /* Fills the viewport below the header: the header offset plus the wide page gap. */
+  height: calc(100vh - var(--header-offset) - var(--wide-page-gap));
 }
 
 .head {

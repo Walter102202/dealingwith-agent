@@ -1,6 +1,6 @@
 import { formatUsd } from '@dealingwith/contracts';
 import { useEffect, useState } from 'react';
-import styles from './Landing.module.css';
+import styles from './AgentTerminal.module.css';
 import { prefersReducedMotion, useInView } from './Reveal.js';
 
 type Tone = 'ok' | 'warn' | 'info' | 'plain';

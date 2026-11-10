@@ -1,8 +1,9 @@
 import { formatUsd } from '@dealingwith/contracts';
 import { useEffect, useState } from 'react';
 import { QuoteCard } from '../components/QuoteCard.js';
+import styles from './AppReplay.module.css';
+import frame from './AppWindow.module.css';
 import { DEMO_QUOTE, DEMO_REQUEST } from './demo-quote.js';
-import styles from './Landing.module.css';
 import { prefersReducedMotion, useInView } from './Reveal.js';
 
 /** The beats of the replay, in order; each one is a state of the real page. */
@@ -64,17 +65,17 @@ export function AppReplay() {
   const quote = after(beat, 'paid') ? DEMO_QUOTE : { ...DEMO_QUOTE, status: 'published' as const };
 
   return (
-    <div ref={ref} className={styles.window}>
-      <div className={styles.chrome}>
-        <span className={styles.dots} aria-hidden="true">
+    <div ref={ref} className={frame.window}>
+      <div className={frame.chrome}>
+        <span className={frame.dots} aria-hidden="true">
           <i />
           <i />
           <i />
         </span>
-        <span className={styles.url}>dealingwith.si/portal/projects/retail-kpi-dashboard</span>
+        <span className={frame.url}>dealingwith.si/portal/projects/retail-kpi-dashboard</span>
         <button
           type="button"
-          className={styles.replay}
+          className={frame.replay}
           onClick={() => setRun((n) => n + 1)}
           disabled={!done}
         >

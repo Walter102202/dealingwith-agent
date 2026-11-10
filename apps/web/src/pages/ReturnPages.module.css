@@ -19,7 +19,7 @@
   align-items: center;
   min-height: 40px;
   padding: 0 18px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--accent);
   color: var(--accent-ink);
   font-weight: 500;
