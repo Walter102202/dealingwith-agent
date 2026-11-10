@@ -12,15 +12,28 @@ describe('AppConfigSchema', () => {
       paypalMode: 'mock',
       appUrl: 'http://localhost:3000',
       demoMode: true,
+      assistant: { enabled: false },
     });
     const sandbox = AppConfigSchema.parse({
       paypalMode: 'sandbox',
       paypalClientId: 'AX1',
       appUrl: 'https://dealingwith.example',
       demoMode: true,
+      assistant: { enabled: true },
     });
     expect(mock.paypalClientId).toBeUndefined();
     expect(sandbox.paypalClientId).toBe('AX1');
+    expect(sandbox.assistant.enabled).toBe(true);
+  });
+
+  test('requires the assistant flag', () => {
+    expect(() =>
+      AppConfigSchema.parse({
+        paypalMode: 'mock',
+        appUrl: 'http://localhost:3000',
+        demoMode: true,
+      }),
+    ).toThrow();
   });
 });
 

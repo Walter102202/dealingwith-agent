@@ -18,6 +18,13 @@ export const EnvSchema = z
     ANTHROPIC_API_KEY: z.string().optional(),
     OPENAI_API_KEY: z.string().optional(),
     /**
+     * The dashboard assistant (AG Studio chat). It runs whenever ANTHROPIC_API_KEY
+     * is set, whatever LLM_PROVIDER says; the quoting agent keeps its own model.
+     */
+    ASSISTANT_MODEL: z.string().trim().min(1).default('claude-sonnet-5-5'),
+    /** Turns the assistant answers per UTC day across all visitors; 0 turns it off. */
+    ASSISTANT_DAILY_TURN_LIMIT: z.coerce.number().int().min(0).default(400),
+    /**
      * Public origin of the service, used for PayPal return URLs and the session
      * cookie's Secure flag. Unset, it falls back to Render's RENDER_EXTERNAL_URL
      * (the service's own https URL) and only then to the local default.

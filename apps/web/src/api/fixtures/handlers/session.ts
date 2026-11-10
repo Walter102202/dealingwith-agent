@@ -5,7 +5,7 @@ import { origin } from './shared.js';
 
 export const sessionHandlers = {
   config(): AppConfig {
-    return { paypalMode: 'mock', appUrl: origin(), demoMode: true };
+    return { paypalMode: 'mock', appUrl: origin(), demoMode: true, assistant: { enabled: false } };
   },
 
   login(role: 'client' | 'provider'): Session {

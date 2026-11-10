@@ -26,3 +26,6 @@ coverage/
 # Private per-developer notes and permission rules for Claude Code
 CLAUDE.local.md
 .claude/settings.local.json
+
+# Git worktrees that Claude Code creates for parallel work
+.claude/worktrees/

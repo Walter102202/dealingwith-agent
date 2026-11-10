@@ -19,6 +19,7 @@ const config = (paypalMode: 'mock' | 'sandbox') => ({
   ...(paypalMode === 'sandbox' ? { paypalClientId: 'test-client-id' } : {}),
   appUrl: 'http://localhost:5173',
   demoMode: paypalMode === 'mock',
+  assistant: { enabled: false },
 });
 
 describe('PayWithPayPal', () => {

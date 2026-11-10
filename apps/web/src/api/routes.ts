@@ -48,6 +48,7 @@ export const routes = {
     projectId ? `/api/events?projectId=${encodeURIComponent(projectId)}` : '/api/events',
   dashboard: {
     data: '/api/dashboard/data',
+    assistantTurn: '/api/dashboard/assistant/turn',
   },
   demo: {
     reset: '/api/demo/reset',

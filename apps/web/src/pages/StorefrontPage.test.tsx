@@ -22,7 +22,12 @@ import { routes } from '../api/routes.js';
 import { renderWithProviders } from '../test/render.js';
 import { StorefrontPage } from './StorefrontPage.js';
 
-const config = { paypalMode: 'mock', appUrl: 'http://localhost:5173', demoMode: true };
+const config = {
+  paypalMode: 'mock',
+  appUrl: 'http://localhost:5173',
+  demoMode: true,
+  assistant: { enabled: false },
+};
 
 describe('StorefrontPage', () => {
   beforeEach(() => {

@@ -10,6 +10,7 @@ export function configRoutes() {
       ...(env.PAYPAL_MODE === 'sandbox' ? { paypalClientId: env.PAYPAL_CLIENT_ID } : {}),
       appUrl: env.APP_URL,
       demoMode: env.DEMO_MODE,
+      assistant: { enabled: c.get('deps').assistant !== null },
     });
   });
   return app;

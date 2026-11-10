@@ -47,6 +47,7 @@ export async function createHarness(overrides: Partial<Deps> = {}) {
     now,
     logger: createLogger({}, { silent: true }),
     agent: { buildContextPack: fail, runAgent: fail },
+    assistant: null,
     ...overrides,
   };
   return { deps, paypal, events, close: () => closeDb(db) };

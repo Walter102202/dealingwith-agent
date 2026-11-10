@@ -40,7 +40,17 @@
 .nav {
   display: flex;
   align-items: center;
+}
+
+.items {
+  display: flex;
+  align-items: center;
   gap: var(--space-3);
+}
+
+/* Phones only (see the end of the file); two classes so it wins over the Button's own display. */
+.nav .menuButton {
+  display: none;
 }
 
 .who {
@@ -97,16 +107,11 @@
 
 /*
  * Narrow headers, measured in a browser: a signed-in provider needs about
- * 830px for everything, a client about 340px. Below that the pill sheds, in
- * order, the name, the provider's Storefront link, "Reset demo data" for a
- * visible "Reset" (the full label stays for screen readers) and the client's
- * Storefront link; on a phone the
- * provider's remaining controls scroll inside the pill instead of the page.
+ * 830px for everything. Between 600 and 840px the pill drops the name and the
+ * provider's Storefront link. At 600px and below every session action moves
+ * into a panel under the pill, opened from a Menu pill, so nothing is cut off
+ * or scrolls sideways (decision 2026-11-10-header-menu-on-phones).
  */
-.short {
-  display: none;
-}
-
 @media (max-width: 840px) {
   .who,
   .hideBelowTablet {
@@ -119,29 +124,54 @@
     padding-top: var(--space-5);
   }
 
-  .long {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
+  .bar {
+    position: relative;
   }
 
-  .short {
-    display: inline;
+  .nav .menuButton {
+    display: inline-flex;
   }
 
-  .nav {
-    min-width: 0;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding-block: var(--space-1);
-  }
-}
-
-@media (max-width: 420px) {
-  .hideBelowPhone {
+  /* Opaque: a backdrop blur nested in the pill's own blur would not reach the page behind. */
+  .items {
     display: none;
+    position: absolute;
+    top: calc(100% + var(--space-2));
+    right: 0;
+    width: min(280px, 100%);
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-1);
+    padding: var(--space-2);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    box-shadow:
+      inset 0 0 0 1px rgb(var(--ink-rgb) / 0.08),
+      0 10px 30px rgb(var(--ink-rgb) / 0.12);
+  }
+
+  .items.open {
+    display: flex;
+  }
+
+  /* Everything the wider pill hides is in the menu. */
+  .items .link,
+  .items .hideBelowTablet {
+    display: flex;
+    min-height: 44px;
+  }
+
+  .items > button {
+    min-height: 44px;
+    padding: 0 12px;
+    justify-content: flex-start;
+  }
+
+  .items .who {
+    display: flex;
+    order: -1;
+    flex-wrap: wrap;
+    padding: var(--space-2) 12px var(--space-3);
+    border-bottom: 1px solid var(--line);
   }
 }

@@ -1,0 +1,53 @@
+.draft {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+.draft p {
+  margin: 0;
+}
+
+.message {
+  white-space: pre-wrap;
+}
+
+.lines {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.lines td {
+  padding: var(--space-1) 0;
+  border-top: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.lines tfoot td {
+  font-weight: 600;
+}
+
+.ref {
+  display: block;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.amount {
+  padding-left: var(--space-3);
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.note {
+  color: var(--ink-soft);
+}

@@ -1,0 +1,33 @@
+/* A band between the dashboard header and the report; scrolls on its own so the report keeps its room. */
+.card {
+  flex-shrink: 0;
+  max-height: 42vh;
+  overflow: auto;
+  padding: var(--space-3) var(--space-5) var(--space-4);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-muted);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.body {
+  max-width: 640px;
+}
+
+@media (max-width: 600px) {
+  .card {
+    padding: var(--space-3) var(--space-4);
+  }
+}

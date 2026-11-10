@@ -21,14 +21,14 @@ Values live only in Render. `sync: false` means the dashboard owns the value: it
 | `PAYPAL_CLIENT_SECRET` | yes | Walter, dashboard | same REST app |
 | `PAYPAL_WEBHOOK_ID` | yes | Walter, dashboard, after step 3 | id of the webhook registered to the hosted URL; while empty every webhook is rejected and the boot log warns `paypal.webhook_id_missing` |
 | `LLM_PROVIDER` | no | Blueprint | `anthropic` (switch to `openai` to demo the other provider; both keys stay set) |
-| `ANTHROPIC_API_KEY` | yes | Walter, dashboard | capped key, step 0 |
+| `ANTHROPIC_API_KEY` | yes | Walter, dashboard | capped key, step 0. Also turns on the dashboard assistant, whatever `LLM_PROVIDER` says |
 | `OPENAI_API_KEY` | yes | Walter, dashboard | capped key, step 0 |
 | `APP_URL` | no | dashboard, only when the domain is attached | public origin of the service, no trailing slash. Empty, the backend uses Render's own `RENDER_EXTERNAL_URL` (`https://<service>.onrender.com`) and refuses any non-https value on Render. Set to `https://dealingwith.si` in the last section. PayPal return and cancel URLs derive from it |
 | `DEMO_MODE` | no | Blueprint | `true`: seed the demo data on boot, enable the password-less demo logins and "Reset demo data". Anyone with the URL can enter as the demo client or provider: that is the judges' path, and it is why the model keys carry spend limits. Switch to `false` the day real authentication ships |
 | `VITE_API_MODE` | no | Blueprint | `http`; read at build time |
 | `VITE_AG_STUDIO_LICENSE` | yes | Walter, dashboard | AG Studio trial key; read at build time, empty shows a watermark on the dashboard |
 
-`PORT` is injected by Render and read by the backend. `LLM_MODEL` is unset: the defaults are `claude-opus-5-5` and `gpt-6.1-sol` (`apps/backend/src/agent/provider.ts`).
+`PORT` is injected by Render and read by the backend. `LLM_MODEL` is unset: the defaults are `claude-opus-5-5` and `gpt-6.1-sol` (`apps/backend/src/agent/provider.ts`). The dashboard assistant reads two optional variables, unset on Render: `ASSISTANT_MODEL` (default `claude-sonnet-5-5`) and `ASSISTANT_DAILY_TURN_LIMIT` (turns per UTC day across all visitors, default `400`, `0` turns the assistant off; decision `docs/decisions/2026-11-10-assistant-daily-turn-cap.md`). Each turn logs one `assistant.turn` line with its token usage.
 
 ## First deploy, in order
 

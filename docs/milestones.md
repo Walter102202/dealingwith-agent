@@ -66,6 +66,7 @@ Humans can do everything the agent can, and see what the agent did.
 - [x] **Return pages** (D5). Done when: PayPal redirects land on a receipt or on the funded mandate.
 - [x] **Provider dashboard** (D6). Done when: the AG Studio dashboard shows revenue by service, pipeline, unpaid additionals and requests over time with the product theme, and "Reset demo data" works. Fallback: the same with AG Grid and AG Charts Community if AG Studio cannot be used.
 - [x] **Product landing page** (L1, 2026-11-09). Done when: `/` explains the product (promise, change-order problem, how it works, MCP and mandates, PayPal flows, provider dashboard) with the real quote card in a read-only preview and doors into the demo; the storefront lives at `/store` and every storefront link points there (`docs/decisions/2026-11-09-landing-at-root-storefront-at-store.md`).
+- [x] **Dashboard as a report with custom widgets** (D7, 2026-11-10). Done when: `/dashboard` opens in read mode on Overview, Collections and Agent channel with an Edit toggle; the quotes table (AG Grid), agent budget and KPI tiles are custom Studio widgets that cross-filter with the charts; the dashboard fits a 380 px screen (`docs/decisions/2026-11-10-studio-custom-widgets.md`, `docs/decisions/2026-11-10-dashboard-read-mode-by-default.md`).
 - [x] **Cercana favicon** (F1, 2026-11-10). Done when: the approved two-piece D replaces the serif placeholder in browser tabs, SVG and ICO assets are checked at 16 and 32 pixels on light and dark backgrounds, and the production build serves the favicon and Apple touch icon (`docs/decisions/2026-11-10-cercana-favicon.md`).
 
 ---
@@ -108,6 +109,14 @@ Added 2026-11-08 when David joined. Policy: `CONSTITUTION.md`; runbook: `docs/ci
 - [x] **`main` protected** (G3, Walter). Done when: the ruleset in `infra/github/main-ruleset.json` is active on GitHub and a direct push to `main` is rejected.
 - [x] **Gated delivery** (G4; `autoDeployTrigger: checksPass` in effect since 2026-11-08, PRs #6 to #8 deployed only after their green run; with the `main` ruleset a red `main` cannot be produced by a merge). Done when: `render.yaml` sets `autoDeployTrigger: checksPass` and a red CI on `main` does not deploy.
 - [ ] **David onboarded** (G5). Done when: David has write access and has read `CONSTITUTION.md`, `AGENTS.md`, `CLAUDE.md` and `docs/ci-cd.md`.
+
+## S — Dashboard assistant (AG Studio AI)
+
+Added 2026-11-10 on `feat/studio-assistant`. Decisions: `2026-11-10-assistant-anthropic-adapter-on-backend`, `2026-11-10-assistant-no-thinking-replay`, `2026-11-10-assistant-daily-turn-cap`, `2026-11-10-collections-agent-amounts-from-data`.
+
+- [~] **Turn endpoint** (S1). Done when: `POST /api/dashboard/assistant/turn` streams AG events from Claude Sonnet 5.5 for a provider session, is off without `ANTHROPIC_API_KEY`, and stops at `ASSISTANT_DAILY_TURN_LIMIT`.
+- [~] **Assistant in the dashboard** (S2). Done when: the AI panel on `/dashboard` answers a data question and adds a chart, with a Fast and a Thorough effort.
+- [~] **Collections agent** (S3). Done when: asking for a payment reminder shows a draft whose amounts and total come from the quote data, signed by the provider, and nothing is sent.
 
 ## Walter's actions (outside the code)
 

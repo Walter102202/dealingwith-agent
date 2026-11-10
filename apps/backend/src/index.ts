@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { serve } from '@hono/node-server';
 import { createAgentPort } from './agent/port.js';
 import { createApp } from './api/app.js';
+import { createAssistantPort } from './assistant/port.js';
 import { migrateWhenReady } from './db/boot.js';
 import { closeDb, createDb } from './db/client.js';
 import { seedDemo } from './db/seed.js';
@@ -28,14 +29,16 @@ const paypal = createPaypalGateway(env, {
     await processWebhook(deps, { headers, rawBody: JSON.stringify(event) });
   },
 });
+const now = () => new Date();
 const deps: Deps = {
   db,
   paypal,
   env,
   logger,
   events: createEventBus(),
-  now: () => new Date(),
+  now,
   agent: createAgentPort(env),
+  assistant: createAssistantPort(env, now),
 };
 const app = createApp(deps);
 const server = serve({ fetch: app.fetch, port: env.PORT }, () => {

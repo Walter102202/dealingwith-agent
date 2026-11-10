@@ -21,6 +21,8 @@ describe('loadEnv', () => {
       PORT: 3000,
       SESSION_SECRET: 'dev-session-secret-change-me',
       DEMO_MODE: true,
+      ASSISTANT_MODEL: 'claude-sonnet-5-5',
+      ASSISTANT_DAILY_TURN_LIMIT: 400,
     });
   });
   test('requires sandbox credentials without exposing their values', () => {
@@ -36,6 +38,8 @@ describe('loadEnv', () => {
     { APP_URL: 'https://x.example' },
     { APP_URL: 'http://localhost:3000/' },
     { DEMO_MODE: 'yes' },
+    { ASSISTANT_DAILY_TURN_LIMIT: '-1' },
+    { ASSISTANT_DAILY_TURN_LIMIT: 'lots' },
   ])('rejects invalid configuration %j', (source) => {
     expect(() => loadEnv(source)).toThrow();
   });
@@ -72,5 +76,8 @@ describe('loadEnv', () => {
         SESSION_SECRET: 'custom-secret',
       }),
     ).toMatchObject({ PORT: 3100, DEMO_MODE: false });
+    expect(
+      loadEnv({ ASSISTANT_MODEL: 'claude-opus-5-5', ASSISTANT_DAILY_TURN_LIMIT: '25' }),
+    ).toMatchObject({ ASSISTANT_MODEL: 'claude-opus-5-5', ASSISTANT_DAILY_TURN_LIMIT: 25 });
   });
 });

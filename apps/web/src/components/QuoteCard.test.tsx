@@ -12,6 +12,7 @@ vi.mock('../api/client.js', async (importOriginal) => {
         paypalMode: 'mock',
         appUrl: 'http://localhost:5173',
         demoMode: true,
+        assistant: { enabled: false },
       })),
       post: vi.fn(),
     },
