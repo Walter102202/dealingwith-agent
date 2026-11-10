@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '../test/render.js';
 
@@ -110,5 +110,77 @@ describe('Layout reset demo data', () => {
     renderLayout();
     await waitFor(() => expect(apiMock.get).toHaveBeenCalled());
     expect(screen.queryByRole('button', { name: 'Reset demo data' })).toBeNull();
+  });
+});
+
+describe('Layout menu on phones', () => {
+  const config = {
+    paypalMode: 'mock',
+    appUrl: 'http://x',
+    demoMode: true,
+    assistant: { enabled: false },
+  };
+  afterEach(() => vi.clearAllMocks());
+
+  const openMenu = () => {
+    const button = screen.getByRole('button', { name: 'Menu' });
+    fireEvent.click(button);
+    return button;
+  };
+
+  it('puts every session action in the panel the Menu button controls', async () => {
+    sessionMock.current = provider;
+    apiMock.get.mockResolvedValue(config);
+    renderLayout();
+    const button = screen.getByRole('button', { name: 'Menu' });
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+    const panel = document.getElementById(button.getAttribute('aria-controls') ?? '');
+    if (!panel) throw new Error('the Menu button controls no element');
+    const actions = within(panel);
+    expect(actions.getByRole('link', { name: 'Storefront' })).toBeInTheDocument();
+    expect(actions.getByText('Andes')).toBeInTheDocument();
+    expect(actions.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument();
+    expect(await actions.findByRole('button', { name: 'Reset demo data' })).toBeInTheDocument();
+    expect(actions.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
+    fireEvent.click(button);
+    expect(button).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('closes on Escape and gives focus back to the Menu button', () => {
+    sessionMock.current = client;
+    apiMock.get.mockResolvedValue(config);
+    renderLayout();
+    const button = openMenu();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+    expect(button).toHaveFocus();
+  });
+
+  it('closes on a press outside the header and once an action is chosen', () => {
+    sessionMock.current = provider;
+    apiMock.get.mockResolvedValue(config);
+    renderLayout();
+    const button = openMenu();
+    fireEvent.pointerDown(screen.getByText('body'));
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+    openMenu();
+    fireEvent.pointerDown(screen.getByRole('link', { name: 'Dashboard' }));
+    expect(button).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.click(screen.getByRole('link', { name: 'Dashboard' }));
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('offers the signed-out visitor the storefront and the demo sign in', () => {
+    sessionMock.current = { session: null, status: 'ready', loginAs: vi.fn(), logout: vi.fn() };
+    apiMock.get.mockResolvedValue(config);
+    renderLayout();
+    const button = openMenu();
+    const panel = document.getElementById(button.getAttribute('aria-controls') ?? '');
+    if (!panel) throw new Error('the Menu button controls no element');
+    expect(
+      within(panel)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['Storefront', 'Demo sign in']);
   });
 });
