@@ -71,7 +71,9 @@ jobs:
             echo "::error::render.yaml lists no buildFilter.ignoredPaths for dealingwith-agent."
             exit 1
           fi
-          git ls-files -z -- "${patterns[@]/#/:(glob)}" | xargs -0 rm -f --
+          git ls-files -z -- "${patterns[@]/#/:(glob)}" > "$RUNNER_TEMP/ignored.bin"
+          echo "Deleting $(tr -cd '\0' < "$RUNNER_TEMP/ignored.bin" | wc -c) tracked files matched by ${#patterns[@]} patterns, then rebuilding."
+          xargs -0 rm -f -- < "$RUNNER_TEMP/ignored.bin"
           rm -rf apps/*/dist packages/*/dist
           pnpm build
           dist_hash > "$RUNNER_TEMP/dist-after.txt"
