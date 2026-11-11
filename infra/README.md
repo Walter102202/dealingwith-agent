@@ -4,7 +4,7 @@ The Blueprint is [`render.yaml`](../render.yaml) at the repository root: one web
 
 The hosted service is a working simulation, not a mock-up: real PayPal sandbox orders, authorizations, captures and signed webhooks, real model calls, real data in Postgres. Only the money (PayPal sandbox) and the identities (demo logins) are test data, until real authentication and PayPal live ship after the submission (decision `docs/decisions/2026-11-08-hosted-at-dealingwith-si-demo-mode-until-submission.md`). It goes live on the Render URL first; the domain `dealingwith.si` is attached later (last section).
 
-Render deploys `main` only after the three CI checks pass on that commit (`autoDeployTrigger: checksPass`). Nothing deploys from a branch or a laptop.
+Render deploys `main` only after the three CI checks pass on that commit (`autoDeployTrigger: checksPass`), and skips a commit that touches only paths in `buildFilter.ignoredPaths` (docs, tests, CI and tooling files). Nothing deploys from a branch or a laptop.
 
 ## Environment variables
 
@@ -48,7 +48,7 @@ Values live only in Render. `sync: false` means the dashboard owns the value: it
 
 ## Day to day
 
-- **Deploys** happen on their own when a commit on `main` has green CI. Watch them in the service's Events tab.
+- **Deploys** happen on their own when a commit on `main` has green CI and touches a path outside `buildFilter.ignoredPaths` in `render.yaml`; a commit that changes only documentation, tests or CI files does not deploy, and the live deploy stays on the previous commit. Watch them in the service's Events tab. To deploy anyway: Manual Deploy → Deploy latest commit (manual deploys ignore the filter).
 - **Rollback**: service → Deploys → the previous live deploy → Rollback. Migrations run at boot and are additive, so the previous code runs against the newer schema. Then fix forward through a pull request.
 - **Logs** are JSON lines with a request id; they never contain tokens or secrets. Filter on `msg` (`server.listening`, `request.completed`, `webhook.processed`, `webhook.rejected`). A rejected webhook logs why (`webhook_id_missing`, `headers_missing`, `body_not_json` or `verification_failed` with PayPal's `verificationStatus`), the `host` it arrived on, PayPal's `transmissionId` (the delivery's id in the dashboard's attempt history) and the body size, never the body. `db.not_ready` means the service started before Postgres accepted connections (the first Blueprint sync does this); the backend retries up to ten times, three seconds apart, before giving up.
 - **Secrets rotate in the dashboard**, never in the repository. After rotating PayPal credentials, redeploy; the token cache is in memory.

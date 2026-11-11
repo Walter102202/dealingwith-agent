@@ -66,8 +66,8 @@ Decisions live in `docs/decisions/`, one file per decision, named `YYYY-MM-DD-<s
 
 - `main` is the integrated, deployable state and changes only through a pull request. Work happens on `track/<letter>` or `feat|fix|docs|chore/<slug>` branches, one git worktree per branch next to the repository.
 - Push after every commit. Never force-push, amend a pushed commit or delete anything without written authorization.
-- CI runs three parallel jobs on every push: `checks` (lint, typecheck, test), `build` (production build, migration drift, boot smoke) and `hygiene` (tracked-file guard, gitleaks). All three are required on `main`.
-- Render deploys `main` only after CI passes on that commit. Details and the red-CI procedure: `docs/ci-cd.md`.
+- CI runs three parallel jobs on every push: `checks` (lint, typecheck, test), `build` (production build, migration drift, proof that the paths the deploy ignores do not change the build, boot smoke) and `hygiene` (tracked-file guard, gitleaks). All three are required on `main`.
+- Render deploys `main` only after CI passes on that commit, and skips a commit that touches only paths in `buildFilter.ignoredPaths` (`render.yaml`: docs, tests, CI and tooling files). Details and the red-CI procedure: `docs/ci-cd.md`.
 
 ## Where tests live
 
