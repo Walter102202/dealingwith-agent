@@ -4,7 +4,7 @@ A working guide for the MVP build. Milestones are outcomes, not dates. Each stag
 
 Legend: `[ ]` not started · `[~]` in progress · `[x]` done
 
-**Current position:** M0, M2, M3, the web (D1-D6), W, A9, E (E2), I1 and I2 done and merged into `main` on 2026-11-08; G1-G3 done the same day; I3 and I4 done on 2026-11-08 (live eval 5/5 with both providers; the service is live at `https://dealingwith-agent.onrender.com` with webhook, funded mandate and MCP verified from outside); G4 done the same day. The domain `https://dealingwith.si` is live since 2026-11-08 (DNS at Hostinger, `APP_URL` points at it; the PayPal webhook stays on the Render host because PayPal's sender does not reach the domain, verified 2026-11-09, see `infra/README.md`). Open: G5, I5 and M6.
+**Current position:** M0, M2, M3, the web (D1-D6), W, A9, E (E2), I1 and I2 done and merged into `main` on 2026-11-08; G1-G3 done the same day; I3 and I4 done on 2026-11-08 (live eval 5/5 with both providers; the service is live at `https://dealingwith-agent.onrender.com` with webhook, funded mandate and MCP verified from outside); G4 done the same day; G5 done by 2026-11-11. The domain `https://dealingwith.si` is live since 2026-11-08 (DNS at Hostinger, `APP_URL` points at it; the PayPal webhook stays on the Render host because PayPal's sender does not reach the domain, verified 2026-11-09, see `infra/README.md`). I5 done on 2026-11-11; G6 merged on 2026-11-11 and waiting for a docs-only merge that does not deploy. Open: G6 and M6.
 
 ---
 
@@ -81,13 +81,13 @@ The same code runs against PayPal sandbox, a real model and Render.
 - [x] **Live model passes** (I3; 5/5 with `claude-opus-5-5` and 5/5 with `gpt-6.1-sol` on 2026-11-08). Done when: the live eval passes five of five with Anthropic and with OpenAI using the same prompts.
 - [x] **Deployed on Render** (I4; live on 2026-11-08 at `https://dealingwith-agent.onrender.com`: webhook registered and processing, mandate funded with a US$2,000.00 authorization that expires 2026-12-07 and must be renewed on 2026-11-30, MCP smoke and Claude Code verified from outside; the domain `dealingwith.si` follows `infra/README.md`, last section). Done when: the hosted URL serves the app, the webhook points at it, the demo mandate is funded once, and MCP works from Claude Desktop and Claude Code against the hosted URL.
 - [x] **Webhook rejections explain themselves** (I2 follow-up, 2026-11-09): a rejected webhook logs `webhook.rejected` with the reason, PayPal's verification status, the host it arrived on and the transmission id, so a delivery to the domain can be told apart from one to the Render host without guessing (`infra/README.md`, "Day to day").
-- [ ] **Pre-submission checks** (I5). Done when: a fresh browser completes the five demo requests on the hosted URL, CI is green, nothing private is in the repo, both Render services are on the always-on plans of the Blueprint (`0.5c-512mb`, `0.1c-256mb`).
+- [x] **Pre-submission checks** (I5; 2026-11-11: a fresh browser completed the five requests on `https://dealingwith.si`, request 1 paid on PayPal's page with the judge account; requests 2 and 3 also passed over MCP with a real sandbox capture the same day; CI green; nothing private tracked; both services on the Blueprint plans). Done when: a fresh browser completes the five demo requests on the hosted URL, CI is green, nothing private is in the repo, both Render services are on the always-on plans of the Blueprint (`0.5c-512mb`, `0.1c-256mb`).
 
 ---
 
 ## M6 — Submitted
 
-- [~] **README final** (S1; rewritten on 2026-11-10 for the dashboard assistant, the custom widgets and the PayPal and AI map; the video link and the judge buyer account are still `TBD`). Done when: URL, demo logins, judge buyer account, video, judge path, architecture, flows and limits are in the README.
+- [~] **README final** (S1; rewritten on 2026-11-10 for the dashboard assistant, the custom widgets and the PayPal and AI map; the judge buyer account added on 2026-11-11; the video link is still `TBD`). Done when: URL, demo logins, judge buyer account, video, judge path, architecture, flows and limits are in the README.
 - [ ] **Video** (S2). Done when: a public YouTube video under three minutes follows `docs/demo-script.md`.
 - [ ] **Devpost** (S3). Done when: the submission is complete with repo, video, hosted URL and the AG Grid sponsor prize opted in.
 
@@ -109,7 +109,7 @@ Added 2026-11-08 when David joined. Policy: `CONSTITUTION.md`; runbook: `docs/ci
 - [x] **CI gates** (G2). Done when: three parallel jobs (`checks`, `build`, `hygiene`) run on every push, each under four minutes, and the run on `main` is green.
 - [x] **`main` protected** (G3, Walter). Done when: the ruleset in `infra/github/main-ruleset.json` is active on GitHub and a direct push to `main` is rejected.
 - [x] **Gated delivery** (G4; `autoDeployTrigger: checksPass` in effect since 2026-11-08, PRs #6 to #8 deployed only after their green run; with the `main` ruleset a red `main` cannot be produced by a merge). Done when: `render.yaml` sets `autoDeployTrigger: checksPass` and a red CI on `main` does not deploy.
-- [ ] **David onboarded** (G5). Done when: David has write access and has read `CONSTITUTION.md`, `AGENTS.md`, `CLAUDE.md` and `docs/ci-cd.md`.
+- [x] **David onboarded** (G5; collaborator with write access by 2026-11-11, governance docs read). Done when: David has write access and has read `CONSTITUTION.md`, `AGENTS.md`, `CLAUDE.md` and `docs/ci-cd.md`.
 - [~] **Deploys skip what cannot reach production** (G6, 2026-11-11). Done when: `render.yaml` declares `buildFilter.ignoredPaths`, the `build` job proves them on every run, and a docs-only merge to `main` does not deploy.
 
 ## S — Dashboard assistant (AG Studio AI)
@@ -125,8 +125,8 @@ Added 2026-11-10 on `feat/studio-assistant`. Decisions: `2026-11-10-assistant-an
 ## Walter's actions (outside the code)
 
 - [x] Apply the `main` ruleset (active since 2026-11-08, id 26787773): `gh api -X POST repos/Walter102202/dealingwith-agent/rulesets --input infra/github/main-ruleset.json` (G3).
-- [~] Give David write access to the repository (G5; invitation with write permission sent on 2026-11-08 to `satisfymath`, pending his acceptance).
-- [ ] AG Studio trial license key requested.
+- [x] Give David write access to the repository (G5; invitation sent on 2026-11-08 to `satisfymath`, accepted by 2026-11-11).
+- [x] AG Studio trial license key requested (received 2026-11-10; kept out of the repository, set in Render and the local `.env`).
 - [x] PayPal sandbox: US business account, US personal (judge) account, REST app linked to the US business account; credentials only in the local `.env` (done 2026-11-08; I1 and I2 verified against them).
 - [x] Render account ready with the sponsor credits (2026-11-08; US$50 hackathon credit).
 - [ ] YouTube channel ready.
