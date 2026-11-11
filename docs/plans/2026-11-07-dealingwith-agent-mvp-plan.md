@@ -48,7 +48,7 @@ Run these in order. Every step has an expected result; if yours differs, stop an
 1. `cd` into the main checkout and `git pull`. Expected: `git log --oneline -1` shows the commit the track's revision note names, or a later one on `main`.
 2. `git worktree add ../dealingwith-track-<letter> -b track/<letter> main`, then `cd ../dealingwith-track-<letter>` and `pnpm install`. Expected: install finishes and `git status --short` prints nothing (the lockfile did not change). If `track/<letter>` already exists (you are resuming), `cd` into the existing worktree and `git pull` instead.
 3. `pnpm lint`, `pnpm typecheck`, `pnpm test`. Expected: all three green, with at least the test-file and test counts the track's revision note gives for `main`. Fewer tests means a wrong checkout.
-4. `git config user.name` prints `Walter102202` and `git config user.email` prints `walterguzman2202@gmail.com`.
+4. `git config user.name` prints `Walter102202` and `git config user.email` prints the email of that personal account.
 5. Create the folder `dealingwith-reports/` next to the repository if it does not exist (on Walter's machine `C:\dev\dealingwith-reports\`); your report lives at `dealingwith-reports/track-<letter>.md`, outside the repo.
 6. Resume rule: read your milestone section in `docs/milestones.md`; the first unticked line is where you continue. This holds at the start and after any restart.
 
@@ -73,7 +73,7 @@ When something is unclear, do not stop to ask Walter. Ask yourself what a top 1%
 - Branches: Phase 0 works on `main`. Phase 1 tracks work on `track/a`, `track/b`, `track/c`, `track/d`, `track/e`, each in its own git worktree created from `main` (`git worktree add ../dealingwith-track-a -b track/a main`), pushed on every commit (`git push -u origin track/a` the first time). Tracks never merge into `main` themselves. When a track reports done, the integrator (the planning session) merges it into `main` with a merge commit, with Walter's go-ahead, in the order A, B, C, D, E; no rebase of pushed branches, no force-push. Known planned conflict: `apps/backend/src/agent/port.ts` exists in A (placeholder) and B (real); B's version wins.
 - Only the integrator edits `packages/contracts`, `apps/backend/src/db` and the root configuration files (`package.json`, `pnpm-workspace.yaml`, `vitest.config.ts`, `biome.json`, `tsconfig.base.json`) after Phase 0, except where a task says otherwise (A8 adds the `tests` workspace). If your task needs a new field or schema, write it as a decision file plus a note in your report, and build against a local type extension until the integrator lands it.
 - Commits: Conventional Commits (`feat(scope): ...`, `fix:`, `docs:`, `chore:`, `test:`), present tense, one task per commit (small follow-up commits are fine). Never amend a pushed commit, never force-push, never open a PR or merge without Walter.
-- Git identity: user `Walter102202`, email `walterguzman2202@gmail.com` (Walter's personal account). Verify with `git config user.name` before the first commit.
+- Git identity: user `Walter102202` with the email of Walter's personal account. Verify with `git config user.name` before the first commit.
 - English everywhere in the repo. Walter's chat language is Spanish.
 - Secrets only in `.env` (ignored). `docs/hackathon/` is local analysis and is never committed; if you see it in `git status`, stop and fix `.gitignore` first.
 - Before you say a task is done, run the task's test command and paste its last lines in your report. Evidence before assertions.
