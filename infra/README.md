@@ -4,7 +4,7 @@ The Blueprint is [`render.yaml`](../render.yaml) at the repository root: one web
 
 The hosted service is a working simulation, not a mock-up: real PayPal sandbox orders, authorizations, captures and signed webhooks, real model calls, real data in Postgres. Only the money (PayPal sandbox) and the identities (demo logins) are test data, until real authentication and PayPal live ship after the submission (decision `docs/decisions/2026-11-08-hosted-at-dealingwith-si-demo-mode-until-submission.md`). It goes live on the Render URL first; the domain `dealingwith.si` is attached later (last section).
 
-Render deploys `main` only after the three CI checks pass on that commit (`autoDeployTrigger: checksPass`). Nothing deploys from a branch or a laptop.
+Render deploys `main` only after the three CI checks pass on that commit (`autoDeployTrigger: checksPass`), and skips a commit that touches only paths in `buildFilter.ignoredPaths` (docs, tests, CI and tooling files). Nothing deploys from a branch or a laptop.
 
 ## Environment variables
 
