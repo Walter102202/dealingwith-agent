@@ -6,7 +6,6 @@ What the MVP deliberately leaves out, and the order in which we would add it. Th
 
 These are in the design as P2. They are the first things we pick up if time remains.
 
-- **Natural-language dashboard widget** with the AG Studio Agent Framework, served by our own backend so the model key stays server-side.
 - **MCP Apps quote card:** the quote rendered as an interactive card inside Claude or ChatGPT, using shared components from `packages/ui`, so the client reviews and corrects a quote without leaving their assistant.
 - **PayPal Vault for standing mandates:** save the client's PayPal wallet once and charge against the token, replacing the authorization-plus-partial-capture funding model. Blocked today by sandbox enablement; the MVP probes it once and records the result.
 
@@ -45,4 +44,3 @@ The first two are committed as the first work after the submission (decision `do
 - **Codex and other MCP clients** in the connection snippets once their remote MCP syntax is verified.
 - **`packages/ui`** populated with the quote card and mandate components shared between the web and MCP Apps.
 - **Webhook replay and admin tools** for reconciling payments without touching the database.
-- **Custom domain** `dealingwith.si`, attached after the first deploy on the Render URL (`infra/README.md`, last section).
