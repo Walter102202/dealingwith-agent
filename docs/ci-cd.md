@@ -10,6 +10,7 @@ branch push ──► CI (3 jobs, parallel, < 4 min each) ──► pull request
                                                                CI on main (same 3 jobs) ┘
                                                                                        │
                                                         Render deploys main only if CI passed
+                                                        and the commit touches a deployable path
 ```
 
 ## What CI runs
@@ -19,7 +20,7 @@ branch push ──► CI (3 jobs, parallel, < 4 min each) ──► pull request
 | Job | Steps | Catches | Duration |
 |---|---|---|---|
 | `checks (lint, typecheck, test)` | `pnpm install --frozen-lockfile`, `pnpm lint`, `pnpm typecheck`, `pnpm test` | Lockfile drift, formatting, type errors, failing tests (351 tests in 73 files) | 2 min 15 s, measured on `main` on 2026-11-08 |
-| `build (production build, migrations, boot)` | `db:generate` must produce no diff; `pnpm build`; start `dist/index.js` with in-memory PGlite; `/healthz` answers `{"ok":true}` and `/login` serves the web build | Schema edited without its migration (Render would boot against a stale database); a build that passes typecheck but fails to compile or copy its prompts; a server that builds but does not start or does not serve the web | 25 s, measured on `main` on 2026-11-08 |
+| `build (production build, migrations, boot)` | `db:generate` must produce no diff; `pnpm build`; delete every tracked file matched by the deploy's `buildFilter.ignoredPaths`, rebuild and compare every `dist` file byte for byte; start `dist/index.js` from that pruned tree with in-memory PGlite; `/healthz` answers `{"ok":true}` and `/login` serves the web build | Schema edited without its migration (Render would boot against a stale database); a build that passes typecheck but fails to compile or copy its prompts; a server that builds but does not start or does not serve the web; a path the deploy ignores that the build actually reads, which would let a commit skip a deploy it needs | 25 s, measured on `main` on 2026-11-08 |
 | `hygiene (secrets, tracked files)` | `git ls-files` contains no `docs/hackathon/`, `.env`, `.env.*` (except `.env.example`), keys or certificates; `.gitignore` still lists `docs/hackathon/`, `.env`, `.data/`; the gitleaks CLI (pinned version, checksum-verified) over every commit of every branch | A secret or the private hackathon analysis reaching GitHub | 6 s, measured on `main` on 2026-11-08 (97 commits) |
 
 The drift check runs `drizzle-kit generate`, which asks interactively when a rename is ambiguous; in CI that would hang until the timeout. Generate renames locally and commit the SQL; CI only confirms there is nothing left to generate.
@@ -70,6 +71,8 @@ Merge method: merge commit or squash. Rebase-merging is disabled because it rewr
 ## Delivery
 
 Render builds and deploys `main` from the Blueprint `render.yaml` at the repository root; `infra/README.md` lists the variables and the first-deploy steps. Until the Blueprint is applied in a Render account there is no hosted deploy and nothing to roll back. The service sets `autoDeployTrigger: checksPass`: a commit on `main` deploys only when its CI run is green. Nothing deploys from a branch or from a laptop.
+
+A commit that touches only paths in the service's `buildFilter.ignoredPaths` (documentation, `tests/`, `evals/`, `*.test.ts(x)`, CI and tooling configuration; the list is in `render.yaml`) does not deploy at all. The live deploy stays on the previous commit, which builds the same app, so Render showing a live commit older than `main` is expected. The `build` job proves the list on every run: it deletes every tracked file the patterns match, rebuilds, requires byte-identical `dist` output and boots that build. A pattern that reaches the build turns CI red with the `dist` files it changes, instead of silently skipping a deploy. The list changes only through a pull request, like the rest of the Blueprint. To deploy anyway (for example after rotating a secret), use the service's Manual Deploy → Deploy latest commit; manual deploys ignore the filter. Decision: [`2026-11-11-deploys-skip-paths-that-cannot-reach-production`](decisions/2026-11-11-deploys-skip-paths-that-cannot-reach-production.md).
 
 - Build: `corepack enable && pnpm install --frozen-lockfile && pnpm build`. Start: `pnpm --filter @dealingwith/backend start`. Health check: `/healthz`.
 - Migrations run at boot, so a migration must be additive and compatible with the version still running while the new one starts.

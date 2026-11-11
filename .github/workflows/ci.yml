@@ -58,6 +58,28 @@ jobs:
 
       - run: pnpm build
 
+      # Render skips the deploy of a commit that touches only buildFilter.ignoredPaths (render.yaml).
+      # Prove those paths cannot change production: delete every tracked file they match, rebuild,
+      # and require a byte-identical build. The boot check below then runs in the pruned tree, so the
+      # server does not need any of those files at runtime either.
+      - name: Paths the deploy ignores do not change the build
+        run: |
+          dist_hash() { find apps/*/dist packages/*/dist -type f -print0 | sort -z | xargs -0 sha256sum; }
+          dist_hash > "$RUNNER_TEMP/dist-before.txt"
+          mapfile -t patterns < <(yq '.services[] | select(.name == "dealingwith-agent") | .buildFilter.ignoredPaths[]' render.yaml)
+          if [ "${#patterns[@]}" -eq 0 ]; then
+            echo "::error::render.yaml lists no buildFilter.ignoredPaths for dealingwith-agent."
+            exit 1
+          fi
+          git ls-files -z -- "${patterns[@]/#/:(glob)}" | xargs -0 rm -f --
+          rm -rf apps/*/dist packages/*/dist
+          pnpm build
+          dist_hash > "$RUNNER_TEMP/dist-after.txt"
+          if ! diff "$RUNNER_TEMP/dist-before.txt" "$RUNNER_TEMP/dist-after.txt"; then
+            echo "::error::A path in render.yaml buildFilter.ignoredPaths changes the build (diff above). Remove it from the list: a commit touching only that path would skip a deploy it needs."
+            exit 1
+          fi
+
       - name: Built server boots, answers /healthz and serves the web
         env:
           DATABASE_URL: pglite://memory

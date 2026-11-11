@@ -48,7 +48,7 @@ Values live only in Render. `sync: false` means the dashboard owns the value: it
 
 ## Day to day
 
-- **Deploys** happen on their own when a commit on `main` has green CI. Watch them in the service's Events tab.
+- **Deploys** happen on their own when a commit on `main` has green CI and touches a path outside `buildFilter.ignoredPaths` in `render.yaml`; a commit that changes only documentation, tests or CI files does not deploy, and the live deploy stays on the previous commit. Watch them in the service's Events tab. To deploy anyway: Manual Deploy → Deploy latest commit (manual deploys ignore the filter).
 - **Rollback**: service → Deploys → the previous live deploy → Rollback. Migrations run at boot and are additive, so the previous code runs against the newer schema. Then fix forward through a pull request.
 - **Logs** are JSON lines with a request id; they never contain tokens or secrets. Filter on `msg` (`server.listening`, `request.completed`, `webhook.processed`, `webhook.rejected`). A rejected webhook logs why (`webhook_id_missing`, `headers_missing`, `body_not_json` or `verification_failed` with PayPal's `verificationStatus`), the `host` it arrived on, PayPal's `transmissionId` (the delivery's id in the dashboard's attempt history) and the body size, never the body. `db.not_ready` means the service started before Postgres accepted connections (the first Blueprint sync does this); the backend retries up to ten times, three seconds apart, before giving up.
 - **Secrets rotate in the dashboard**, never in the repository. After rotating PayPal credentials, redeploy; the token cache is in memory.

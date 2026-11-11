@@ -110,6 +110,7 @@ Added 2026-11-08 when David joined. Policy: `CONSTITUTION.md`; runbook: `docs/ci
 - [x] **`main` protected** (G3, Walter). Done when: the ruleset in `infra/github/main-ruleset.json` is active on GitHub and a direct push to `main` is rejected.
 - [x] **Gated delivery** (G4; `autoDeployTrigger: checksPass` in effect since 2026-11-08, PRs #6 to #8 deployed only after their green run; with the `main` ruleset a red `main` cannot be produced by a merge). Done when: `render.yaml` sets `autoDeployTrigger: checksPass` and a red CI on `main` does not deploy.
 - [ ] **David onboarded** (G5). Done when: David has write access and has read `CONSTITUTION.md`, `AGENTS.md`, `CLAUDE.md` and `docs/ci-cd.md`.
+- [~] **Deploys skip what cannot reach production** (G6, 2026-11-11). Done when: `render.yaml` declares `buildFilter.ignoredPaths`, the `build` job proves them on every run, and a docs-only merge to `main` does not deploy.
 
 ## S — Dashboard assistant (AG Studio AI)
 
