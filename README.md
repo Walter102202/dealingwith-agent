@@ -100,7 +100,7 @@ Tools: `list_services`, `list_projects`, `get_project`, `request_quote`, `answer
 
 ## Architecture
 
-One Node process (Hono) serves the JSON API, the MCP endpoint, the PayPal webhook and the built web app. The quoting agent says what each line is (included, or which pricing rule applies); a deterministic pricing engine turns them into amounts; a policy module gates agent spending against the mandate. Details in [`docs/architecture.md`](docs/architecture.md). The hosted demo runs on Render from [`render.yaml`](render.yaml): a commit on `main` deploys only after CI passes ([`infra/README.md`](infra/README.md), [`docs/ci-cd.md`](docs/ci-cd.md)).
+One Node process (Hono) serves the JSON API, the MCP endpoint, the PayPal webhook and the built web app. The quoting agent says what each line is (included, or which pricing rule applies); a deterministic pricing engine turns them into amounts; a policy module gates agent spending against the mandate. Details in [`docs/architecture.md`](docs/architecture.md). The hosted demo runs on Render from [`render.yaml`](render.yaml): a commit on `main` deploys only after CI passes, and a commit that touches only docs, tests or CI files does not deploy at all ([`infra/README.md`](infra/README.md), [`docs/ci-cd.md`](docs/ci-cd.md)).
 
 ```mermaid
 flowchart LR

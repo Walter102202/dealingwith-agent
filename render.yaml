@@ -10,6 +10,34 @@ services:
     branch: main
     # A commit on main deploys only after its CI run passes (the three required checks).
     autoDeployTrigger: checksPass
+    # ...and only when it touches a path outside this list. Nothing listed here reaches the built app,
+    # and CI proves it on every run: the build job deletes every tracked file these patterns match,
+    # rebuilds, requires a byte-identical build and boots it. List only files the build never reads;
+    # the agent prompts are Markdown under apps/backend/src/agent, so never add a pattern like
+    # **/*.md. Never list install inputs either (the root and app package.json files,
+    # pnpm-lock.yaml, pnpm-workspace.yaml, .npmrc): the proof rebuilds without reinstalling. tests/
+    # and evals/ are safe because a dependency change there also changes pnpm-lock.yaml, which
+    # deploys. Patterns are globs from the repository root.
+    # Decision: docs/decisions/2026-11-11-deploys-skip-paths-that-cannot-reach-production.md.
+    buildFilter:
+      ignoredPaths:
+        - "docs/**"
+        - "README.md"
+        - "AGENTS.md"
+        - "CLAUDE.md"
+        - "CONSTITUTION.md"
+        - "LICENSE"
+        - "infra/**"
+        - ".github/**"
+        - "tests/**"
+        - "evals/**"
+        - "**/*.test.ts"
+        - "**/*.test.tsx"
+        - ".editorconfig"
+        - ".env.example"
+        - ".gitleaks.toml"
+        - "biome.json"
+        - "vitest.config.ts"
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
     startCommand: pnpm --filter @dealingwith/backend start
     healthCheckPath: /healthz

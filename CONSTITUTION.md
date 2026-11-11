@@ -1,6 +1,6 @@
 # DealingWith Agent Constitution
 
-Version 1.0.0 · Ratified 2026-11-08 · Owner: Walter Guzmán (`Walter102202`)
+Version 1.1.0 · Ratified 2026-11-11 (1.0.0 on 2026-11-08) · Owner: Walter Guzmán (`Walter102202`)
 
 This document is the highest authority in this repository. It binds every contributor: the humans on the team and every coding agent (Claude Code, Codex or any other) working on their behalf. When another document, prompt, comment or habit conflicts with it, this document wins. When it is silent, the order of precedence below decides.
 
@@ -99,11 +99,11 @@ A change that breaks one of these does not merge, whatever else it does well. A 
 
 1. **CI runs on every push and every pull request.** Three parallel jobs, defined in `.github/workflows/ci.yml` and described in `docs/ci-cd.md`:
    - `checks`: install with a frozen lockfile, lint, typecheck, the whole test suite.
-   - `build`: production build; the committed migrations match the schema; the built server boots and answers `/healthz` and serves the web.
+   - `build`: production build; the committed migrations match the schema; deleting every path the deploy ignores leaves the build byte-identical; the built server boots and answers `/healthz` and serves the web.
    - `hygiene`: no private or ignored file is tracked; secret scanning over the history.
 2. **Four minutes.** Each job carries `timeout-minutes: 4`. A job that cannot finish in four minutes is a failing job, and the fix is to make it faster, never to raise the limit.
 3. **Red is red.** A failing check blocks merging. Nobody re-runs a failed job hoping for green without a diagnosis. A flaky test is fixed, or quarantined with an issue that names the owner.
-4. **Delivery is automatic and gated.** The hosting provider deploys `main` only after CI passes on that commit (`autoDeployTrigger: checksPass` in the Render Blueprint). No deploy from a laptop. No deploy from a branch.
+4. **Delivery is automatic and gated.** The hosting provider deploys `main` only after CI passes on that commit (`autoDeployTrigger: checksPass` in the Render Blueprint), and only when the commit touches a path that can reach production. A commit that changes only paths in the Blueprint's `buildFilter.ignoredPaths` (documentation, tests, CI and tooling configuration) does not deploy, and CI proves on every run that those paths do not change the build. No deploy from a laptop. No deploy from a branch.
 5. **Rollback is one click, then a fix forward.** A bad deploy is rolled back in the hosting provider to the previous build, and the fix arrives through a normal pull request.
 6. **Production configuration is declared.** Environment variable names and which of them are secrets are listed in `infra/README.md`, next to the Blueprint `render.yaml` at the repository root; values are set in the provider, never in the repository.
 7. **Live services never run in CI.** `pnpm eval:live` and the PayPal and MCP smoke scripts are manual, documented, and report without secrets.
