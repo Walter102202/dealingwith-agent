@@ -32,7 +32,7 @@ One rule holds everywhere: **the model never prices.** Amounts come from the pro
 ## Demo accounts
 
 - **Demo logins (no password):** "Try the live demo" on the home page opens the login page; choose "Enter as client (Mara)" or "Enter as provider (Andes Data Studio)".
-- **PayPal sandbox buyer account for judges:** `TBD: judge account`. This is test data, not a secret; the sandbox never moves real money.
+- **PayPal sandbox buyer account for judges:** email `sb-nyhgp53771637@personal.example.com`, password `Z!_1Jq@$`. This is test data, not a secret; the sandbox never moves real money.
 
 The demo business is Andes Data Studio, a data consultancy. Its client Lukas Retail GmbH (contact Mara Keller) contracted project P1, "Retail KPI dashboard", with three scope clauses: five views including a per-branch view (included), automations, scheduled emails and alerts (excluded), one data source, Shopify (included). Mara's agent holds mandate M1: at most US$100.00 per purchase and US$300.00 in total, funded once with a PayPal authorization. On the hosted demo the mandate is already funded, and "Reset demo data" keeps that funding. If the panel ever reads "Not authorized yet", click "Authorize with PayPal" and approve with the judge account first.
 
