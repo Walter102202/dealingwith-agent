@@ -36,6 +36,8 @@ export async function acceptQuote(
   deps: Deps,
   input: { quoteId: string; version: number; actor: Actor },
 ): Promise<AcceptQuoteResult> {
+  // Recorded on every payment an agent's accept creates, including the pay-now a person approves.
+  const acceptedBy = input.actor.kind === 'agent' ? { agentId: input.actor.agent.id } : {};
   const prepared: Prepared = await deps.db.transaction(async (tx) => {
     const first = await getQuote(tx, input.quoteId, input.version);
     await tx.select().from(requests).where(eq(requests.id, first.requestId)).for('update');
@@ -107,6 +109,7 @@ export async function acceptQuote(
             mode: 'mandate',
             amountCents: quote.totalCents,
             idempotencyKey: `mandate:${quote.id}:${quote.version}`,
+            ...acceptedBy,
             paypalAuthorizationId: mandate.funding.paypalAuthorizationId,
             raw: { mandateId: mandate.id },
           });
@@ -131,6 +134,7 @@ export async function acceptQuote(
       mode: 'pay_now',
       amountCents: quote.totalCents,
       idempotencyKey: `pay:${quote.id}:${quote.version}`,
+      ...acceptedBy,
       raw: { ...(reason ? { reason } : {}), ...(message ? { message } : {}) },
     });
     await updateQuoteStatus(tx, {
@@ -213,6 +217,7 @@ export async function acceptQuote(
       mode: 'pay_now',
       amountCents: quote.totalCents,
       idempotencyKey: `pay:${quote.id}:${quote.version}`,
+      ...acceptedBy,
       raw: { reason: prepared.reason, message: prepared.message },
     });
     row = await paymentRow(deps.db, payment.id);
