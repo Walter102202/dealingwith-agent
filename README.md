@@ -33,6 +33,8 @@ A person on the web and an agent over MCP work on the same versioned quote and t
 
 ## Where PayPal and AI do the work
 
+PayPal is not a checkout button here: it is the spending limit itself. The client approves a budget once in PayPal, PayPal holds it, and every purchase the agent makes is a partial capture of that hold, so an agent can never spend money PayPal has not already set aside. The AI decides what a request is, never what it costs.
+
 | Piece | What it does | Code |
 |---|---|---|
 | PayPal Orders v2 | Pay-now orders (intent `CAPTURE`) and the one-time funding of an agent's budget (intent `AUTHORIZE`) | [`integrations/paypal/sandbox.ts`](apps/backend/src/integrations/paypal/sandbox.ts) |
@@ -68,9 +70,11 @@ Requests 2 and 3 are meant to come from Mara's AI agent. Typed on the web they p
 
 1. "I need a per-branch view and a summary email every Monday." The quote marks the per-branch view as included at US$0.00 (clause C1) and prices the Monday summary at US$80.00 (rule `S2.report.v1`), delivery 1 day. Click "Pay with PayPal", approve on PayPal's page with the judge account, and PayPal brings you back to a receipt; the project gains clause C4 "Weekly Monday summary email". Total paid: US$80.00.
 2. "Add our Amazon sales as a second source, no rush." Sent by Mara's agent over MCP, the quote comes to US$190.00 (US$150.00 base plus US$40.00 for one source). That is over the mandate's US$100.00 per-purchase limit, so Mara's agent gets `approval_required` and an approval link for a human to pay. Leave it unpaid for now: paying it shifts the clause numbers below.
-3. "Alert me by email when any branch's daily sales drop more than 20%." Sent by Mara's agent, the US$60.00 alert (rule `S2.alert.v1`) is within the mandate: the agent's `accept_quote` returns `paid`, PayPal captures US$60.00 against the authorization, clause C5 is appended, and the project page updates live without a reload.
+3. "Alert me by email when any branch's daily sales drop more than 20%." Sent by Mara's agent, the US$60.00 alert (rule `S2.alert.v1`) is within the mandate: the agent's `accept_quote` returns `paid`, PayPal captures US$60.00 against the authorization, clause C5 is appended, and the project page updates live without a reload. The "Agent budget" panel lists the capture as "Paid by" the agent that made it, and the quote card reads "Accepted by" the same agent.
 4. "Send the Monday summary to our regional managers too." Already covered by the clause paid in request 1: included at US$0.00, the button reads "Accept at no cost". Extras already paid for count as contract scope.
 5. "Make the dashboard load faster." One question back: is the slowness caused by data volume or by the dashboard design? Nothing is priced or published until it is answered.
+
+To see PayPal's side of it, sign in at [sandbox.paypal.com](https://www.sandbox.paypal.com) with the judge account: its activity lists the US$80.00 payment, the US$300.00 authorization and the US$60.00 the agent captured from it.
 
 After the five requests, sign out and choose "Enter as provider": you land on the provider dashboard, where the payments and requests you just made are already counted, and the assistant can tell you who still owes what.
 
@@ -136,6 +140,8 @@ Design: [`docs/design/2026-11-07-dealingwith-agent-mvp-design.md`](docs/design/2
 - **Webhooks.** Every event is signature-verified, inserted once by `paypal_event_id`, and applied idempotently; a capture confirmed by webhook before the browser returns ends in the same state (`apps/backend/src/workflows/webhooks.ts`, `apps/backend/src/api/routes/webhooks.ts`).
 - **Idempotency keys.** Each payment has a unique key (`pay:<quoteId>:<version>` or `mandate:<quoteId>:<version>`) that is also the `PayPal-Request-Id` of the creating call (a renewed order appends the attempt number), so a retry or a double click never creates a second payment (`apps/backend/src/modules/payments/payments.ts`).
 - **Gateway.** One interface with a mock for local work and a sandbox implementation for the hosted demo; money leaves our code only as integer cents (`apps/backend/src/integrations/paypal/`).
+
+**Next with PayPal** ([`docs/roadmap.md`](docs/roadmap.md)): Vault, so the client saves their PayPal wallet once and the mandate becomes a standing budget with no 29-day renewal; and PayPal Invoicing, so the reminders the Collections agent drafts today go out as invoices the client can pay.
 
 ## Provider dashboard (AG Studio)
 
