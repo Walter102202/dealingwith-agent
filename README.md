@@ -73,15 +73,27 @@ After the five requests, sign out and choose "Enter as provider": you land on th
 
 ## Connect your agent
 
-On the project page, "Connect my agent" issues a token (shown once) and prints three snippets with the host already filled in. Below, `<host>` is `dealingwith.si` for the hosted demo.
+On the project page, "Connect my agent" issues a token, shown once, and turns it into something a non-technical client can use. Below, `<host>` is `dealingwith.si` for the hosted demo.
 
-Claude Code:
+**Claude Code: paste a message.** The page shows a ready-to-paste message with a copy button. The client pastes it into Claude Code; the agent runs the setup command itself, keeps the key to itself, and ends by telling the client to close Claude Code and open it again in the same folder, because the new tools load only in a new session. The message as copied:
 
 ```text
+Please connect yourself to DealingWith, where I order work from my service provider. Once connected, you can request quotes for me and pay them within the budget I approved.
+
+1. Run this command in the terminal. It saves the connection for this folder:
+
 claude mcp add --transport http dealingwith https://<host>/mcp --header "Authorization: Bearer dwa_…"
+
+2. If it says dealingwith already exists, run `claude mcp remove dealingwith -s local`, then run the command above again.
+
+3. The part that starts with dwa_ is a secret key. Do not repeat it, show it or save it anywhere else.
+
+4. When it works, tell me in one sentence that I need to close Claude Code and open it again in this same folder before you can use DealingWith.
 ```
 
-Cursor (`.cursor/mcp.json`):
+**Claude Desktop or claude.ai: paste a link.** These connectors cannot send headers, so they use a capability URL: Settings → Connectors → Add custom connector, paste `https://<host>/mcp/dwa_…`, choose "No sign in". Treat the link as a secret: anyone with it can act as your agent.
+
+**Technical setup**, behind a disclosure on the same card: the bare Claude Code command above, the raw token, and the Cursor configuration (`.cursor/mcp.json`):
 
 ```json
 {
@@ -93,8 +105,6 @@ Cursor (`.cursor/mcp.json`):
   }
 }
 ```
-
-Claude Desktop and claude.ai custom connectors cannot send headers, so they use a capability URL. Settings → Connectors → Add custom connector, paste `https://<host>/mcp/dwa_…`, choose "No sign in". Treat the URL as a secret: anyone with the link can act as your agent.
 
 Tools: `list_services`, `list_projects`, `get_project`, `request_quote`, `answer_questions`, `get_quote`, `accept_quote`, `get_payment`, `get_mandate`. `accept_quote` spends money only within the client's mandate; otherwise it returns an approval link. The full guide, with request and response shapes, is [`docs/mcp.md`](docs/mcp.md).
 

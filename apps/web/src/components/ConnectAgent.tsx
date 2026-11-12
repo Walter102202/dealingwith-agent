@@ -7,6 +7,7 @@ import {
 import { type FormEvent, useId, useState } from 'react';
 import { api, errorMessage } from '../api/client.js';
 import { routes } from '../api/routes.js';
+import { claudeCodeMessage, connectorUrl } from '../lib/agent-setup.js';
 import { Button } from './Button.js';
 import styles from './ConnectAgent.module.css';
 import { CopyField } from './CopyField.js';
@@ -19,7 +20,11 @@ interface ConnectAgentProps {
   onChange: () => Promise<void>;
 }
 
-/** Issues agent tokens, shows the connection snippets once, and lists and revokes agents. */
+/**
+ * Issues agent tokens and shows them once: first a message to paste into
+ * Claude Code and the Claude Desktop / claude.ai connector link, then the
+ * technical snippets behind a disclosure. Lists and revokes agents.
+ */
 export function ConnectAgent({ agents, mandateId, onChange }: ConnectAgentProps) {
   // The API keeps revoked agents in the list (with `revokedAt`); only live ones are shown.
   const liveAgents = agents.filter((agent) => agent.revokedAt === undefined);
@@ -81,10 +86,46 @@ export function ConnectAgent({ agents, mandateId, onChange }: ConnectAgentProps)
       {issued ? (
         <div className={styles.issued} aria-live="polite">
           <p className={styles.warning}>Copy it now; it is not shown again.</p>
-          <CopyField label="Agent token" value={issued.token} />
-          <CopyField label="Claude Desktop" value={issued.snippets.claudeDesktop} multiline />
-          <CopyField label="Claude Code" value={issued.snippets.claudeCode} multiline />
-          <CopyField label="Cursor" value={issued.snippets.cursor} multiline />
+          <p className="small">
+            It holds a secret key that lets an agent spend from your budget. Give it only to your
+            own AI agent.
+          </p>
+
+          <section className={styles.option} aria-labelledby={`${id}-code`}>
+            <h3 id={`${id}-code`} className={styles.optionTitle}>
+              Claude Code
+            </h3>
+            <p className="muted small">
+              Paste this message into Claude Code. It connects itself and tells you the one step
+              left.
+            </p>
+            <CopyField
+              label="Message for Claude Code"
+              value={claudeCodeMessage(issued.snippets)}
+              prose
+            />
+          </section>
+
+          <section className={styles.option} aria-labelledby={`${id}-desktop`}>
+            <h3 id={`${id}-desktop`} className={styles.optionTitle}>
+              Claude Desktop or claude.ai
+            </h3>
+            <p className="muted small">
+              Open Settings, then Connectors, then Add custom connector. Paste this link and choose
+              “No sign in”.
+            </p>
+            <CopyField label="Connector link" value={connectorUrl(issued.snippets)} />
+          </section>
+
+          <details className={styles.technical}>
+            <summary>Technical setup (terminal, Cursor, raw token)</summary>
+            <div className={styles.technicalBody}>
+              <CopyField label="Claude Code command" value={issued.snippets.claudeCode} multiline />
+              <CopyField label="Cursor (mcp.json)" value={issued.snippets.cursor} multiline />
+              <CopyField label="Agent token" value={issued.token} />
+            </div>
+          </details>
+
           <Button variant="ghost" onClick={() => setIssued(null)}>
             Done, I copied it
           </Button>
