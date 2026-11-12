@@ -21,10 +21,11 @@ afterAll(async () => {
   await closeDb(db);
 });
 describe('getMandate', () => {
-  test('maps seeded funding to the contract', async () => {
+  test('maps the seeded, unfunded mandate to the contract', async () => {
     const m = MandateSchema.parse(await getMandate(db, DEMO.mandate.id));
     expect(remainingCents(m)).toBe(30000);
-    expect(fundingHeadroomCents(m)).toBe(200000);
+    expect(fundingHeadroomCents(m)).toBe(0);
+    expect(m.funding.paypalAuthorizationId).toBeUndefined();
   });
 });
 describe('findMandateForProject', () => {

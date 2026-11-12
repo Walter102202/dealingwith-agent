@@ -13,7 +13,7 @@ import { DEMO_IDS } from './demo-ids.js';
 /**
  * In-memory demo state for fixtures mode: the seed of `demo-data.ts` as the
  * web sees it through the API. `resetState()` restores it, keeping the
- * mandate's funding and the connected agents, exactly like `resetDemoData`.
+ * connected agents and leaving the mandate unfunded, exactly like `resetDemoData`.
  */
 
 export const BUSINESS = { id: DEMO_IDS.business, name: 'Andes Data Studio' } as const;
@@ -140,7 +140,7 @@ const initialMandate = (): Mandate => ({
   currency: 'USD',
   expiresAt: '2026-12-31T23:59:59.000Z',
   status: 'pending',
-  funding: { fundingAmountCents: 200000, fundingCapturedCents: 0 },
+  funding: { fundingAmountCents: 0, fundingCapturedCents: 0 },
 });
 
 export interface FixtureState {
@@ -187,20 +187,16 @@ export function persist(): void {
 
 export let state: FixtureState = load() ?? freshState();
 
-/** Back to the seed. Funding and agents survive, like the backend's reset. */
+/** Back to the seed. Agents survive and the mandate is unfunded again, like the backend's reset. */
 export function resetState(): void {
   const previous = state;
   state = freshState();
   state.session = previous.session;
   state.agents = previous.agents;
-  if (previous.mandate && state.mandate) {
-    state.mandate.funding = previous.mandate.funding;
-    if (previous.mandate.status === 'active') state.mandate.status = 'active';
-  }
   persist();
 }
 
-/** Full reset, for tests: forgets the session, the agents and the funding too. */
+/** Full reset, for tests: forgets the session and the agents too. */
 export function hardResetState(): void {
   state = freshState();
   persist();
