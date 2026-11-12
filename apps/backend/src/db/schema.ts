@@ -233,6 +233,8 @@ export const payments = pgTable(
     quoteId: uuid('quote_id').notNull(),
     quoteVersion: integer('quote_version').notNull(),
     mode: paymentMode('mode').notNull().$type<PaymentMode>(),
+    /** The connected agent whose accept created this payment; null when a person accepted on the web. */
+    agentId: uuid('agent_id').references(() => clientAgents.id),
     paypalOrderId: text('paypal_order_id'),
     paypalAuthorizationId: text('paypal_authorization_id'),
     paypalCaptureId: text('paypal_capture_id'),

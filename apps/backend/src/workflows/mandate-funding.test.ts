@@ -1,6 +1,6 @@
-import { randomUUID } from 'node:crypto';
-import type { ClientAgent, LineItemIntent } from '@dealingwith/contracts';
+import type { LineItemIntent } from '@dealingwith/contracts';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { issueAgentToken } from '../access/agent-tokens.js';
 import { DEMO } from '../db/demo-data.js';
 import { resetDemoData } from '../db/seed.js';
 import { fundingHeadroomCents, getMandate, updateMandate } from '../modules/mandates/mandates.js';
@@ -99,14 +99,11 @@ describe('mandate funding', () => {
       label: id,
       rationale: id,
     });
-    const agent: ClientAgent = {
-      id: randomUUID(),
+    const { agent } = await issueAgentToken(h.deps.db, {
       clientId: DEMO.client.id,
       label: "Mara's assistant",
-      scopes: ['quote:request', 'quote:accept'],
       mandateId: DEMO.mandate.id,
-      createdAt: new Date(0).toISOString(),
-    };
+    });
     const accept = async (intents: LineItemIntent[]) => {
       const q = await publishedQuote(h.deps, { intents, channel: 'mcp' });
       return acceptQuote(h.deps, { quoteId: q.id, version: 1, actor: { kind: 'agent', agent } });

@@ -25,6 +25,8 @@ export const PaymentSchema = z.object({
   paypalCaptureId: z.string().optional(),
   /** The mandate a `mode: 'mandate'` payment was charged against (spec section 4: every autonomous capture points to a mandate). */
   mandateId: IdSchema.optional(),
+  /** The connected agent whose accept created this payment; absent when a person accepted on the web. */
+  agentId: IdSchema.optional(),
   amountCents: CentsSchema,
   currency: CurrencySchema,
   status: PaymentStatusSchema,
