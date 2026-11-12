@@ -21,6 +21,38 @@
   font-weight: 500;
 }
 
+.option {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid rgb(var(--ink-rgb) / 0.12);
+}
+
+.optionTitle {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.technical {
+  padding-top: var(--space-3);
+  border-top: 1px solid rgb(var(--ink-rgb) / 0.12);
+}
+
+.technical > summary {
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+.technicalBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
 .form {
   align-self: stretch;
   display: flex;

@@ -1,5 +1,5 @@
-import type { ClientAgent } from '@dealingwith/contracts';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { type ClientAgent, connectionSnippets } from '@dealingwith/contracts';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const apiMock = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), del: vi.fn() }));
@@ -12,9 +12,12 @@ vi.mock('../api/client.js', async (importOriginal) => {
 });
 
 import { DEMO_IDS } from '../api/fixtures/demo-ids.js';
+import { claudeCodeMessage } from '../lib/agent-setup.js';
 import { ConnectAgent } from './ConnectAgent.js';
 
 const token = `dwa_${'a'.repeat(43)}`;
+const appUrl = 'https://dealingwith.example';
+const snippets = connectionSnippets({ appUrl, token });
 const agent: ClientAgent = {
   id: 'e0000000-0000-4000-8000-000000000001',
   clientId: DEMO_IDS.client,
@@ -35,16 +38,8 @@ describe('ConnectAgent', () => {
     expect(screen.queryByRole('list', { name: 'Connected agents' })).not.toBeInTheDocument();
   });
 
-  it('issues a token once and shows the three connection snippets', async () => {
-    apiMock.post.mockResolvedValue({
-      token,
-      agent,
-      snippets: {
-        claudeDesktop: 'desktop snippet',
-        claudeCode: 'code snippet',
-        cursor: 'cursor snippet',
-      },
-    });
+  const issue = async () => {
+    apiMock.post.mockResolvedValue({ token, agent, snippets });
     const onChange = vi.fn(async () => {});
     render(<ConnectAgent agents={[]} onChange={onChange} />);
     fireEvent.click(screen.getByRole('button', { name: 'Connect my agent' }));
@@ -52,17 +47,63 @@ describe('ConnectAgent', () => {
       target: { value: "Mara's assistant" },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Create token' }));
-    expect(await screen.findByText(token)).toBeInTheDocument();
-    expect(screen.getByText('Copy it now; it is not shown again.')).toBeInTheDocument();
-    expect(screen.getByText('Claude Desktop')).toBeInTheDocument();
-    expect(screen.getByText('Claude Code')).toBeInTheDocument();
-    expect(screen.getByText('Cursor')).toBeInTheDocument();
+    await screen.findByText('Copy it now; it is not shown again.');
+    return onChange;
+  };
+
+  it('issues a token once and leads with the message for Claude Code', async () => {
+    const onChange = await issue();
+    const code = screen.getByRole('heading', { name: 'Claude Code' });
+    const desktop = screen.getByRole('heading', { name: 'Claude Desktop or claude.ai' });
+    expect(code.compareDocumentPosition(desktop) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText('Message for Claude Code')).toBeInTheDocument();
+    const message = screen.getByText(/Please connect yourself to DealingWith/);
+    expect(message.textContent).toBe(claudeCodeMessage(snippets));
     expect(apiMock.post).toHaveBeenCalledWith(
       '/api/agents',
       { label: "Mara's assistant" },
       expect.anything(),
     );
     expect(onChange).toHaveBeenCalled();
+  });
+
+  it('gives Claude Desktop and claude.ai the connector link alone', async () => {
+    await issue();
+    expect(
+      screen.getByRole('heading', { name: 'Claude Desktop or claude.ai' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(`${appUrl}/mcp/${token}`)).toBeInTheDocument();
+  });
+
+  it('keeps the command, the Cursor JSON and the raw token behind the technical disclosure', async () => {
+    await issue();
+    const disclosure = screen
+      .getByText('Technical setup (terminal, Cursor, raw token)')
+      .closest('details');
+    expect(disclosure).not.toBeNull();
+    expect(disclosure).not.toHaveAttribute('open');
+    const inside = within(disclosure as HTMLElement);
+    expect(inside.getByText('Claude Code command')).toBeInTheDocument();
+    expect(inside.getByText(snippets.claudeCode)).toBeInTheDocument();
+    expect(inside.getByText('Cursor (mcp.json)')).toBeInTheDocument();
+    expect(inside.getByText(token)).toBeInTheDocument();
+    expect(screen.getAllByText(token)).toHaveLength(1);
+  });
+
+  it('copies the message exactly as shown', async () => {
+    const original = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+    const writeText = vi.fn(async () => {});
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    try {
+      await issue();
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Copy', description: 'Message for Claude Code' }),
+      );
+      await waitFor(() => expect(writeText).toHaveBeenCalledWith(claudeCodeMessage(snippets)));
+    } finally {
+      if (original) Object.defineProperty(navigator, 'clipboard', original);
+      else Reflect.deleteProperty(navigator, 'clipboard');
+    }
   });
 
   it('revokes an agent and tells the page to refresh', async () => {
