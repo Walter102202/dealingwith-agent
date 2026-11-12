@@ -44,6 +44,4 @@
   line-height: 1.55;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  max-height: 22rem;
-  overflow-y: auto;
 }

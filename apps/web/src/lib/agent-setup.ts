@@ -15,7 +15,7 @@ export function claudeCodeMessage(snippets: Pick<ConnectionSnippets, 'claudeCode
     '1. Run this command in the terminal. It saves the connection for this folder:',
     snippets.claudeCode,
     '2. If it says dealingwith already exists, run `claude mcp remove dealingwith -s local`, then run the command above again.',
-    '3. The part that starts with dwa_ is a secret key. Do not repeat it, show it or save it anywhere else.',
+    '3. The part that starts with dwa_ is a secret key. Do not repeat it in your replies or save it anywhere else.',
     '4. When it works, tell me in one sentence that I need to close Claude Code and open it again in this same folder before you can use DealingWith.',
   ].join('\n\n');
 }

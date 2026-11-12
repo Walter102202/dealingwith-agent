@@ -53,11 +53,12 @@ describe('ConnectAgent', () => {
 
   it('issues a token once and leads with the message for Claude Code', async () => {
     const onChange = await issue();
-    expect(screen.getByRole('heading', { name: 'Claude Code' })).toBeInTheDocument();
+    const code = screen.getByRole('heading', { name: 'Claude Code' });
+    const desktop = screen.getByRole('heading', { name: 'Claude Desktop or claude.ai' });
+    expect(code.compareDocumentPosition(desktop) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByText('Message for Claude Code')).toBeInTheDocument();
     const message = screen.getByText(/Please connect yourself to DealingWith/);
     expect(message.textContent).toBe(claudeCodeMessage(snippets));
-    expect(message.textContent).toContain(snippets.claudeCode);
     expect(apiMock.post).toHaveBeenCalledWith(
       '/api/agents',
       { label: "Mara's assistant" },
@@ -86,15 +87,23 @@ describe('ConnectAgent', () => {
     expect(inside.getByText(snippets.claudeCode)).toBeInTheDocument();
     expect(inside.getByText('Cursor (mcp.json)')).toBeInTheDocument();
     expect(inside.getByText(token)).toBeInTheDocument();
+    expect(screen.getAllByText(token)).toHaveLength(1);
   });
 
   it('copies the message exactly as shown', async () => {
+    const original = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
     const writeText = vi.fn(async () => {});
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
-    await issue();
-    const field = screen.getByText('Message for Claude Code').parentElement as HTMLElement;
-    fireEvent.click(within(field).getByRole('button', { name: 'Copy' }));
-    await waitFor(() => expect(writeText).toHaveBeenCalledWith(claudeCodeMessage(snippets)));
+    try {
+      await issue();
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Copy', description: 'Message for Claude Code' }),
+      );
+      await waitFor(() => expect(writeText).toHaveBeenCalledWith(claudeCodeMessage(snippets)));
+    } finally {
+      if (original) Object.defineProperty(navigator, 'clipboard', original);
+      else Reflect.deleteProperty(navigator, 'clipboard');
+    }
   });
 
   it('revokes an agent and tells the page to refresh', async () => {

@@ -87,14 +87,12 @@ export function ConnectAgent({ agents, mandateId, onChange }: ConnectAgentProps)
         <div className={styles.issued} aria-live="polite">
           <p className={styles.warning}>Copy it now; it is not shown again.</p>
           <p className="small">
-            It holds a secret key that lets an agent spend from your budget. Give it only to your
-            own AI agent.
+            Everything below holds a secret key that lets an agent spend from your budget. Give it
+            only to your own AI agent.
           </p>
 
-          <section className={styles.option} aria-labelledby={`${id}-code`}>
-            <h3 id={`${id}-code`} className={styles.optionTitle}>
-              Claude Code
-            </h3>
+          <section className={styles.option}>
+            <h3 className={styles.optionTitle}>Claude Code</h3>
             <p className="muted small">
               Paste this message into Claude Code. It connects itself and tells you the one step
               left.
@@ -106,10 +104,8 @@ export function ConnectAgent({ agents, mandateId, onChange }: ConnectAgentProps)
             />
           </section>
 
-          <section className={styles.option} aria-labelledby={`${id}-desktop`}>
-            <h3 id={`${id}-desktop`} className={styles.optionTitle}>
-              Claude Desktop or claude.ai
-            </h3>
+          <section className={styles.option}>
+            <h3 className={styles.optionTitle}>Claude Desktop or claude.ai</h3>
             <p className="muted small">
               Open Settings, then Connectors, then Add custom connector. Paste this link and choose
               “No sign in”.
