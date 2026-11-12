@@ -40,8 +40,8 @@ PayPal is not a checkout button here: it is the spending limit itself. The clien
 | PayPal Orders v2 | Pay-now orders (intent `CAPTURE`) and the one-time funding of an agent's budget (intent `AUTHORIZE`) | [`integrations/paypal/sandbox.ts`](apps/backend/src/integrations/paypal/sandbox.ts) |
 | PayPal Payments v2 | Each purchase an agent makes is a partial capture of that authorization (`final_capture: false`) | [`workflows/accept-quote.ts`](apps/backend/src/workflows/accept-quote.ts) |
 | PayPal Webhooks | Six events, signature-verified with PayPal and applied once per event id | [`workflows/webhooks.ts`](apps/backend/src/workflows/webhooks.ts) |
-| Quoting agent | Claude Opus 5.5 (or OpenAI `gpt-6.1-sol`, same prompts) classifies every ask as included, extra or missing information. It returns a structured classification per line, never an amount | [`apps/backend/src/agent/`](apps/backend/src/agent/) |
-| MCP server | Nine tools that let any MCP client (Claude, Claude Code, Cursor) request quotes and pay within the client's mandate (the budget the client pre-authorized) | [`apps/backend/src/mcp/`](apps/backend/src/mcp/) |
+| Quoting agent | Claude Opus 5.5 (or OpenAI `gpt-6.1-sol`, same prompts) classifies every ask as included, extra or unclear. It returns a structured classification per line, never an amount | [`apps/backend/src/agent/`](apps/backend/src/agent/) |
+| MCP server | Nine tools that let the client's agent, in any app that speaks MCP (Claude Code, Claude Desktop, Cursor), request quotes and pay within the mandate | [`apps/backend/src/mcp/`](apps/backend/src/mcp/) |
 | Dashboard assistant | Claude Sonnet 5.5 behind the AG Studio Agent Framework, with a custom Collections agent that drafts payment reminders | [`apps/web/src/dashboard/assistant/`](apps/web/src/dashboard/assistant/), [`apps/backend/src/assistant/`](apps/backend/src/assistant/) |
 
 One rule holds everywhere: **the model never prices.** Amounts come from the provider's catalog through the pricing engine, in integer cents, and every line cites the contract clause or the pricing rule behind it.
@@ -57,13 +57,13 @@ The demo business is Andes Data Studio, a data consultancy. Its client Lukas Ret
 - **C2, excluded:** automations, scheduled emails and alerts
 - **C3, included:** one data source, Shopify
 
-Mara's agent holds mandate M1: at most US$100.00 per purchase and US$300.00 in total, until 31 Dec 2026. Every demo run starts with that budget proposed but not assigned: Mara assigns it from the project page and approves once in PayPal, which holds the US$300.00 total and captures only what the agent spends. "Reset demo data" returns it to unassigned.
+The project has one agent budget, mandate M1: at most US$100.00 per purchase and US$300.00 in total, until 31 Dec 2026. Every demo run starts with that budget proposed but not assigned: Mara assigns it from the project page and approves once in PayPal, which holds the US$300.00 total and captures only what the agent spends.
 
 ## How judges test in two minutes
 
-Sign in as Mara and type the requests into the box labelled "Describe what you need" on the project page. Start from the seeded state, where the project lists three clauses; to restore it, sign in as the provider and click "Reset demo data" (inside "Menu" on a narrow window).
+Sign in as Mara and type the requests into the box labelled "Describe what you need" on the project page. Start from the seeded state, where the project lists three clauses and the agent budget is not assigned; to restore it, sign in as the provider and click "Reset demo data" (inside "Menu" on a narrow window).
 
-Requests 2 and 3 are meant to come from Mara's AI agent. Typed on the web they produce the same quotes, but a person pays with PayPal and the mandate is not used. To watch the agent pay on its own, do two things after request 1:
+Requests 2 and 3 are meant to come from Mara's AI agent. Typed on the web they produce the same quotes, but a person pays with PayPal and the mandate is not used. To watch the agent pay on its own, do two things before request 2:
 
 - **Assign the budget.** In the "Agent budget" panel click "Assign a budget to your agent", keep the proposed limits, click "Continue to PayPal" and approve with the judge account. Back on the project page the panel reads "Active" and "Backed by PayPal authorization", US$300.00 left to capture.
 - **Connect an agent** ([Connect your agent](#connect-your-agent)) and send requests 2 and 3 from it.
@@ -98,7 +98,7 @@ claude mcp add --transport http dealingwith https://<host>/mcp --header "Authori
 4. When it works, tell me in one sentence that I need to close Claude Code and open it again in this same folder before you can use DealingWith.
 ```
 
-**Claude Desktop or claude.ai: paste a link.** These connectors cannot send headers, so they use a capability URL: Settings → Connectors → Add custom connector, paste `https://<host>/mcp/dwa_…`, choose "No sign in". Treat the link as a secret: anyone with it can act as your agent.
+**Claude Desktop or claude.ai: paste a link.** These connectors cannot send a custom header, so they use a capability URL: Settings → Connectors → Add custom connector, paste `https://<host>/mcp/dwa_…`, choose "No sign in". Treat the link as a secret: anyone with it can act as your agent.
 
 **Technical setup**, behind a disclosure on the same card: the bare Claude Code command above, the raw token, and the Cursor configuration (`.cursor/mcp.json`):
 
@@ -117,12 +117,12 @@ Tools: `list_services`, `list_projects`, `get_project`, `request_quote`, `answer
 
 ## Architecture
 
-One Node process (Hono) serves the JSON API, the MCP endpoint, the PayPal webhook and the built web app. The quoting agent says what each line is (included, or which pricing rule applies); a deterministic pricing engine turns them into amounts; a policy module gates agent spending against the mandate. Details in [`docs/architecture.md`](docs/architecture.md). The hosted demo runs on Render from [`render.yaml`](render.yaml): a commit on `main` deploys only after CI passes, and a commit that touches only docs, tests or CI files does not deploy at all ([`infra/README.md`](infra/README.md), [`docs/ci-cd.md`](docs/ci-cd.md)).
+One Node process (Hono) serves the JSON API, the MCP endpoint, the PayPal webhook and the built web app. The quoting agent says what each line is (included, or which pricing rule applies); a deterministic pricing engine turns those lines into amounts; a policy module gates agent spending against the mandate. Details in [`docs/architecture.md`](docs/architecture.md). The hosted demo runs on Render from [`render.yaml`](render.yaml): a commit on `main` deploys only after CI passes, and a commit that touches only docs, tests or CI files does not deploy at all ([`infra/README.md`](infra/README.md), [`docs/ci-cd.md`](docs/ci-cd.md)).
 
 ```mermaid
 flowchart LR
   Browser["Browser (React web app, AG Studio dashboard)"] -->|JSON API, SSE| Backend["Hono backend: API, MCP, webhooks, static web"]
-  Agent["MCP client (Claude Code, Claude Desktop, Cursor)"] -->|Streamable HTTP /mcp| Backend
+  Agent["Client's agent (Claude Code, Claude Desktop, Cursor)"] -->|Streamable HTTP /mcp| Backend
   Backend --> DB[("Postgres")]
   Backend -->|orders, authorizations, captures| PayPal["PayPal sandbox"]
   PayPal -->|webhooks| Backend
@@ -134,14 +134,14 @@ Design: [`docs/design/2026-11-07-dealingwith-agent-mvp-design.md`](docs/design/2
 
 ## PayPal flows
 
-- **Pay now.** Accepting a quote creates an order with intent `CAPTURE` and returns the approval link; the browser goes to PayPal's approval page (the mock approve page in mock mode), PayPal returns to `/pay/return`, and our server captures the order and shows the receipt. The same single path serves the web and the link the MCP tool hands to a human (`apps/backend/src/workflows/accept-quote.ts`, `apps/backend/src/workflows/pay-now.ts`, `apps/backend/src/workflows/capture.ts`).
-- **Mandate funding.** "Assign a budget to your agent" saves any limits the client edited, then creates an order with intent `AUTHORIZE` for the total limit (the total minus what is already spent, on "Re-authorize"); after approval we authorize it and the mandate becomes active, "Backed by PayPal authorization". Captures never exceed the authorization, so PayPal's over-capture allowance is never needed. "Reset demo data" returns the mandate to unassigned, so every demo run shows this step (`apps/backend/src/workflows/mandate-funding.ts`, `apps/web/src/components/MandateForms.tsx`).
-- **Agent pays within the mandate.** The policy module checks the limits and reserves the spend under a row lock, then we capture part of the authorization with `final_capture: false`; when a limit or mandate-state check fails the agent gets an approval link instead, and a wrong project, currency or stale version is denied. Every payment an agent's accept creates records that agent (`payments.agent_id`), and so does the accepted quote version, even when it is fully included and nothing is paid (`quotes.accepted_agent_id`); the project page shows the name ("Paid by", "Accepted by"). The agents of one client share the project's budget, and `get_mandate` reports the same mandate `accept_quote` charges (`apps/backend/src/modules/policies/evaluate.ts`, `apps/backend/src/modules/policies/reserve.ts`, `apps/backend/src/workflows/accept-quote.ts`).
+- **Pay now.** Accepting a quote creates an order with intent `CAPTURE` and returns the approval link; the browser goes to PayPal's approval page (the mock approve page in mock mode), PayPal returns to `/pay/return`, and our server captures the order and shows the receipt. The same path serves the web and the link the MCP tool hands to a human (`apps/backend/src/workflows/accept-quote.ts`, `apps/backend/src/workflows/pay-now.ts`, `apps/backend/src/workflows/capture.ts`).
+- **Mandate funding.** "Assign a budget to your agent" saves any limits the client edited, then creates an order with intent `AUTHORIZE` for the total limit (the total minus what is already spent, on "Re-authorize"); after approval we authorize it and the mandate becomes active, "Backed by PayPal authorization". Captures never exceed the authorization, so PayPal's over-capture allowance is never needed (`apps/backend/src/workflows/mandate-funding.ts`, `apps/web/src/components/MandateForms.tsx`).
+- **Agent pays within the mandate.** The policy module checks the limits and reserves the spend under a row lock, then we capture part of the authorization with `final_capture: false`; when a limit or mandate-state check fails the agent gets an approval link instead, and a wrong project, currency or stale version is denied. Every payment an agent's accept creates records that agent (`payments.agent_id`), and so does the accepted quote version, even when it is fully included and nothing is paid (`quotes.accepted_agent_id`); the project page shows the name ("Paid by", "Accepted by"). The agents of one client share the project's mandate, and `get_mandate` returns it (`apps/backend/src/modules/policies/evaluate.ts`, `apps/backend/src/modules/policies/reserve.ts`, `apps/backend/src/workflows/accept-quote.ts`).
 - **Webhooks.** Every event is signature-verified, inserted once by `paypal_event_id`, and applied idempotently; a capture confirmed by webhook before the browser returns ends in the same state (`apps/backend/src/workflows/webhooks.ts`, `apps/backend/src/api/routes/webhooks.ts`).
 - **Idempotency keys.** Each payment has a unique key (`pay:<quoteId>:<version>` or `mandate:<quoteId>:<version>`) that is also the `PayPal-Request-Id` of the creating call (a renewed order appends the attempt number), so a retry or a double click never creates a second payment (`apps/backend/src/modules/payments/payments.ts`).
-- **Gateway.** One interface with a mock for local work and a sandbox implementation for the hosted demo; money leaves our code only as integer cents (`apps/backend/src/integrations/paypal/`).
+- **Gateway.** One interface with a mock for local work and a sandbox implementation for the hosted demo. Amounts are integer cents throughout our code and become PayPal's decimal strings (`"80.00"`) only inside the gateway (`apps/backend/src/integrations/paypal/`).
 
-**Next with PayPal** ([`docs/roadmap.md`](docs/roadmap.md)): Vault, so the client saves their PayPal wallet once and the mandate becomes a standing budget with no 29-day renewal; and PayPal Invoicing, so the reminders the Collections agent drafts today go out as invoices the client can pay.
+**Next with PayPal** ([`docs/roadmap.md`](docs/roadmap.md)): Vault, so the client saves their PayPal wallet once and the mandate becomes a standing budget that never needs re-authorizing; and PayPal Invoicing, so the reminders the Collections agent drafts today go out as invoices the client can pay.
 
 ## Provider dashboard (AG Studio)
 
@@ -180,10 +180,10 @@ Decisions: [custom widgets](docs/decisions/2026-11-10-studio-custom-widgets.md),
 ## Known limits
 
 - Sandbox only. Live PayPal does not exist in this codebase.
-- MCP authentication is a per-agent bearer token, revocable from the portal. OAuth is the production path.
-- A PayPal authorization lasts 29 days, in the sandbox too (live adds a 3-day honor period). Each demo run authorizes a fresh one when Mara assigns the budget, and the previous one is left to expire rather than voided. When the funding headroom falls below the per-purchase limit the mandate panel offers "Re-authorize". Vault is the production path for standing mandates.
+- MCP authentication is a per-agent bearer token, revocable from the project page. OAuth is the production path.
+- A PayPal authorization lasts 29 days, in the sandbox too, and PayPal guarantees the funds only for the first 3 (the honor period); after that a capture depends on the funds still being available. Each demo run authorizes a fresh one when Mara assigns the budget, and the previous one is left to expire rather than voided. When the amount left to capture falls below the per-purchase limit, the "Agent budget" panel offers "Re-authorize".
 - Sessions are demo logins (signed cookies), not real authentication.
-- One business, seeded. The provider's services, pricing rules, the contract and its clauses are demo data; there are no screens yet to create or edit them. The data model carries `business_id` everywhere.
+- One business, seeded. The provider's services, pricing rules, the contract and its clauses are demo data; there are no screens yet to create or edit them. The data model is already scoped by business: services, clients, projects and mandates carry `business_id`.
 - Quotes reach the client as soon as they are priced; the provider does not review them first.
 - The dashboard assistant answers at most 400 turns per UTC day across all visitors, and drafts reminders without sending them. Card backgrounds and borders are outside what Studio's agents change.
 - Without an AG Studio license key the dashboard renders in trial mode with a watermark.
@@ -202,7 +202,11 @@ pnpm build      # every package to dist/
 pnpm --filter @dealingwith/backend seed   # seed the demo data into DATABASE_URL
 ```
 
-Open http://localhost:5173. Everything runs locally without credentials: `PAYPAL_MODE=mock`, `LLM_PROVIDER=mock` and an embedded PostgreSQL (PGlite). Copy `.env.example` to `.env` to change defaults: PayPal sandbox credentials with `PAYPAL_MODE=sandbox`, a model with `LLM_PROVIDER=anthropic` or `openai` and its key (`ANTHROPIC_API_KEY` also turns on the dashboard assistant). For the mock payment round-trip in development set `APP_URL=http://localhost:5173`, because the default `http://localhost:3000` serves only a built web (`pnpm build`). How the team works, for humans and agents: [`CONSTITUTION.md`](CONSTITUTION.md), then [`AGENTS.md`](AGENTS.md). CI gates and deployment: [`docs/ci-cd.md`](docs/ci-cd.md). Decisions: [`docs/decisions/`](docs/decisions/).
+Open http://localhost:5173. Everything runs locally without credentials: `PAYPAL_MODE=mock`, `LLM_PROVIDER=mock` and an embedded PostgreSQL (PGlite).
+
+Copy `.env.example` to `.env` to change defaults: PayPal sandbox credentials with `PAYPAL_MODE=sandbox`, a model with `LLM_PROVIDER=anthropic` or `openai` and its key (`ANTHROPIC_API_KEY` also turns on the dashboard assistant). For the mock payment round-trip in development set `APP_URL=http://localhost:5173`, because the default `http://localhost:3000` serves the web app only after `pnpm build`.
+
+How the team works, for humans and agents: [`CONSTITUTION.md`](CONSTITUTION.md), then [`AGENTS.md`](AGENTS.md). CI gates and deployment: [`docs/ci-cd.md`](docs/ci-cd.md). Decisions: [`docs/decisions/`](docs/decisions/).
 
 ## License
 
