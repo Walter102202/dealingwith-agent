@@ -7,10 +7,12 @@ interface CopyFieldProps {
   value: string;
   /** Multi-line values (JSON, commands) render in a code block. */
   multiline?: boolean;
+  /** A message in plain words, rendered multi-line in the body font. */
+  prose?: boolean;
 }
 
 /** A read-only value with a copy button. "Copied" confirms for two seconds. */
-export function CopyField({ label, value, multiline = false }: CopyFieldProps) {
+export function CopyField({ label, value, multiline = false, prose = false }: CopyFieldProps) {
   const id = useId();
   const [copied, setCopied] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -36,7 +38,9 @@ export function CopyField({ label, value, multiline = false }: CopyFieldProps) {
           {copied ? 'Copied' : 'Copy'}
         </Button>
       </div>
-      {multiline ? (
+      {prose ? (
+        <pre className={styles.prose}>{value}</pre>
+      ) : multiline ? (
         <pre className={styles.code}>{value}</pre>
       ) : (
         <code className={styles.value}>{value}</code>
