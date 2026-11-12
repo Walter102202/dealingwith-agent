@@ -104,6 +104,11 @@
   font-size: var(--text-xs);
 }
 
+.paidBy {
+  display: block;
+  color: var(--ink-faint);
+}
+
 .amount {
   display: inline-flex;
   align-items: baseline;

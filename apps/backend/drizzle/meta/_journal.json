@@ -15,6 +15,13 @@
       "when": 1794496124978,
       "tag": "0001_payment_agent",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794500504981,
+      "tag": "0002_quote_accepted_agent",
+      "breakpoints": true
     }
   ]
 }

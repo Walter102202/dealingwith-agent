@@ -56,7 +56,8 @@ export const AcceptQuoteOutputSchema = AcceptQuoteResultSchema;
 export const GetPaymentInputSchema = z.strictObject({ paymentId: IdSchema });
 export const GetPaymentOutputSchema = z.object({ payment: PaymentSchema });
 
-export const GetMandateInputSchema = z.strictObject({});
+/** `projectId` names the project whose budget to read; an agent with its own mandate gets that one either way. */
+export const GetMandateInputSchema = z.strictObject({ projectId: IdSchema.optional() });
 export const GetMandateOutputSchema = z.object({ mandate: MandateSchema.nullable() });
 
 export type ListServicesInput = z.infer<typeof ListServicesInputSchema>;

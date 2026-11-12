@@ -6,9 +6,11 @@ import { DEMO } from '../../db/demo-data.js';
 import { seedDemo } from '../../db/seed.js';
 import { createTestDb } from '../../db/test-db.js';
 import {
+  findLatestMandateForClient,
   findMandateForProject,
   fundingHeadroomCents,
   getMandate,
+  mandateForAgent,
   remainingCents,
 } from './mandates.js';
 
@@ -36,5 +38,26 @@ describe('findMandateForProject', () => {
     expect(
       await findMandateForProject(db, { projectId: randomUUID(), clientId: DEMO.client.id }),
     ).toBeNull();
+  });
+});
+describe('mandateForAgent', () => {
+  const agent = { clientId: DEMO.client.id };
+  test('an agent without its own mandate pays from the project budget, shared by the client agents', async () => {
+    expect(await mandateForAgent(db, agent, DEMO.project.id)).toMatchObject({
+      id: DEMO.mandate.id,
+    });
+    expect(await mandateForAgent(db, agent, randomUUID())).toBeNull();
+    expect(await mandateForAgent(db, agent, undefined)).toBeNull();
+  });
+  test('an attached mandate wins over the project', async () => {
+    expect(
+      await mandateForAgent(db, { ...agent, mandateId: DEMO.mandate.id }, undefined),
+    ).toMatchObject({ id: DEMO.mandate.id });
+  });
+  test('findLatestMandateForClient returns the client mandate that is not revoked', async () => {
+    expect(await findLatestMandateForClient(db, DEMO.client.id)).toMatchObject({
+      id: DEMO.mandate.id,
+    });
+    expect(await findLatestMandateForClient(db, randomUUID())).toBeNull();
   });
 });

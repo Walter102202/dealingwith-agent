@@ -73,6 +73,11 @@ function ProjectBody({ view, onRequest, onAnswers, onPaid }: ProjectBodyProps) {
   const latestOnly = quotes.filter(
     (q) => !quotes.some((other) => other.id === q.id && other.version > q.version),
   );
+  /** The name of the agent that accepted a quote, as a QuoteCard prop; nothing when a person did. */
+  const acceptedBy = (agentId?: string) => {
+    const label = view.agents.find((a) => a.id === agentId)?.label;
+    return label ? { acceptedBy: label } : {};
+  };
 
   return (
     <div className={styles.page}>
@@ -103,6 +108,7 @@ function ProjectBody({ view, onRequest, onAnswers, onPaid }: ProjectBodyProps) {
                 <QuoteCard
                   key={`${quote.id}-${quote.version}`}
                   quote={quote}
+                  {...acceptedBy(quote.acceptedAgentId)}
                   onAccept={onPaid}
                   onAdjust={(text) => onAnswers(quote.id)({ adjustment: text })}
                   onAnswers={onAnswers(quote.id)}
@@ -118,6 +124,7 @@ function ProjectBody({ view, onRequest, onAnswers, onPaid }: ProjectBodyProps) {
               mandate={view.mandate}
               projectId={project.id}
               payments={view.payments}
+              agents={view.agents}
               onChange={onPaid}
             />
           </Card>

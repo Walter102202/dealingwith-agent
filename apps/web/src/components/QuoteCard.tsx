@@ -22,7 +22,11 @@ interface QuoteCardPreview {
   preview: true;
 }
 
-type QuoteCardProps = { quote: Quote } & (QuoteCardActions | QuoteCardPreview);
+type QuoteCardProps = {
+  quote: Quote;
+  /** Name of the connected agent that accepted this version, when one did. */
+  acceptedBy?: string;
+} & (QuoteCardActions | QuoteCardPreview);
 
 export function deliveryLabel(days: number): string {
   return days === 1 ? '1 day' : `${days} days`;
@@ -155,6 +159,12 @@ export function QuoteCard(props: QuoteCardProps) {
               <dt>Delivery</dt>
               <dd>{deliveryLabel(quote.deliveryDays)}</dd>
             </div>
+            {props.acceptedBy ? (
+              <div>
+                <dt>Accepted by</dt>
+                <dd>{props.acceptedBy}</dd>
+              </div>
+            ) : null}
             <div className={styles.totalRow}>
               <dt>Total</dt>
               <dd data-testid="quote-total">

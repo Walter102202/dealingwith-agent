@@ -61,6 +61,7 @@ export function dashboardRows(s: FixtureState): DashboardData {
       version: p.quoteVersion,
       mode: p.mode,
       status: p.status,
+      agentName: s.agents.find((a) => a.id === p.agentId)?.label ?? null,
       clientName: CLIENT.name,
       projectTitle: projectTitle(quote?.projectId),
       amountCents: p.amountCents,

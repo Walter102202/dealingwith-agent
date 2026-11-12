@@ -174,10 +174,10 @@ A payment of one of the client's quotes.
 
 ### `get_mandate`
 
-The mandate this token pays from, or `null` when the agent has none (then every acceptance needs human approval).
+The mandate this token pays from, resolved exactly as `accept_quote` resolves it: the mandate attached to the agent, otherwise the mandate of the project (the agents of one client share the project budget). `projectId` is optional and names the project; without it an agent with no mandate of its own gets the client's most recent mandate. `null` when there is none (then every acceptance needs human approval).
 
 ```json
-{ "name": "get_mandate", "arguments": {} }
+{ "name": "get_mandate", "arguments": { "projectId": "…" } }
 ```
 
 ```json

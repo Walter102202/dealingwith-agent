@@ -259,6 +259,15 @@ describe('MCP server', () => {
     expect(structured<{ services: unknown[] }>(list).services).toHaveLength(3);
     await client.close();
   });
+  test('get_mandate shows an agent without its own mandate the project budget it shares', async () => {
+    const shared = await issueAgentToken(h.deps.db, { clientId: DEMO.client.id, label: 'Second' });
+    const client = await connect('http://mcp.test/mcp', shared.token);
+    for (const args of [{}, { projectId: DEMO.project.id }]) {
+      const mandate = await call(client, 'get_mandate', args);
+      expect(structured<{ mandate: { id: string } }>(mandate).mandate.id).toBe(DEMO.mandate.id);
+    }
+    await client.close();
+  });
   test('(i) a revoked token gets 401 on both forms', async () => {
     await revokeAgentToken(h.deps.db, { agentId, clientId: DEMO.client.id });
     await expect(connect('http://mcp.test/mcp', token)).rejects.toMatchObject(UNAUTHORIZED);

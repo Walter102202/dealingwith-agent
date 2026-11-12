@@ -1,4 +1,4 @@
-import { formatUsd, type Mandate, type Payment } from '@dealingwith/contracts';
+import { type ClientAgent, formatUsd, type Mandate, type Payment } from '@dealingwith/contracts';
 import { useState } from 'react';
 import { StatusBadge } from './Badge.js';
 import { Button } from './Button.js';
@@ -12,6 +12,8 @@ interface MandatePanelProps {
   projectId: string;
   /** The project's payments; the panel lists the ones the agent made. */
   payments: Payment[];
+  /** The client's connected agents, to name the one behind each payment. */
+  agents?: ClientAgent[];
   onChange: () => Promise<void>;
 }
 
@@ -99,7 +101,13 @@ function BudgetSummary({ mandate, headroom }: { mandate: Mandate; headroom: numb
 }
 
 /** Policy limits, PayPal backing with its headroom, and the payments the agent made. */
-export function MandatePanel({ mandate, projectId, payments, onChange }: MandatePanelProps) {
+export function MandatePanel({
+  mandate,
+  projectId,
+  payments,
+  agents = [],
+  onChange,
+}: MandatePanelProps) {
   const [editing, setEditing] = useState(false);
 
   if (!mandate) return <CreateMandateForm projectId={projectId} onChange={onChange} />;
@@ -113,6 +121,7 @@ export function MandatePanel({ mandate, projectId, payments, onChange }: Mandate
   );
   const needsReauth = backed && headroom < mandate.perPurchaseLimitCents;
   const agentPayments = payments.filter((p) => p.mode === 'mandate');
+  const agentName = (id?: string) => agents.find((a) => a.id === id)?.label;
 
   return (
     <div className={styles.panel}>
@@ -150,6 +159,9 @@ export function MandatePanel({ mandate, projectId, payments, onChange }: Mandate
               <li key={p.id}>
                 <span>
                   Quote v{p.quoteVersion} · {formatDate(p.createdAt)}
+                  {agentName(p.agentId) ? (
+                    <span className={styles.paidBy}>Paid by {agentName(p.agentId)}</span>
+                  ) : null}
                 </span>
                 <span className={styles.amount}>
                   <Money cents={p.amountCents} /> <StatusBadge status={p.status} />
