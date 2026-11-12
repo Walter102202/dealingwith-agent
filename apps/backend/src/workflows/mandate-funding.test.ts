@@ -3,7 +3,7 @@ import type { ClientAgent, LineItemIntent } from '@dealingwith/contracts';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { DEMO } from '../db/demo-data.js';
 import { resetDemoData } from '../db/seed.js';
-import { fundingHeadroomCents, getMandate } from '../modules/mandates/mandates.js';
+import { fundingHeadroomCents, getMandate, updateMandate } from '../modules/mandates/mandates.js';
 import { activateMandate, createHarness, publishedQuote } from '../test/workflow-harness.js';
 import { acceptQuote } from './accept-quote.js';
 import {
@@ -39,9 +39,44 @@ describe('mandate funding', () => {
     const m = await activateMandate(h.deps);
     expect(m.status).toBe('active');
     expect(m.funding.paypalAuthorizationId).toBeTruthy();
-    expect(fundingHeadroomCents(m)).toBe(200000);
+    expect(fundingHeadroomCents(m)).toBe(30000);
     expect(h.events.filter((e) => e.type === 'mandate.updated')).toHaveLength(1);
     expect(await revokeMandate(h.deps, { mandateId: m.id })).toMatchObject({ status: 'revoked' });
+  });
+  test('funds at most what the agent can still spend: the total minus spent', async () => {
+    const fund = (fundingAmountCents: number) =>
+      startFunding(h.deps, { mandateId: DEMO.mandate.id, fundingAmountCents });
+    await expect(fund(30001)).rejects.toMatchObject({
+      code: 'invalid_mandate',
+      message: 'Funding cannot exceed what the agent can still spend, US$300.00',
+    });
+    await updateMandate(h.deps.db, DEMO.mandate.id, { status: 'active', spentCents: 10000 });
+    await expect(fund(20001)).rejects.toMatchObject({ code: 'invalid_mandate' });
+    await expect(fund(20000)).resolves.toMatchObject({ orderId: expect.any(String) });
+    await expect(fund(0)).rejects.toMatchObject({ code: 'invalid_mandate' });
+  });
+  test.each(['exhausted', 'expired', 'revoked'] as const)(
+    'refuses funding a %s mandate',
+    async (status) => {
+      await updateMandate(h.deps.db, DEMO.mandate.id, { status });
+      await expect(
+        startFunding(h.deps, { mandateId: DEMO.mandate.id, fundingAmountCents: 30000 }),
+      ).rejects.toMatchObject({
+        code: 'invalid_mandate',
+        message: `A ${status} mandate cannot be funded`,
+      });
+    },
+  );
+  test('refuses funding a mandate whose expiry has passed', async () => {
+    await updateMandate(h.deps.db, DEMO.mandate.id, {
+      expiresAt: new Date('2026-11-07T11:59:59Z'),
+    });
+    await expect(
+      startFunding(h.deps, { mandateId: DEMO.mandate.id, fundingAmountCents: 30000 }),
+    ).rejects.toMatchObject({
+      code: 'invalid_mandate',
+      message: 'The mandate has expired; set a new expiry first',
+    });
   });
   test('refuses funding an unrelated mandate with an order', async () => {
     const order = await h.paypal.createOrder({

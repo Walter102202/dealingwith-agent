@@ -22,7 +22,7 @@ test('Starts via MCP, continues on web: both channels see the same quote id, ver
     expect(web).toEqual(quote);
     expect(web.totalCents).toBe(6000);
     const funding = (await (
-      await s.request(`/api/mandates/${DEMO.mandate.id}/fund`, post({ fundingAmountCents: 200000 }))
+      await s.request(`/api/mandates/${DEMO.mandate.id}/fund`, post({ fundingAmountCents: 30000 }))
     ).json()) as { orderId: string };
     await s.paypal.approve(funding.orderId);
     expect(
