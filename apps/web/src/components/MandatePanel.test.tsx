@@ -41,16 +41,21 @@ const funded: Mandate = {
 
 const APPROVAL = 'http://localhost:5173/mock-paypal/approve/MOCK-ORDER-000001';
 const noop = async () => {};
-const panel = (mandate: Mandate | null) =>
+const panel = (mandate: Mandate | null, onChange: () => Promise<void> = noop) =>
   render(
-    <MandatePanel mandate={mandate} projectId={DEMO_IDS.project} payments={[]} onChange={noop} />,
+    <MandatePanel
+      mandate={mandate}
+      projectId={DEMO_IDS.project}
+      payments={[]}
+      onChange={onChange}
+    />,
   );
 const openForm = () =>
   fireEvent.click(screen.getByRole('button', { name: 'Assign a budget to your agent' }));
 
 describe('MandatePanel', () => {
   afterEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   it.each(['revoked', 'expired', 'exhausted'] as const)(
@@ -125,6 +130,70 @@ describe('MandatePanel', () => {
     );
     expect(apiMock.patch.mock.invocationCallOrder[0]).toBeLessThan(
       apiMock.post.mock.invocationCallOrder[0] ?? 0,
+    );
+  });
+
+  it('keeps an unchanged expiry exactly as stored when other limits change', async () => {
+    apiMock.patch.mockResolvedValue(pending);
+    apiMock.post.mockResolvedValue({ approvalUrl: APPROVAL, orderId: 'MOCK-ORDER-000001' });
+    panel({ ...pending, expiresAt: '2026-12-31T12:00:00.000Z' });
+    openForm();
+    fireEvent.change(screen.getByLabelText('Per purchase (USD)'), { target: { value: '80' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to PayPal' }));
+    await waitFor(() => expect(navigationMock.assign).toHaveBeenCalledWith(APPROVAL));
+    expect(apiMock.patch).toHaveBeenCalledWith(
+      `/api/mandates/${DEMO_IDS.mandate}`,
+      {
+        perPurchaseLimitCents: 8000,
+        totalLimitCents: 30000,
+        expiresAt: '2026-12-31T12:00:00.000Z',
+      },
+      expect.anything(),
+    );
+  });
+
+  it('does not start PayPal when saving the limits fails', async () => {
+    const onChange = vi.fn(async () => {});
+    apiMock.patch.mockRejectedValue(new Error('Expiry must be in the future.'));
+    panel(pending, onChange);
+    openForm();
+    fireEvent.change(screen.getByLabelText('Total (USD)'), { target: { value: '250' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to PayPal' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Expiry must be in the future.');
+    expect(apiMock.post).not.toHaveBeenCalled();
+    expect(navigationMock.assign).not.toHaveBeenCalled();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('refreshes the panel when the limits were saved but PayPal could not start', async () => {
+    const onChange = vi.fn(async () => {});
+    apiMock.patch.mockResolvedValue({ ...pending, totalLimitCents: 25000 });
+    apiMock.post.mockRejectedValue(new Error('PayPal is not answering. Try again.'));
+    panel(pending, onChange);
+    openForm();
+    fireEvent.change(screen.getByLabelText('Total (USD)'), { target: { value: '250' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to PayPal' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'PayPal is not answering. Try again.',
+    );
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+    expect(navigationMock.assign).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Continue to PayPal' })).toBeEnabled();
+  });
+
+  it('accepts amounts in cents', async () => {
+    apiMock.patch.mockResolvedValue(pending);
+    apiMock.post.mockResolvedValue({ approvalUrl: APPROVAL, orderId: 'MOCK-ORDER-000001' });
+    panel(pending);
+    openForm();
+    expect(screen.getByLabelText('Total (USD)')).toHaveAttribute('step', '0.01');
+    fireEvent.change(screen.getByLabelText('Total (USD)'), { target: { value: '250.50' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to PayPal' }));
+    await waitFor(() => expect(navigationMock.assign).toHaveBeenCalledWith(APPROVAL));
+    expect(apiMock.post).toHaveBeenCalledWith(
+      `/api/mandates/${DEMO_IDS.mandate}/fund`,
+      { fundingAmountCents: 25050 },
+      expect.anything(),
     );
   });
 

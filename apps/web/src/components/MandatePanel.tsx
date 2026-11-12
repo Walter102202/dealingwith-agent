@@ -124,7 +124,11 @@ export function MandatePanel({ mandate, projectId, payments, onChange }: Mandate
 
       {canFund && (unassigned || needsReauth) ? (
         editing ? (
-          <AssignBudgetForm mandate={mandate} onCancel={() => setEditing(false)} />
+          <AssignBudgetForm
+            mandate={mandate}
+            onCancel={() => setEditing(false)}
+            onSaved={onChange}
+          />
         ) : (
           <div>
             <Button variant={unassigned ? 'primary' : 'secondary'} onClick={() => setEditing(true)}>

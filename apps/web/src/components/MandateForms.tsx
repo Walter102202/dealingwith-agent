@@ -48,7 +48,7 @@ function LimitsFields({ values, onChange }: { values: Limits; onChange: (v: Limi
           id={`${id}-per`}
           type="number"
           min="1"
-          step="1"
+          step="0.01"
           value={values.perPurchase}
           onChange={(e) => onChange({ ...values, perPurchase: e.target.value })}
         />
@@ -59,7 +59,7 @@ function LimitsFields({ values, onChange }: { values: Limits; onChange: (v: Limi
           id={`${id}-total`}
           type="number"
           min="1"
-          step="1"
+          step="0.01"
           value={values.total}
           onChange={(e) => onChange({ ...values, total: e.target.value })}
         />
@@ -150,13 +150,17 @@ function holdSentence(holdCents: number | null, firstTime: boolean): string {
  * changed), then PayPal authorizes what the agent can still spend, the total
  * minus what it already spent. For a budget assigned for the first time that
  * is the total (decision 2026-11-12-reset-unassigns-agent-budget).
+ * `onSaved` refreshes the page when the limits were saved but PayPal could not
+ * be reached, so the panel never shows limits the server no longer has.
  */
 export function AssignBudgetForm({
   mandate,
   onCancel,
+  onSaved,
 }: {
   mandate: Mandate;
   onCancel: () => void;
+  onSaved: () => Promise<void>;
 }) {
   const initial: Limits = {
     perPurchase: dollars(mandate.perPurchaseLimitCents),
@@ -186,13 +190,25 @@ export function AssignBudgetForm({
     }
     setBusy(true);
     setError(null);
+    let saved = false;
     try {
+      const expiryChanged = values.expires !== initial.expires;
       const changed =
+        expiryChanged ||
         parsed.limits.perPurchaseLimitCents !== mandate.perPurchaseLimitCents ||
-        parsed.limits.totalLimitCents !== mandate.totalLimitCents ||
-        values.expires !== initial.expires;
-      if (changed)
-        await api.patch(routes.mandates.update(mandate.id), parsed.limits, MandateSchema);
+        parsed.limits.totalLimitCents !== mandate.totalLimitCents;
+      if (changed) {
+        await api.patch(
+          routes.mandates.update(mandate.id),
+          // An unchanged expiry goes back exactly as stored, never moved to the end of its day.
+          {
+            ...parsed.limits,
+            expiresAt: expiryChanged ? parsed.limits.expiresAt : mandate.expiresAt,
+          },
+          MandateSchema,
+        );
+        saved = true;
+      }
       const result = await api.post(
         routes.mandates.fund(mandate.id),
         { fundingAmountCents },
@@ -202,6 +218,7 @@ export function AssignBudgetForm({
     } catch (e) {
       setError(errorMessage(e));
       setBusy(false);
+      if (saved) await onSaved().catch(() => {});
     }
   };
 
