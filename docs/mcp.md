@@ -168,7 +168,7 @@ The mandate this token pays from, or `null` when the agent has none (then every 
 ```
 
 ```json
-{ "mandate": { "id": "…", "status": "active", "perPurchaseLimitCents": 10000, "totalLimitCents": 30000, "spentCents": 6000, "expiresAt": "2026-12-31T23:59:59.000Z", "funding": { "paypalAuthorizationId": "…", "fundingAmountCents": 200000, "fundingCapturedCents": 6000 } } }
+{ "mandate": { "id": "…", "status": "active", "perPurchaseLimitCents": 10000, "totalLimitCents": 30000, "spentCents": 6000, "expiresAt": "2026-12-31T23:59:59.000Z", "funding": { "paypalAuthorizationId": "…", "fundingAmountCents": 30000, "fundingCapturedCents": 6000 } } }
 ```
 
 ## Resource
