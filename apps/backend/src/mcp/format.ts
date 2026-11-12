@@ -103,7 +103,8 @@ export function formatPaymentMarkdown(payment: Payment): string {
 }
 
 export function formatMandateMarkdown(mandate: Mandate | null): string {
-  if (!mandate) return 'This agent has no mandate: every accepted quote needs human approval.';
+  if (!mandate)
+    return 'This agent has no mandate to pay from: every accepted quote needs human approval.';
   return [
     `Mandate ${mandate.id}: ${mandate.status}`,
     `Project: ${mandate.projectId}`,

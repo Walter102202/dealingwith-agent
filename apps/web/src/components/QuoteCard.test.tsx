@@ -120,6 +120,17 @@ describe('QuoteCard', () => {
     expect(within(extra).getByText('Rule S2.report.v1')).toBeInTheDocument();
   });
 
+  it('names the agent that accepted the quote, and nothing when a person did', () => {
+    const { unmount } = renderWithProviders(
+      <QuoteCard quote={requestOne} acceptedBy="Mara's assistant" preview />,
+    );
+    expect(screen.getByText('Accepted by')).toBeInTheDocument();
+    expect(screen.getByText("Mara's assistant")).toBeInTheDocument();
+    unmount();
+    renderWithProviders(<QuoteCard quote={requestOne} preview />);
+    expect(screen.queryByText('Accepted by')).toBeNull();
+  });
+
   it('preview of a needs-info quote shows the explanation without the form', () => {
     renderWithProviders(<QuoteCard quote={needsInfo} preview />);
     expect(screen.queryByRole('button', { name: 'Send answers' })).toBeNull();

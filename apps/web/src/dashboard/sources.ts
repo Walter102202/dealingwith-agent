@@ -145,6 +145,7 @@ const PAYMENT_FIELDS = fields<PaymentRow>({
   version: 'integerFormat',
   mode: 'textFormat',
   status: 'textFormat',
+  agentName: 'textFormat',
   channel: 'textFormat',
   clientName: 'textFormat',
   projectTitle: 'textFormat',

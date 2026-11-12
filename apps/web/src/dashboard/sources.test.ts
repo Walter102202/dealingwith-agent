@@ -68,6 +68,7 @@ describe('toStudioSources', () => {
           version: quote.version,
           mode: 'mandate',
           status: 'captured',
+          agentName: "Mara's assistant",
           clientName: quote.clientName,
           projectTitle: quote.projectTitle,
           amountCents: quote.totalCents,

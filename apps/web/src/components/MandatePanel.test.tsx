@@ -228,6 +228,40 @@ describe('MandatePanel', () => {
     expect(screen.queryByRole('button', { name: 'Assign a budget to your agent' })).toBeNull();
   });
 
+  it('names the agent behind each payment it made', () => {
+    render(
+      <MandatePanel
+        mandate={funded}
+        projectId={DEMO_IDS.project}
+        payments={[
+          {
+            id: 'd0000000-0000-4000-8000-000000000001',
+            quoteId: 'c0000000-0000-4000-8000-000000000001',
+            quoteVersion: 1,
+            mode: 'mandate',
+            mandateId: DEMO_IDS.mandate,
+            agentId: 'e0000000-0000-4000-8000-000000000001',
+            amountCents: 6000,
+            currency: 'USD',
+            status: 'captured',
+            createdAt: '2026-11-12T10:00:00.000Z',
+          },
+        ]}
+        agents={[
+          {
+            id: 'e0000000-0000-4000-8000-000000000001',
+            clientId: DEMO_IDS.client,
+            label: "Mara's assistant",
+            scopes: ['quote:request', 'quote:accept'],
+            createdAt: '2026-11-12T09:00:00.000Z',
+          },
+        ]}
+        onChange={noop}
+      />,
+    );
+    expect(screen.getByText("Paid by Mara's assistant")).toBeInTheDocument();
+  });
+
   it('offers Re-authorize when the headroom is below the per-purchase limit and holds what is left', async () => {
     apiMock.post.mockResolvedValue({ approvalUrl: APPROVAL, orderId: 'MOCK-ORDER-000002' });
     const low: Mandate = {

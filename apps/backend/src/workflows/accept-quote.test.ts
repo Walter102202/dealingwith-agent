@@ -177,6 +177,7 @@ describe('acceptQuote', () => {
       status: 'captured',
       agentId: payer.id,
     });
+    expect((await getQuote(h.deps.db, q.id)).acceptedAgentId).toBe(payer.id);
     expect(await getMandate(h.deps.db, DEMO.mandate.id)).toMatchObject({
       spentCents: 6000,
       funding: { fundingCapturedCents: 6000 },
@@ -257,6 +258,22 @@ describe('acceptQuote', () => {
       message: 'Nothing to pay: everything requested is already included in the project scope.',
     });
     expect(await h.deps.db.select().from(payments)).toHaveLength(0);
+    expect((await getQuote(h.deps.db, q.id)).acceptedAgentId).toBeUndefined();
+  });
+  test('names the agent that accepted an included quote, which has no payment to carry it', async () => {
+    const q = await publishedQuote(h.deps, {
+      intents: [{ kind: 'included', scopeRef: 'C1', label: 'View', rationale: 'C1' }],
+    });
+    const accepter = await agent();
+    const input = { quoteId: q.id, version: 1, actor: { kind: 'agent' as const, agent: accepter } };
+    expect(await acceptQuote(h.deps, input)).toMatchObject({ status: 'paid' });
+    // A later accept by another agent finds the quote paid and does not rewrite who accepted it.
+    await acceptQuote(h.deps, { ...input, actor: { kind: 'agent', agent: await agent() } });
+    expect(await h.deps.db.select().from(payments)).toHaveLength(0);
+    expect(await getQuote(h.deps.db, q.id)).toMatchObject({
+      status: 'paid',
+      acceptedAgentId: accepter.id,
+    });
   });
   test.each(['INSTRUMENT_DECLINED', 'AUTHORIZATION_AMOUNT_EXCEEDED'])(
     'falls back to one human order after the definitive decline %s, releasing the reservation once',

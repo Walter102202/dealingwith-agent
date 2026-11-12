@@ -217,6 +217,8 @@ export const quotes = pgTable(
     agentRunId: uuid('agent_run_id'),
     publishedAt: timestamptz('published_at'),
     acceptedAt: timestamptz('accepted_at'),
+    /** The connected agent that accepted this version, with or without a payment; null when a person accepted on the web. */
+    acceptedAgentId: uuid('accepted_agent_id').references(() => clientAgents.id),
     paidAt: timestamptz('paid_at'),
     createdAt: createdAt(),
   },
