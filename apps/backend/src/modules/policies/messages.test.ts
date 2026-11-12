@@ -43,6 +43,16 @@ describe('policyMessage', () => {
       }),
     ).toBe(message);
   });
+  test('tells the agent the client has not assigned a budget to a pending mandate', () => {
+    expect(
+      policyMessage('mandate_inactive', {
+        amountCents: 6000,
+        mandate: { ...mandate(), status: 'pending' },
+      }),
+    ).toBe(
+      'The client has not assigned a budget to this agent yet; they can do it on the project page. Approve this payment in PayPal.',
+    );
+  });
   test('explains the absence of a published version', () => {
     expect(
       policyMessage('stale_version', {

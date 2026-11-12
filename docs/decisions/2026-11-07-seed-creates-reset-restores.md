@@ -18,3 +18,5 @@ The demo seed runs on every deploy and must be idempotent (spec section 7.9). "R
 - Redeploys are safe; only the explicit reset changes demo state.
 - Catalog edits (prices, inclusions) ship by changing `demo-data.ts` and redeploying.
 - After five judge runs exhaust the US$300 total, one reset makes request 3 pay again, which is what the button promises. The policies module (Task A3) owns every other status transition (`pending` → `active` on funding, `exhausted` when `spent + amount` would exceed the total, `expired`, `revoked`).
+
+The client-agents clause is superseded by [2026-11-07 Reset keeps connected client agents](2026-11-07-reset-keeps-client-agents.md). The funding clause (reset keeps the authorization and the status) is superseded by [2026-11-12 Reset leaves the agent budget unassigned](2026-11-12-reset-unassigns-agent-budget.md): reset now returns the mandate to `pending` with no funding.

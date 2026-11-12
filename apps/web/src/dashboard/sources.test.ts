@@ -45,6 +45,9 @@ describe('toStudioSources', () => {
     expect(formatterOf(1, 'quoteStatus')?.('needs_info')).toBe('Needs info');
     expect(formatterOf(0, 'status')?.('published')).toBe('Published');
     expect(formatterOf(2, 'mode')?.('pay_now')).toBe('Pay now');
+    // A pending mandate has no PayPal funding yet: the client has not assigned the budget.
+    expect(formatterOf(4, 'status')?.('pending')).toBe('Not assigned yet');
+    expect(formatterOf(4, 'status')?.('active')).toBe('Active');
     expect(formatterOf(1, 'label')).toBeUndefined();
   });
 

@@ -82,7 +82,11 @@ export async function publishedQuote(
     }),
   });
 }
-export async function activateMandate(deps: Deps, fundingAmountCents = 200000) {
+/** Funds the demo mandate through the mock gateway; by default for its whole total, as the web does. */
+export async function activateMandate(
+  deps: Deps,
+  fundingAmountCents: number = DEMO.mandate.totalLimitCents,
+) {
   const order = await startFunding(deps, { mandateId: DEMO.mandate.id, fundingAmountCents });
   if (!(deps.paypal instanceof MockPaypalGateway))
     throw new AppError('mock_required', 'Tests require the mock gateway');

@@ -34,6 +34,8 @@ beforeEach(async () => {
     status: 'active',
     totalLimitCents: 10000,
     spentCents: 0,
+    paypalAuthorizationId: 'AUTH-1',
+    fundingAmountCents: 200000,
     fundingCapturedCents: 0,
   });
 });

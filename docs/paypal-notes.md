@@ -49,3 +49,9 @@ Walter used Resend on the USD 80 PAYMENT.CAPTURE.COMPLETED event in the sandbox 
 ```
 
 After the re-deliveries, the web project still showed quote v1 Paid and exactly one C4 paid additional. I2 passed: genuine signed approval and capture events processed, capture re-deliveries acknowledged without repeating the scope change.
+
+## Mandate authorization and the capture ceiling — 2026-11-12
+
+Since 2026-11-12 "Reset demo data" leaves the demo mandate unfunded, and each run funds it when Mara clicks "Assign a budget to your agent": one order with intent `AUTHORIZE` for the total limit (US$300.00 with the seeded limits), approved with the judge account (`docs/decisions/2026-11-12-reset-unassigns-agent-budget.md`). Until then the mandate was funded once with US$2,000.00 and kept across resets.
+
+PayPal lets a merchant capture up to 115% of an authorization or US$75 above it, whichever is less, and supports several partial captures within one authorization period ([Authorize and capture](https://developer.paypal.com/docs/integration/direct/payments/capture-payment/), [Authorization and honor period](https://developer.paypal.com/payment-methods/auth-honor)). We never use that allowance: `evaluate.ts` refuses a spend when `spent + amount` exceeds the total limit or `captured + amount` exceeds the authorized amount, so the captures against one authorization add up to at most the authorization. With the seeded limits a run makes at most three captures of US$100.00 against US$300.00; partial captures against an authorization were verified on the hosted sandbox on 2026-11-11 (I5). The previous authorization is not voided on reset; it expires after 29 days.

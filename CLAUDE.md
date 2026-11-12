@@ -59,7 +59,7 @@ A request (web or MCP) produces agent intents: `included` with a `scopeRef` to a
 
 ### Database
 
-Drizzle on Postgres. `createDb(url)` picks the driver from the scheme: `pglite://memory` (tests), `pglite://<dir>` (local default `.data/dev`), `postgres://` (Render). Eleven tables in `src/db/schema.ts`; migrations are checked-in SQL under `apps/backend/drizzle/`. `seedDemo` creates the demo world and `resetDemoData` restores it while keeping mandate funding and connected agents.
+Drizzle on Postgres. `createDb(url)` picks the driver from the scheme: `pglite://memory` (tests), `pglite://<dir>` (local default `.data/dev`), `postgres://` (Render). Eleven tables in `src/db/schema.ts`; migrations are checked-in SQL under `apps/backend/drizzle/`. `seedDemo` creates the demo world and `resetDemoData` restores it, keeping connected agents and returning the mandate to `pending` with no PayPal funding.
 
 ### Web
 

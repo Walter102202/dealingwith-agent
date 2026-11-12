@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import type { Db } from './client.js';
 import { DEMO } from './demo-data.js';
 import * as schema from './schema.js';
@@ -91,10 +91,12 @@ export async function seedDemo(db: Db): Promise<void> {
 
 /**
  * "Reset demo data": removes everything the demo produced and restores the
- * scripted starting point. The mandate's funding (PayPal authorization id,
- * funding amount, funding captured) survives, because a seed cannot
- * re-approve a PayPal authorization (spec section 6). Its status survives too,
- * except `exhausted`, which becomes `active` since spent is back to zero.
+ * scripted starting point, the one a fresh seed creates. The mandate goes back
+ * to `pending` with its seeded limits and no PayPal funding, so every demo run
+ * shows the client assigning the budget (decision
+ * 2026-11-12-reset-unassigns-agent-budget). It keeps its id, so connected
+ * agents still point at it. The previous authorization is not voided: it is
+ * sandbox money and expires on its own.
  */
 export async function resetDemoData(db: Db): Promise<void> {
   await db.transaction(async (tx) => {
@@ -119,12 +121,15 @@ export async function resetDemoData(db: Db): Promise<void> {
     await tx
       .update(schema.mandates)
       .set({
-        spentCents: 0,
-        // Spent is zero again, so an exhausted mandate is usable; every other status is kept.
-        status: sql`CASE WHEN ${schema.mandates.status} = 'exhausted' THEN 'active'::mandate_status ELSE ${schema.mandates.status} END`,
+        status: DEMO.mandate.status,
         perPurchaseLimitCents: DEMO.mandate.perPurchaseLimitCents,
         totalLimitCents: DEMO.mandate.totalLimitCents,
         expiresAt: DEMO.mandate.expiresAt,
+        spentCents: 0,
+        paypalAuthorizationId: null,
+        fundingAmountCents: DEMO.mandate.fundingAmountCents,
+        fundingCapturedCents: DEMO.mandate.fundingCapturedCents,
+        fundingExpiresAt: null,
         updatedAt: new Date(),
       })
       .where(eq(schema.mandates.id, DEMO.mandate.id));

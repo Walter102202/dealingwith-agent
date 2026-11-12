@@ -2,9 +2,11 @@ import type { Mandate } from '@dealingwith/contracts';
 import { eq } from 'drizzle-orm';
 import { mandates, projects } from '../db/schema.js';
 import { AppError } from '../lib/errors.js';
+import { formatUsd } from '../lib/format.js';
 import {
   findMandateForProject,
   getMandate,
+  remainingCents,
   toMandate,
   updateMandate,
 } from '../modules/mandates/mandates.js';
@@ -82,14 +84,17 @@ export async function startFunding(
   input: { mandateId: string; fundingAmountCents: number },
 ): Promise<{ approvalUrl: string; orderId: string }> {
   const mandate = await getMandate(deps.db, input.mandateId);
-  if (
-    !Number.isSafeInteger(input.fundingAmountCents) ||
-    input.fundingAmountCents <= 0 ||
-    mandate.status === 'revoked'
-  )
+  if (!Number.isSafeInteger(input.fundingAmountCents) || input.fundingAmountCents <= 0)
+    throw new AppError('invalid_mandate', 'Funding requires a positive amount in cents');
+  if (mandate.status !== 'pending' && mandate.status !== 'active')
+    throw new AppError('invalid_mandate', `A ${mandate.status} mandate cannot be funded`);
+  if (new Date(mandate.expiresAt) <= deps.now())
+    throw new AppError('invalid_mandate', 'The mandate has expired; set a new expiry first');
+  // PayPal holds at most what the agent can still spend (decision 2026-11-12-reset-unassigns-agent-budget).
+  if (input.fundingAmountCents > remainingCents(mandate))
     throw new AppError(
       'invalid_mandate',
-      'Funding requires a positive amount and a non-revoked mandate',
+      `Funding cannot exceed what the agent can still spend, ${formatUsd(remainingCents(mandate))}`,
     );
   const order = await deps.paypal.createOrder({
     intent: 'AUTHORIZE',

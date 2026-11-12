@@ -55,13 +55,16 @@ The demo business is Andes Data Studio, a data consultancy. Its client Lukas Ret
 - **C2, excluded:** automations, scheduled emails and alerts
 - **C3, included:** one data source, Shopify
 
-Mara's agent holds mandate M1: at most US$100.00 per purchase and US$300.00 in total, funded once with a PayPal authorization. On the hosted demo the mandate is already funded, and "Reset demo data" keeps that funding. If the panel ever reads "Not authorized yet", click "Authorize with PayPal" and approve with the judge account first.
+Mara's agent holds mandate M1: at most US$100.00 per purchase and US$300.00 in total, until 31 Dec 2026. Every demo run starts with that budget proposed but not assigned: Mara assigns it from the project page and approves once in PayPal, which holds the US$300.00 total and captures only what the agent spends. "Reset demo data" returns it to unassigned.
 
 ## How judges test in two minutes
 
 Sign in as Mara and type the requests into the box labelled "Describe what you need" on the project page. Start from the seeded state, where the project lists three clauses; to restore it, sign in as the provider and click "Reset demo data" (inside "Menu" on a narrow window).
 
-Requests 2 and 3 are meant to come from Mara's AI agent. Typed on the web they produce the same quotes, but a person pays with PayPal and the mandate is not used. To watch the agent pay on its own, connect one first ([Connect your agent](#connect-your-agent)) and send 2 and 3 from it.
+Requests 2 and 3 are meant to come from Mara's AI agent. Typed on the web they produce the same quotes, but a person pays with PayPal and the mandate is not used. To watch the agent pay on its own, do two things after request 1:
+
+- **Assign the budget.** In the "Agent budget" panel click "Assign a budget to your agent", keep the proposed limits, click "Continue to PayPal" and approve with the judge account. Back on the project page the panel reads "Active" and "Backed by PayPal authorization", US$300.00 left to capture.
+- **Connect an agent** ([Connect your agent](#connect-your-agent)) and send requests 2 and 3 from it.
 
 1. "I need a per-branch view and a summary email every Monday." The quote marks the per-branch view as included at US$0.00 (clause C1) and prices the Monday summary at US$80.00 (rule `S2.report.v1`), delivery 1 day. Click "Pay with PayPal", approve on PayPal's page with the judge account, and PayPal brings you back to a receipt; the project gains clause C4 "Weekly Monday summary email". Total paid: US$80.00.
 2. "Add our Amazon sales as a second source, no rush." Sent by Mara's agent over MCP, the quote comes to US$190.00 (US$150.00 base plus US$40.00 for one source). That is over the mandate's US$100.00 per-purchase limit, so Mara's agent gets `approval_required` and an approval link for a human to pay. Leave it unpaid for now: paying it shifts the clause numbers below.
@@ -128,7 +131,7 @@ Design: [`docs/design/2026-11-07-dealingwith-agent-mvp-design.md`](docs/design/2
 ## PayPal flows
 
 - **Pay now.** Accepting a quote creates an order with intent `CAPTURE` and returns the approval link; the browser goes to PayPal's approval page (the mock approve page in mock mode), PayPal returns to `/pay/return`, and our server captures the order and shows the receipt. The same single path serves the web and the link the MCP tool hands to a human (`apps/backend/src/workflows/accept-quote.ts`, `apps/backend/src/workflows/pay-now.ts`, `apps/backend/src/workflows/capture.ts`).
-- **Mandate funding.** "Authorize with PayPal" creates an order with intent `AUTHORIZE` for the funding amount; after approval we authorize it and the mandate becomes active, "Backed by PayPal authorization" (`apps/backend/src/workflows/mandate-funding.ts`).
+- **Mandate funding.** "Assign a budget to your agent" saves any limits the client edited, then creates an order with intent `AUTHORIZE` for the total limit (the total minus what is already spent, on "Re-authorize"); after approval we authorize it and the mandate becomes active, "Backed by PayPal authorization". Captures never exceed the authorization, so PayPal's over-capture allowance is never needed. "Reset demo data" returns the mandate to unassigned, so every demo run shows this step (`apps/backend/src/workflows/mandate-funding.ts`, `apps/web/src/components/MandateForms.tsx`).
 - **Agent pays within the mandate.** The policy module checks the limits and reserves the spend under a row lock, then we capture part of the authorization with `final_capture: false`; when a limit or mandate-state check fails the agent gets an approval link instead, and a wrong project, currency or stale version is denied (`apps/backend/src/modules/policies/evaluate.ts`, `apps/backend/src/modules/policies/reserve.ts`, `apps/backend/src/workflows/accept-quote.ts`).
 - **Webhooks.** Every event is signature-verified, inserted once by `paypal_event_id`, and applied idempotently; a capture confirmed by webhook before the browser returns ends in the same state (`apps/backend/src/workflows/webhooks.ts`, `apps/backend/src/api/routes/webhooks.ts`).
 - **Idempotency keys.** Each payment has a unique key (`pay:<quoteId>:<version>` or `mandate:<quoteId>:<version>`) that is also the `PayPal-Request-Id` of the creating call (a renewed order appends the attempt number), so a retry or a double click never creates a second payment (`apps/backend/src/modules/payments/payments.ts`).
@@ -172,7 +175,7 @@ Decisions: [custom widgets](docs/decisions/2026-11-10-studio-custom-widgets.md),
 
 - Sandbox only. Live PayPal does not exist in this codebase.
 - MCP authentication is a per-agent bearer token, revocable from the portal. OAuth is the production path.
-- A PayPal authorization lasts 29 days, in the sandbox too (live adds a 3-day honor period). When the funding headroom falls below the per-purchase limit the mandate panel offers "Re-authorize"; an expired authorization needs the same click. Vault is the production path for standing mandates.
+- A PayPal authorization lasts 29 days, in the sandbox too (live adds a 3-day honor period). Each demo run authorizes a fresh one when Mara assigns the budget, and the previous one is left to expire rather than voided. When the funding headroom falls below the per-purchase limit the mandate panel offers "Re-authorize". Vault is the production path for standing mandates.
 - Sessions are demo logins (signed cookies), not real authentication.
 - One business, seeded. The provider's services, pricing rules, the contract and its clauses are demo data; there are no screens yet to create or edit them. The data model carries `business_id` everywhere.
 - Quotes reach the client as soon as they are priced; the provider does not review them first.
