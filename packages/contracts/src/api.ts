@@ -90,6 +90,8 @@ export const DashboardPaymentRowSchema = z.object({
   version: z.number().int().positive(),
   mode: PaymentModeSchema,
   status: PaymentStatusSchema,
+  /** Name of the client's agent whose accept created the payment; null when a person accepted on the web. */
+  agentName: z.string().nullable(),
   clientName: z.string(),
   projectTitle: z.string().nullable(),
   amountCents: CentsSchema,

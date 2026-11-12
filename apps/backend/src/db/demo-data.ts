@@ -135,8 +135,10 @@ export const DEMO = {
     totalLimitCents: 30000,
     currency: 'USD',
     expiresAt: new Date('2026-12-31T23:59:59Z'),
+    // Proposed limits with no PayPal funding: the client assigns the budget in the demo,
+    // which authorizes the total limit (decision 2026-11-12-reset-unassigns-agent-budget).
     status: 'pending',
-    fundingAmountCents: 200000,
+    fundingAmountCents: 0,
     fundingCapturedCents: 0,
   },
   clientAgent: {

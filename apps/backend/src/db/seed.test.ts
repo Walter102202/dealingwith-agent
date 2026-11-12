@@ -26,8 +26,10 @@ describe('seedDemo', () => {
       status: 'pending',
       perPurchaseLimitCents: 10000,
       totalLimitCents: 30000,
-      fundingAmountCents: 200000,
+      paypalAuthorizationId: null,
+      fundingAmountCents: 0,
       fundingCapturedCents: 0,
+      fundingExpiresAt: null,
     });
   });
 
@@ -54,9 +56,10 @@ describe('seedDemo', () => {
 });
 
 describe('resetDemoData', () => {
-  test('restores clauses and spent while keeping the mandate funding', async () => {
+  test('restores clauses and returns a funded mandate to pending with no PayPal funding', async () => {
     const db = await createTestDb();
     await seedDemo(db);
+    const [seeded] = await db.select().from(schema.mandates);
 
     const [project] = await db.select().from(schema.projects);
     await db
@@ -78,8 +81,13 @@ describe('resetDemoData', () => {
       .set({
         spentCents: 6000,
         status: 'active',
+        perPurchaseLimitCents: 15000,
+        totalLimitCents: 50000,
+        expiresAt: new Date('2027-01-31T23:59:59Z'),
         paypalAuthorizationId: 'AUTH-DEMO-1',
+        fundingAmountCents: 50000,
         fundingCapturedCents: 6000,
+        fundingExpiresAt: new Date('2026-12-10T00:00:00Z'),
       })
       .where(eq(schema.mandates.id, DEMO.mandate.id));
 
@@ -89,37 +97,49 @@ describe('resetDemoData', () => {
     expect(afterProject?.scopeClauses.map((c) => c.id)).toEqual(['C1', 'C2', 'C3']);
     const [afterMandate] = await db.select().from(schema.mandates);
     expect(afterMandate).toMatchObject({
+      id: DEMO.mandate.id,
+      status: 'pending',
+      perPurchaseLimitCents: 10000,
+      totalLimitCents: 30000,
+      expiresAt: DEMO.mandate.expiresAt,
       spentCents: 0,
-      status: 'active',
-      paypalAuthorizationId: 'AUTH-DEMO-1',
-      fundingAmountCents: 200000,
-      fundingCapturedCents: 6000,
+      paypalAuthorizationId: null,
+      fundingAmountCents: 0,
+      fundingCapturedCents: 0,
+      fundingExpiresAt: null,
     });
+    // Reset lands exactly where a fresh seed starts, apart from the timestamps.
+    expect({ ...afterMandate, updatedAt: undefined }).toEqual({ ...seeded, updatedAt: undefined });
   });
 
-  test('re-activates an exhausted mandate while keeping its funding', async () => {
-    const db = await createTestDb();
-    await seedDemo(db);
-    await db
-      .update(schema.mandates)
-      .set({
-        status: 'exhausted',
-        spentCents: 30000,
-        paypalAuthorizationId: 'AUTH-DEMO-2',
-        fundingCapturedCents: 30000,
-      })
-      .where(eq(schema.mandates.id, DEMO.mandate.id));
+  test.each(['exhausted', 'revoked', 'expired'] as const)(
+    'returns a %s mandate to pending with no PayPal funding',
+    async (status) => {
+      const db = await createTestDb();
+      await seedDemo(db);
+      await db
+        .update(schema.mandates)
+        .set({
+          status,
+          spentCents: 30000,
+          paypalAuthorizationId: 'AUTH-DEMO-2',
+          fundingAmountCents: 30000,
+          fundingCapturedCents: 30000,
+        })
+        .where(eq(schema.mandates.id, DEMO.mandate.id));
 
-    await resetDemoData(db);
+      await resetDemoData(db);
 
-    const [mandate] = await db.select().from(schema.mandates);
-    expect(mandate).toMatchObject({
-      status: 'active',
-      spentCents: 0,
-      paypalAuthorizationId: 'AUTH-DEMO-2',
-      fundingCapturedCents: 30000,
-    });
-  });
+      const [mandate] = await db.select().from(schema.mandates);
+      expect(mandate).toMatchObject({
+        status: 'pending',
+        spentCents: 0,
+        paypalAuthorizationId: null,
+        fundingAmountCents: 0,
+        fundingCapturedCents: 0,
+      });
+    },
+  );
 
   test('keeps a pending mandate pending after reset', async () => {
     const db = await createTestDb();

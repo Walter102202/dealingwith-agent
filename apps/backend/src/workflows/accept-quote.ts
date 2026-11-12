@@ -5,11 +5,11 @@ import type {
   Payment,
   Quote,
 } from '@dealingwith/contracts';
-import { eq } from 'drizzle-orm';
-import { payments, requests } from '../db/schema.js';
+import { and, eq } from 'drizzle-orm';
+import { payments, quotes, requests } from '../db/schema.js';
 import { PaypalError } from '../integrations/paypal/gateway.js';
 import { AppError } from '../lib/errors.js';
-import { findMandateForProject, getMandate } from '../modules/mandates/mandates.js';
+import { getMandate, mandateForAgent } from '../modules/mandates/mandates.js';
 import {
   createPayment,
   findPaymentForQuoteVersion,
@@ -36,6 +36,11 @@ export async function acceptQuote(
   deps: Deps,
   input: { quoteId: string; version: number; actor: Actor },
 ): Promise<AcceptQuoteResult> {
+  // Recorded on every payment an agent's accept creates, including the pay-now a person approves,
+  // and on the quote version itself, so an accept that needs no payment still names its agent.
+  const acceptedBy = input.actor.kind === 'agent' ? { agentId: input.actor.agent.id } : {};
+  const acceptedAgent =
+    input.actor.kind === 'agent' ? { acceptedAgentId: input.actor.agent.id } : {};
   const prepared: Prepared = await deps.db.transaction(async (tx) => {
     const first = await getQuote(tx, input.quoteId, input.version);
     await tx.select().from(requests).where(eq(requests.id, first.requestId)).for('update');
@@ -72,16 +77,19 @@ export async function acceptQuote(
     const latest = await getLatestPublishedVersion(tx, quote.id);
     if (quote.status === 'superseded' || (latest !== quote.version && quote.status !== 'accepted'))
       return deny('stale_version', latest);
-    if (quote.totalCents === 0) return { quote, payment: null };
+    if (quote.totalCents === 0) {
+      if (acceptedAgent.acceptedAgentId)
+        await tx
+          .update(quotes)
+          .set(acceptedAgent)
+          .where(and(eq(quotes.quoteId, quote.id), eq(quotes.version, quote.version)));
+      return { quote, payment: null };
+    }
     if (existing) return { quote, payment: existing };
     let reason: AcceptQuoteReason | undefined;
     let message: string | undefined;
     if (input.actor.kind === 'agent') {
-      const mandate = input.actor.agent.mandateId
-        ? await getMandate(tx, input.actor.agent.mandateId)
-        : quote.projectId
-          ? await findMandateForProject(tx, { projectId: quote.projectId, clientId })
-          : null;
+      const mandate = await mandateForAgent(tx, input.actor.agent, quote.projectId);
       if (mandate && mandate.clientId !== clientId)
         throw new AppError('forbidden', 'Mandate belongs to another client', { status: 403 });
       if (mandate) {
@@ -107,6 +115,7 @@ export async function acceptQuote(
             mode: 'mandate',
             amountCents: quote.totalCents,
             idempotencyKey: `mandate:${quote.id}:${quote.version}`,
+            ...acceptedBy,
             paypalAuthorizationId: mandate.funding.paypalAuthorizationId,
             raw: { mandateId: mandate.id },
           });
@@ -115,6 +124,7 @@ export async function acceptQuote(
             version: quote.version,
             status: 'accepted',
             acceptedAt: deps.now(),
+            ...acceptedAgent,
           });
           return { quote, payment };
         }
@@ -131,6 +141,7 @@ export async function acceptQuote(
       mode: 'pay_now',
       amountCents: quote.totalCents,
       idempotencyKey: `pay:${quote.id}:${quote.version}`,
+      ...acceptedBy,
       raw: { ...(reason ? { reason } : {}), ...(message ? { message } : {}) },
     });
     await updateQuoteStatus(tx, {
@@ -138,6 +149,7 @@ export async function acceptQuote(
       version: quote.version,
       status: 'accepted',
       acceptedAt: deps.now(),
+      ...acceptedAgent,
     });
     return { quote, payment, ...(reason ? { reason } : {}), ...(message ? { message } : {}) };
   });
@@ -213,6 +225,7 @@ export async function acceptQuote(
       mode: 'pay_now',
       amountCents: quote.totalCents,
       idempotencyKey: `pay:${quote.id}:${quote.version}`,
+      ...acceptedBy,
       raw: { reason: prepared.reason, message: prepared.message },
     });
     row = await paymentRow(deps.db, payment.id);

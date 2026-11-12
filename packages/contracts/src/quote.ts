@@ -58,6 +58,8 @@ export const QuoteSchema = z.object({
   needsInfo: z.array(NeedsInfoItemSchema),
   publishedAt: IsoDateTimeSchema.optional(),
   acceptedAt: IsoDateTimeSchema.optional(),
+  /** The connected agent that accepted this version; absent when a person accepted on the web. */
+  acceptedAgentId: IdSchema.optional(),
   paidAt: IsoDateTimeSchema.optional(),
 });
 export type Quote = z.infer<typeof QuoteSchema>;

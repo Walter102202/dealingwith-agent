@@ -106,4 +106,18 @@ describe('fixtures', () => {
     expect(view.project.scopeClauses).toHaveLength(3);
     expect(view.quotes).toHaveLength(0);
   });
+
+  it('reset leaves the agent budget unassigned, like the backend', async () => {
+    const order = handlers.fundMandate(DEMO_IDS.mandate, { fundingAmountCents: 30000 });
+    const funded = handlers.completeFunding(DEMO_IDS.mandate, { orderId: order.orderId });
+    expect(funded).toMatchObject({ status: 'active', funding: { fundingAmountCents: 30000 } });
+    handlers.resetDemo();
+    const view = await handlers.getProject(DEMO_IDS.project);
+    expect(view.mandate).toMatchObject({
+      status: 'pending',
+      spentCents: 0,
+      funding: { fundingAmountCents: 0, fundingCapturedCents: 0 },
+    });
+    expect(view.mandate?.funding.paypalAuthorizationId).toBeUndefined();
+  });
 });

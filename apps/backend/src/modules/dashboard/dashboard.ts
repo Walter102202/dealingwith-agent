@@ -1,7 +1,7 @@
 import { type DashboardData, DashboardDataSchema } from '@dealingwith/contracts';
 import { eq } from 'drizzle-orm';
 import type { Db } from '../../db/client.js';
-import { clients, payments, projects, quotes, requests } from '../../db/schema.js';
+import { clientAgents, clients, payments, projects, quotes, requests } from '../../db/schema.js';
 import { listServices } from '../catalog/catalog.js';
 import { findMandateForProject } from '../mandates/mandates.js';
 import { resolveRule } from '../quotes/pricing.js';
@@ -19,6 +19,11 @@ export async function buildDashboardData(
   const quoteRows = (await db.select().from(quotes)).filter((q) => requestMap.has(q.requestId));
   const quoteMap = new Map(quoteRows.map((q) => [`${q.quoteId}:${q.version}`, q]));
   const serviceRows = await listServices(db, businessId);
+  const agentLabels = new Map(
+    (await db.select().from(clientAgents))
+      .filter((a) => clientMap.has(a.clientId))
+      .map((a) => [a.id, a.label]),
+  );
   const metadata = (requestId: string) => {
     const r = requestMap.get(requestId);
     return {
@@ -70,6 +75,7 @@ export async function buildDashboardData(
           version: p.quoteVersion,
           mode: p.mode,
           status: p.status,
+          agentName: agentLabels.get(p.agentId ?? '') ?? null,
           ...metadata(q?.requestId ?? ''),
           amountCents: p.amountCents,
           createdAt: p.createdAt.toISOString(),

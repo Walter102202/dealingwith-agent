@@ -14,7 +14,9 @@ export function policyMessage(
   const amount = formatUsd(ctx.amountCents);
   switch (reason) {
     case 'mandate_inactive':
-      return `The mandate is ${m?.status}; the agent can only pay from an active mandate. Approve this payment in PayPal.`;
+      return m?.status === 'pending'
+        ? 'The client has not assigned a budget to this agent yet; they can do it on the project page. Approve this payment in PayPal.'
+        : `The mandate is ${m?.status}; the agent can only pay from an active mandate. Approve this payment in PayPal.`;
     case 'mandate_expired':
       return `The mandate expired on ${m?.expiresAt.slice(0, 10)}. Approve this payment in PayPal or set a new mandate.`;
     case 'wrong_project':

@@ -1,4 +1,9 @@
-import { IssuedAgentSchema, PaymentSchema, QuoteSchema } from '@dealingwith/contracts';
+import {
+  IssuedAgentSchema,
+  PaymentSchema,
+  ProjectViewSchema,
+  QuoteSchema,
+} from '@dealingwith/contracts';
 import { expect, test } from 'vitest';
 import { DEMO } from '../../apps/backend/src/db/demo-data.js';
 import { acceptQuote } from '../../apps/backend/src/workflows/accept-quote.js';
@@ -22,7 +27,7 @@ test('Starts via MCP, continues on web: both channels see the same quote id, ver
     expect(web).toEqual(quote);
     expect(web.totalCents).toBe(6000);
     const funding = (await (
-      await s.request(`/api/mandates/${DEMO.mandate.id}/fund`, post({ fundingAmountCents: 200000 }))
+      await s.request(`/api/mandates/${DEMO.mandate.id}/fund`, post({ fundingAmountCents: 30000 }))
     ).json()) as { orderId: string };
     await s.paypal.approve(funding.orderId);
     expect(
@@ -43,8 +48,17 @@ test('Starts via MCP, continues on web: both channels see the same quote id, ver
       mode: 'mandate',
       status: 'captured',
       mandateId: DEMO.mandate.id,
+      agentId: issued.agent.id,
     });
     expect(await (await s.request(`/api/payments/${payment.id}`)).json()).toEqual(payment);
+    // The project page gets what it needs to name the agent: the payment and the accepted quote
+    // carry its id, and the page's own agent list carries its label.
+    const view = ProjectViewSchema.parse(
+      await (await s.request(`/api/projects/${DEMO.project.id}`)).json(),
+    );
+    expect(view.payments).toMatchObject([{ id: payment.id, agentId: issued.agent.id }]);
+    expect(view.quotes).toMatchObject([{ id: quote.id, acceptedAgentId: issued.agent.id }]);
+    expect(view.agents).toMatchObject([{ id: issued.agent.id, label: "Mara's assistant" }]);
   } finally {
     await s.close();
   }

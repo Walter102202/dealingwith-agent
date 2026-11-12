@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { ClientAgent, LineItemIntent } from '@dealingwith/contracts';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { issueAgentToken } from '../access/agent-tokens.js';
 import { DEMO } from '../db/demo-data.js';
 import { payments } from '../db/schema.js';
 import { PaypalError } from '../integrations/paypal/gateway.js';
@@ -25,13 +26,8 @@ const intent = (id = 'S2.report'): LineItemIntent => ({
   label: id,
   rationale: id,
 });
-const agent = (): ClientAgent => ({
-  id: randomUUID(),
-  clientId: DEMO.client.id,
-  label: 'Agent',
-  scopes: ['quote:request', 'quote:accept'],
-  createdAt: new Date(0).toISOString(),
-});
+const agent = async (): Promise<ClientAgent> =>
+  (await issueAgentToken(h.deps.db, { clientId: DEMO.client.id, label: 'Agent' })).agent;
 describe('acceptQuote', () => {
   test('renews an expired order once and the new approval URL pays the quote', async () => {
     const q = await publishedQuote(h.deps, { intents: [intent()] });
@@ -41,6 +37,7 @@ describe('acceptQuote', () => {
       actor: { kind: 'web' as const, clientId: DEMO.client.id },
     };
     const first = await acceptQuote(h.deps, input);
+    expect(first.payment?.agentId).toBeUndefined();
     const oldId = first.payment?.paypalOrderId ?? '';
     h.paypal.expireOrder(oldId);
     const [renewed, repeated] = await Promise.all([
@@ -171,10 +168,16 @@ describe('acceptQuote', () => {
   test('agent capture reserves once and adds scope once under concurrent acceptance', async () => {
     await activateMandate(h.deps);
     const q = await publishedQuote(h.deps, { intents: [intent('S2.alert')] });
-    const input = { quoteId: q.id, version: 1, actor: { kind: 'agent' as const, agent: agent() } };
+    const payer = await agent();
+    const input = { quoteId: q.id, version: 1, actor: { kind: 'agent' as const, agent: payer } };
     const results = await Promise.all([acceptQuote(h.deps, input), acceptQuote(h.deps, input)]);
     expect(results.map((r) => r.status)).toEqual(['paid', 'paid']);
-    expect(results[0]?.payment).toMatchObject({ mode: 'mandate', status: 'captured' });
+    expect(results[0]?.payment).toMatchObject({
+      mode: 'mandate',
+      status: 'captured',
+      agentId: payer.id,
+    });
+    expect((await getQuote(h.deps.db, q.id)).acceptedAgentId).toBe(payer.id);
     expect(await getMandate(h.deps.db, DEMO.mandate.id)).toMatchObject({
       spentCents: 6000,
       funding: { fundingCapturedCents: 6000 },
@@ -187,14 +190,16 @@ describe('acceptQuote', () => {
     const q = await publishedQuote(h.deps, {
       intents: [intent('S3.base'), intent('S3.per_source')],
     });
+    const overLimit = await agent();
     expect(
       await acceptQuote(h.deps, {
         quoteId: q.id,
         version: 1,
-        actor: { kind: 'agent', agent: agent() },
+        actor: { kind: 'agent', agent: overLimit },
       }),
     ).toMatchObject({
       status: 'approval_required',
+      payment: { mode: 'pay_now', agentId: overLimit.id },
       reason: 'over_per_purchase',
       message:
         'US$190.00 exceeds the per-purchase limit of US$100.00. Approve this payment in PayPal.',
@@ -204,7 +209,11 @@ describe('acceptQuote', () => {
   });
   test('offers human approval for a pending mandate and without a mandate', async () => {
     const q = await publishedQuote(h.deps, { intents: [intent()] });
-    const input = { quoteId: q.id, version: 1, actor: { kind: 'agent' as const, agent: agent() } };
+    const input = {
+      quoteId: q.id,
+      version: 1,
+      actor: { kind: 'agent' as const, agent: await agent() },
+    };
     expect(await acceptQuote(h.deps, input)).toMatchObject({
       reason: 'mandate_inactive',
       status: 'approval_required',
@@ -225,7 +234,7 @@ describe('acceptQuote', () => {
       await acceptQuote(h.deps, {
         quoteId: q.id,
         version: 1,
-        actor: { kind: 'agent', agent: agent() },
+        actor: { kind: 'agent', agent: await agent() },
       }),
     ).toMatchObject({
       reason: 'funding_exhausted',
@@ -249,6 +258,22 @@ describe('acceptQuote', () => {
       message: 'Nothing to pay: everything requested is already included in the project scope.',
     });
     expect(await h.deps.db.select().from(payments)).toHaveLength(0);
+    expect((await getQuote(h.deps.db, q.id)).acceptedAgentId).toBeUndefined();
+  });
+  test('names the agent that accepted an included quote, which has no payment to carry it', async () => {
+    const q = await publishedQuote(h.deps, {
+      intents: [{ kind: 'included', scopeRef: 'C1', label: 'View', rationale: 'C1' }],
+    });
+    const accepter = await agent();
+    const input = { quoteId: q.id, version: 1, actor: { kind: 'agent' as const, agent: accepter } };
+    expect(await acceptQuote(h.deps, input)).toMatchObject({ status: 'paid' });
+    // A later accept by another agent finds the quote paid and does not rewrite who accepted it.
+    await acceptQuote(h.deps, { ...input, actor: { kind: 'agent', agent: await agent() } });
+    expect(await h.deps.db.select().from(payments)).toHaveLength(0);
+    expect(await getQuote(h.deps.db, q.id)).toMatchObject({
+      status: 'paid',
+      acceptedAgentId: accepter.id,
+    });
   });
   test.each(['INSTRUMENT_DECLINED', 'AUTHORIZATION_AMOUNT_EXCEEDED'])(
     'falls back to one human order after the definitive decline %s, releasing the reservation once',
@@ -259,7 +284,7 @@ describe('acceptQuote', () => {
       const input = {
         quoteId: q.id,
         version: 1,
-        actor: { kind: 'agent' as const, agent: agent() },
+        actor: { kind: 'agent' as const, agent: await agent() },
       };
       const result = await acceptQuote(h.deps, input);
       expect(result).toMatchObject({
@@ -293,7 +318,7 @@ describe('acceptQuote', () => {
       const input = {
         quoteId: q.id,
         version: 1,
-        actor: { kind: 'agent' as const, agent: agent() },
+        actor: { kind: 'agent' as const, agent: await agent() },
       };
       await expect(acceptQuote(h.deps, input)).rejects.toMatchObject({ code, status });
       expect(await getMandate(h.deps.db, DEMO.mandate.id)).toMatchObject({ spentCents: 6000 });
@@ -311,7 +336,11 @@ describe('acceptQuote', () => {
       status: 'PENDING',
     }));
     await expect(
-      acceptQuote(h.deps, { quoteId: q.id, version: 1, actor: { kind: 'agent', agent: agent() } }),
+      acceptQuote(h.deps, {
+        quoteId: q.id,
+        version: 1,
+        actor: { kind: 'agent', agent: await agent() },
+      }),
     ).rejects.toMatchObject({ code: 'CAPTURE_NOT_COMPLETED', status: 502 });
     // The reservation stays and no human order is opened. The mock's completed-capture webhook
     // may already have reconciled the mandate payment by invoice id, which is the real-world path.

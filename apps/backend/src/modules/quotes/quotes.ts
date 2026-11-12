@@ -19,6 +19,7 @@ export function toQuote(row: typeof quotes.$inferSelect): Quote {
       projectId: row.projectId ?? undefined,
       publishedAt: toIsoOrUndefined(row.publishedAt),
       acceptedAt: toIsoOrUndefined(row.acceptedAt),
+      acceptedAgentId: row.acceptedAgentId ?? undefined,
       paidAt: toIsoOrUndefined(row.paidAt),
     }),
   );
@@ -142,12 +143,20 @@ export async function updateQuoteStatus(
     version: number;
     status: QuoteStatus;
     acceptedAt?: Date;
+    acceptedAgentId?: string;
     paidAt?: Date;
   },
 ): Promise<Quote> {
   const [row] = await db
     .update(quotes)
-    .set(compact({ status: input.status, acceptedAt: input.acceptedAt, paidAt: input.paidAt }))
+    .set(
+      compact({
+        status: input.status,
+        acceptedAt: input.acceptedAt,
+        acceptedAgentId: input.acceptedAgentId,
+        paidAt: input.paidAt,
+      }),
+    )
     .where(and(eq(quotes.quoteId, input.quoteId), eq(quotes.version, input.version)))
     .returning();
   if (!row) throw notFound('quote', input.quoteId);

@@ -1,6 +1,6 @@
 # Connecting an agent over MCP
 
-DealingWith Agent exposes the same quoting and payment flow that humans use on the web as an MCP server, so a client's AI agent can request quotes, read them and pay within a mandate. The endpoint runs inside the backend process at `/mcp` (Streamable HTTP, stateless). Verified on 2026-11-08 against `@modelcontextprotocol/sdk@1.32.2`, Claude Code 2.1.319 and the client documentation linked below.
+DealingWith Agent exposes the same quoting and payment flow that humans use on the web as an MCP server, so a client's AI agent can request quotes, read them and pay within a mandate. The endpoint runs inside the backend process at `/mcp` (Streamable HTTP, stateless). Verified on 2026-11-08 against `@modelcontextprotocol/sdk@1.32.2`, Claude Code 2.1.319 and the client documentation linked below; the Claude Code setup message was checked on 2026-11-12 against Claude Code 2.1.322.
 
 ## Authentication
 
@@ -11,9 +11,15 @@ A client issues an agent token in the portal ("Connect my agent"), or with `POST
 
 Unknown, malformed or revoked tokens get HTTP `401` with body `{ "error": { "code": "unauthenticated", "message": "invalid token" } }` before any MCP parsing. Tokens are revocable from the portal at any time; a revoked token fails on the next request. Every token carries the scopes `quote:request` and `quote:accept` and is bound to one client, and optionally to one mandate. The MCP OAuth flow is the production path and is not part of the MVP.
 
-### Client snippets (as the portal prints them)
+### What the portal shows
 
-Claude Code ([docs](https://code.claude.com/docs/en/mcp), checked 2026-11-08):
+The card shows the token once, in three forms. The API (`POST /api/agents`) returns the token and the `snippets` object from `connectionSnippets` in `packages/contracts/src/access.ts`; the web builds the message and the connector link from those snippets (`apps/web/src/lib/agent-setup.ts`), so the command is written in one place.
+
+1. **Message for Claude Code** (first, with a copy button). Plain words for a non-technical client to paste into Claude Code. It says what DealingWith is for, carries the exact command below, tells the agent how to replace an existing `dealingwith` entry, tells it to keep the key secret, and makes it end with one sentence telling the person to restart Claude Code in the same folder. The full text is in the README, "Connect your agent".
+2. **Connector link** for Claude Desktop and claude.ai ([docs](https://support.claude.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp), checked 2026-11-08): Settings → Connectors → Add custom connector, paste the capability URL `https://<host>/mcp/dwa_…`, choose "No sign in". Only the URL is copied. The server must be reachable from the public internet (the hosted URL, not localhost).
+3. **Technical setup**, collapsed: the Claude Code command, the Cursor JSON and the raw token.
+
+Claude Code command ([docs](https://code.claude.com/docs/en/mcp), checked 2026-11-12):
 
 ```text
 claude mcp add --transport http dealingwith https://<host>/mcp --header "Authorization: Bearer dwa_…"
@@ -32,7 +38,14 @@ Cursor, in `.cursor/mcp.json` ([docs](https://cursor.com/docs/context/mcp), chec
 }
 ```
 
-Claude Desktop and claude.ai custom connectors ([docs](https://support.claude.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp), checked 2026-11-08): Settings → Connectors → Add custom connector, paste the capability URL `https://<host>/mcp/dwa_…`, choose "No sign in". The server must be reachable from the public internet (the hosted URL, not localhost).
+### How Claude Code behaves with the message (checked 2026-11-12, Claude Code 2.1.322)
+
+Tested on Windows against a local backend in mock mode: a token issued as Mara in the browser, the message copied with the page's Copy button and pasted into `claude -p` sessions started in an empty temporary folder. The interactive terminal was not driven, so the permission prompt was granted up front with `--allowedTools`.
+
+- **Claude runs the command itself.** Given the message, Claude ran `claude mcp add` with its terminal tool (PowerShell on Windows) and answered with the one sentence the message asks for. In an interactive session the command goes through the usual permission prompt, so the person approves one terminal command.
+- **It lands in the local scope.** `claude mcp add` defaults to `local`: the server is stored in `~/.claude.json` under the current project and loads only there ([docs](https://code.claude.com/docs/en/mcp): "A local-scoped server loads only in the project where you added it"). Claude Code takes the project from the nearest parent folder that holds a `.git` entry, falling back to the folder itself; this was observed, not documented.
+- **The add fails if the name is taken.** A second `claude mcp add ... dealingwith ...` in the same project answers `MCP server dealingwith already exists in local config` and changes nothing. That happens when a client issues a new token; the message tells the agent to run `claude mcp remove dealingwith -s local` and add again. Pasting the same message a second time in the same folder, Claude hit the error, removed the entry, added it again and ended with the same sentence.
+- **The tools appear only in a new session.** The session that ran the command did not see the DealingWith tools afterwards, although Claude Code reported the server as connected. A new session started in the same folder listed all nine tools and called `list_projects` against the local server. The docs do not promise that a running session picks up a newly added server, and `/mcp reconnect all` is documented only as retrying servers that "failed or needs authentication". So the message makes the agent tell the person to close Claude Code and open it again in the same folder.
 
 ## Tools
 
@@ -161,14 +174,14 @@ A payment of one of the client's quotes.
 
 ### `get_mandate`
 
-The mandate this token pays from, or `null` when the agent has none (then every acceptance needs human approval).
+The mandate this token pays from, resolved exactly as `accept_quote` resolves it: the mandate attached to the agent, otherwise the mandate of the project (the agents of one client share the project budget). `projectId` is optional and names the project; without it an agent with no mandate of its own gets the client's most recent mandate. `null` when there is none (then every acceptance needs human approval).
 
 ```json
-{ "name": "get_mandate", "arguments": {} }
+{ "name": "get_mandate", "arguments": { "projectId": "…" } }
 ```
 
 ```json
-{ "mandate": { "id": "…", "status": "active", "perPurchaseLimitCents": 10000, "totalLimitCents": 30000, "spentCents": 6000, "expiresAt": "2026-12-31T23:59:59.000Z", "funding": { "paypalAuthorizationId": "…", "fundingAmountCents": 200000, "fundingCapturedCents": 6000 } } }
+{ "mandate": { "id": "…", "status": "active", "perPurchaseLimitCents": 10000, "totalLimitCents": 30000, "spentCents": 6000, "expiresAt": "2026-12-31T23:59:59.000Z", "funding": { "paypalAuthorizationId": "…", "fundingAmountCents": 30000, "fundingCapturedCents": 6000 } } }
 ```
 
 ## Resource

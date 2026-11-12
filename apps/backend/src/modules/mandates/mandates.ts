@@ -39,6 +39,32 @@ export async function findMandateForProject(
     .limit(1);
   return row ? toMandate(row) : null;
 }
+/** The client's most recent mandate that is not revoked, on any project. */
+export async function findLatestMandateForClient(
+  db: Db,
+  clientId: string,
+): Promise<Mandate | null> {
+  const [row] = await db
+    .select()
+    .from(mandates)
+    .where(and(eq(mandates.clientId, clientId), ne(mandates.status, 'revoked')))
+    .orderBy(desc(mandates.createdAt))
+    .limit(1);
+  return row ? toMandate(row) : null;
+}
+/**
+ * The mandate an agent pays from on a project: the one attached to it, otherwise the project's.
+ * The agents of one client share the project's budget (decision
+ * 2026-11-12-agents-share-the-project-budget); `accept_quote` and `get_mandate` both resolve here.
+ */
+export async function mandateForAgent(
+  db: Db,
+  agent: { clientId: string; mandateId?: string | undefined },
+  projectId: string | undefined,
+): Promise<Mandate | null> {
+  if (agent.mandateId) return getMandate(db, agent.mandateId);
+  return projectId ? findMandateForProject(db, { projectId, clientId: agent.clientId }) : null;
+}
 export async function updateMandate(
   db: Db,
   id: string,

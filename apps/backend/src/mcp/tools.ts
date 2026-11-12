@@ -2,7 +2,7 @@ import { type ClientAgent, MCP_TOOLS, type McpToolName } from '@dealingwith/cont
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { listServices } from '../modules/catalog/catalog.js';
 import { getClient } from '../modules/clients/clients.js';
-import { getMandate } from '../modules/mandates/mandates.js';
+import { findLatestMandateForClient, mandateForAgent } from '../modules/mandates/mandates.js';
 import { listProjectsForClient } from '../modules/projects/projects.js';
 import { getQuote } from '../modules/quotes/quotes.js';
 import { acceptQuote } from '../workflows/accept-quote.js';
@@ -70,7 +70,7 @@ const TOOL_META: Record<McpToolName, ToolMeta> = {
   get_mandate: {
     title: 'Get mandate',
     description:
-      'Read the spending mandate this agent pays from: limits, spent amount, expiry and whether a PayPal authorization backs it. Null when the agent has no mandate.',
+      'Read the spending mandate this agent pays from: limits, spent amount, expiry and whether a PayPal authorization backs it. The agents of one client share the project budget, so an agent without a mandate of its own pays from the mandate of the project: pass projectId to read it (without it, the most recent mandate of the client). Null when there is none: every accepted quote then needs human approval.',
     readOnly: true,
   },
 };
@@ -220,8 +220,11 @@ export function registerTools(server: McpServer, deps: Deps, agent: ClientAgent)
       inputSchema: MCP_TOOLS.get_mandate.input,
       outputSchema: MCP_TOOLS.get_mandate.output,
     },
-    async () => {
-      const mandate = agent.mandateId ? await getMandate(db, agent.mandateId) : null;
+    async ({ projectId }) => {
+      if (projectId) await assertAgentOwnsProject(db, projectId, agent);
+      const mandate =
+        (await mandateForAgent(db, agent, projectId)) ??
+        (projectId ? null : await findLatestMandateForClient(db, agent.clientId));
       return text(formatMandateMarkdown(mandate), { mandate });
     },
   );

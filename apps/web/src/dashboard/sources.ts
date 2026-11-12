@@ -86,6 +86,8 @@ const WORDS: Record<string, string> = {
   needs_info: 'Needs info',
   pay_now: 'Pay now',
   mandate: 'Agent mandate',
+  // Only mandates are `pending`: limits proposed, no PayPal authorization yet.
+  pending: 'Not assigned yet',
 };
 const word = (value: string) =>
   WORDS[value] ?? (value ? value.charAt(0).toUpperCase() + value.slice(1) : value);
@@ -143,6 +145,7 @@ const PAYMENT_FIELDS = fields<PaymentRow>({
   version: 'integerFormat',
   mode: 'textFormat',
   status: 'textFormat',
+  agentName: 'textFormat',
   channel: 'textFormat',
   clientName: 'textFormat',
   projectTitle: 'textFormat',

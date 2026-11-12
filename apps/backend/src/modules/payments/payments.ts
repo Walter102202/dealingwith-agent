@@ -14,6 +14,7 @@ export function toPayment(row: typeof payments.$inferSelect): Payment {
     compact({
       ...row,
       mandateId: row.mode === 'mandate' ? row.raw.mandateId : undefined,
+      agentId: row.agentId ?? undefined,
       paypalOrderId: row.paypalOrderId ?? undefined,
       paypalAuthorizationId: row.paypalAuthorizationId ?? undefined,
       paypalCaptureId: row.paypalCaptureId ?? undefined,
@@ -29,6 +30,7 @@ export async function createPayment(
     mode: PaymentMode;
     amountCents: number;
     idempotencyKey: string;
+    agentId?: string;
     paypalOrderId?: string;
     paypalAuthorizationId?: string;
     raw?: Record<string, unknown>;
