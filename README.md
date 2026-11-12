@@ -59,7 +59,7 @@ The demo business is Andes Data Studio, a data consultancy. Its client Lukas Ret
 
 The project has one agent budget, mandate M1: at most US$100.00 per purchase and US$300.00 in total, until 31 Dec 2026. Every demo run starts with that budget proposed but not assigned: Mara assigns it from the project page and approves once in PayPal, which holds the US$300.00 total and captures only what the agent spends.
 
-## How judges test in two minutes
+## How judges test the demo
 
 Sign in as Mara and type the requests into the box labelled "Describe what you need" on the project page. Start from the seeded state, where the project lists three clauses and the agent budget is not assigned; to restore it, sign in as the provider and click "Reset demo data" (inside "Menu" on a narrow window).
 
