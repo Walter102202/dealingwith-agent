@@ -4,7 +4,7 @@ A working guide for the MVP build. Milestones are outcomes, not dates. Each stag
 
 Legend: `[ ]` not started · `[~]` in progress · `[x]` done
 
-**Current position:** M0, M2, M3, the web (D1-D6), W, A9, E (E2), I1 and I2 done and merged into `main` on 2026-11-08; G1-G3 done the same day; I3 and I4 done on 2026-11-08 (live eval 5/5 with both providers; the service is live at `https://dealingwith-agent.onrender.com` with webhook, funded mandate and MCP verified from outside); G4 done the same day; G5 done by 2026-11-11. The domain `https://dealingwith.si` is live since 2026-11-08 (DNS at Hostinger, `APP_URL` points at it; the PayPal webhook stays on the Render host because PayPal's sender does not reach the domain, verified 2026-11-09, see `infra/README.md`). I5 done on 2026-11-11; G6 merged on 2026-11-11 and waiting for a docs-only merge that does not deploy. Open: G6 and M6.
+**Current position:** M0, M2, M3, the web (D1-D6), W, A9, E (E2), I1 and I2 done and merged into `main` on 2026-11-08; G1-G3 done the same day; I3 and I4 done on 2026-11-08 (live eval 5/5 with both providers; the service is live at `https://dealingwith-agent.onrender.com` with webhook, funded mandate and MCP verified from outside); G4 done the same day; G5 done by 2026-11-11. The domain `https://dealingwith.si` is live since 2026-11-08 (DNS at Hostinger, `APP_URL` points at it; the PayPal webhook stays on the Render host because PayPal's sender does not reach the domain, verified 2026-11-09, see `infra/README.md`). I5 done on 2026-11-11; G6 done on 2026-11-11 (a docs-only merge did not deploy). Open: M6.
 
 ---
 
@@ -89,8 +89,8 @@ The same code runs against PayPal sandbox, a real model and Render.
 
 ## M6 — Submitted
 
-- [~] **README final** (S1; rewritten on 2026-11-10 for the dashboard assistant, the custom widgets and the PayPal and AI map; the judge buyer account added on 2026-11-11; the video link is still `TBD`). Done when: URL, demo logins, judge buyer account, video, judge path, architecture, flows and limits are in the README.
-- [ ] **Video** (S2). Done when: a public YouTube video under three minutes follows `docs/demo-script.md`.
+- [x] **README final** (S1; rewritten on 2026-11-10 for the dashboard assistant, the custom widgets and the PayPal and AI map; the judge buyer account added on 2026-11-11; the video link added on 2026-11-12). Done when: URL, demo logins, judge buyer account, video, judge path, architecture, flows and limits are in the README.
+- [x] **Video** (S2; published on 2026-11-12 at https://youtu.be/RWpdlMtsf_Y, 2 minutes 21 seconds, narrated). Done when: a public YouTube video under three minutes follows `docs/demo-script.md`.
 - [ ] **Devpost** (S3). Done when: the submission is complete with repo, video, hosted URL and the AG Grid sponsor prize opted in.
 
 ---
@@ -112,7 +112,7 @@ Added 2026-11-08 when David joined. Policy: `CONSTITUTION.md`; runbook: `docs/ci
 - [x] **`main` protected** (G3, Walter). Done when: the ruleset in `infra/github/main-ruleset.json` is active on GitHub and a direct push to `main` is rejected.
 - [x] **Gated delivery** (G4; `autoDeployTrigger: checksPass` in effect since 2026-11-08, PRs #6 to #8 deployed only after their green run; with the `main` ruleset a red `main` cannot be produced by a merge). Done when: `render.yaml` sets `autoDeployTrigger: checksPass` and a red CI on `main` does not deploy.
 - [x] **David onboarded** (G5; collaborator with write access by 2026-11-11, governance docs read). Done when: David has write access and has read `CONSTITUTION.md`, `AGENTS.md`, `CLAUDE.md` and `docs/ci-cd.md`.
-- [~] **Deploys skip what cannot reach production** (G6, 2026-11-11). Done when: `render.yaml` declares `buildFilter.ignoredPaths`, the `build` job proves them on every run, and a docs-only merge to `main` does not deploy.
+- [x] **Deploys skip what cannot reach production** (G6, 2026-11-11; #20 deployed as 3b4c2a5, then the docs-only merge of #21, 13f5f95, passed CI and produced no Render deploy). Done when: `render.yaml` declares `buildFilter.ignoredPaths`, the `build` job proves them on every run, and a docs-only merge to `main` does not deploy.
 
 ## S — Dashboard assistant (AG Studio AI)
 

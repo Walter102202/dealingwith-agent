@@ -7,7 +7,7 @@ DealingWith Agent lets a service business quote and collect change orders (the e
 Built for the PayPal AI Hackathon (November 2026). Public repository, MIT license.
 
 - **Hosted demo:** https://dealingwith.si (PayPal sandbox, real model calls, nothing to install)
-- **Video:** `TBD: video link`
+- **Video:** https://youtu.be/RWpdlMtsf_Y (2 minutes 21 seconds)
 - **Agent endpoint (MCP):** `https://dealingwith.si/mcp`
 
 ## The problem
